@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Breakpoint — Plan for the what if</title>
+  <meta name="description" content="Simulate disruptions, see the ripple effect, and plan ahead with confidence. Breakpoint stress-tests your schedule before life does." />
+  <meta name="theme-color" content="#0d0c0f" />
+  <meta property="og:title" content="Breakpoint — Plan for the what if" />
+  <meta property="og:description" content="Simulate disruptions, see the ripple effect, and plan ahead with confidence." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script>
+    document.documentElement.classList.add('js');
+    // failsafe: never leave content hidden if the animation bundle fails
+    setTimeout(function () { document.documentElement.classList.add('anim-ready'); }, 4500);
+  </script>
+  <link rel="preload" as="image" href="/art/hero-landscape.webp" type="image/webp" />
+  <script type="module" src="/src/main.js"></script>
+</head>
+<body>
+
+<!-- ───────────── SVG sprite ───────────── -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="logo" viewBox="0 0 46 30">
+      <g transform="translate(13 0) skewX(-24)" fill="currentColor">
+        <rect x="2" y="0" width="14" height="30" rx="7" />
+        <rect x="19" y="0" width="14" height="30" rx="7" />
+      </g>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 3.6v16.8c0 .8.9 1.3 1.6.8l13-8.4c.6-.4.6-1.2 0-1.6L8.1 2.8c-.7-.5-1.6 0-1.6.8z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6.5L19 12l-6 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow-ur" viewBox="0 0 24 24"><path d="M7 17L17 7M8.5 7H17v8.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.2 2.5L4.8 13.6c-.4.5 0 1.2.6 1.2h5.1l-1.2 6.2c-.1.7.8 1 1.2.5l8.6-11.1c.4-.5 0-1.2-.6-1.2h-5.1l1.2-6.2c.1-.7-.8-1-1.4-.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="i-bolt-fill" viewBox="0 0 24 24"><path d="M13.4 2.2L4.6 13.5c-.5.6-.1 1.4.7 1.4h4.7l-1.1 6.3c-.1.8.9 1.1 1.4.5l8.7-11.2c.5-.6.1-1.4-.7-1.4h-4.7l1.1-6.3c.1-.8-.9-1.1-1.3-.6z" fill="currentColor"/></symbol>
+    <symbol id="i-ripple" viewBox="0 0 48 36"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M3.5 15.5c11-12.5 30-12.5 41 0"/><path d="M10.5 23c7.5-8 19.5-8 27 0"/><path d="M17.5 30.5c3.8-4 9.2-4 13 0"/></g></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 32 36"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2.5l11.5 4.2v9.8c0 7.2-4.9 13-11.5 16.5C9.4 29.5 4.5 23.7 4.5 16.5V6.7L16 2.5z"/><path d="M10.5 17l4 4 7.5-8"/></g></symbol>
+    <symbol id="i-shield" viewBox="0 0 32 36"><path d="M16 2.5l11.5 4.2v9.8c0 7.2-4.9 13-11.5 16.5C9.4 29.5 4.5 23.7 4.5 16.5V6.7L16 2.5z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 40 36"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 3.5l16 8-16 8-16-8 16-8z"/><path d="M4 18.5l16 8 16-8"/><path d="M4 25.5l16 8 16-8"/></g></symbol>
+    <symbol id="i-swap" viewBox="0 0 40 36"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h29m0 0l-7-7m7 7l-7 7"/><path d="M35 25H6m0 0l7-7m-7 7l7 7"/></g></symbol>
+    <symbol id="i-cal" viewBox="0 0 28 28"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="21" height="19" rx="3.5"/><path d="M9.5 2.5v5M18.5 2.5v5M3.5 11.5h21M11 17.5h6"/></g></symbol>
+    <symbol id="i-file" viewBox="0 0 32 36"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h11l8 8v19a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/><path d="M19 3v8h8M10 17h12M10 22h12M10 27h7"/></g></symbol>
+    <symbol id="i-gcal" viewBox="0 0 48 48">
+      <rect x="4" y="4" width="40" height="40" rx="6" fill="#4285f4"/>
+      <path d="M30 44h8a6 6 0 0 0 6-6v-8H30z" fill="#fbbc04"/>
+      <path d="M4 30h14v14h-8a6 6 0 0 1-6-6z" fill="#34a853"/>
+      <path d="M30 4h8a6 6 0 0 1 6 6v10H30z" fill="#ea4335"/>
+      <path d="M18 30v14h12V30z" fill="#188038"/>
+      <rect x="12.5" y="12.5" width="23" height="23" rx="2.5" fill="#fff"/>
+      <text x="24" y="29.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="700" fill="#1a73e8">31</text>
+    </symbol>
+    <symbol id="i-notion" viewBox="0 0 48 48">
+      <rect x="6" y="6" width="36" height="36" rx="7" fill="#fff" stroke="#111" stroke-width="3"/>
+      <path d="M15.5 35.5v-23h3.4l13.2 17.4V12.5h3.3v23h-3.2L18.8 18.4v17.1z" fill="#111"/>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5.5 12.8l4.2 4.2 8.8-9.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<!-- ───────────── NAV ───────────── -->
+<header class="nav" id="nav" data-theme="dark">
+  <div class="nav__bar">
+    <a class="brand" href="#top" aria-label="Breakpoint — back to top">
+      <svg class="brand__mark" aria-hidden="true"><use href="#logo"/></svg>
+      <span class="brand__name">Breakpoint</span>
+    </a>
+    <nav class="nav__links" id="nav-links" aria-label="Primary">
+      <a href="#ripple">Features</a>
+      <a href="#cta">Integrations</a>
+      <a href="#ways">Use Cases</a>
+      <a href="#cta">About</a>
+    </nav>
+    <a class="btn btn--cream nav__cta" href="#cta" data-cta>
+      <span>Get started</span>
+      <svg class="ico ico--r" aria-hidden="true"><use href="#i-arrow"/></svg>
+      <svg class="ico ico--ur" aria-hidden="true"><use href="#i-arrow-ur"/></svg>
+    </a>
+    <button class="nav__toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links"><i></i><i></i></button>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ═════════════ 1 · HERO (dark) ═════════════ -->
+<section class="hero" id="top" data-nav="dark">
+  <div class="hero__stage">
+    <div class="hero__wash" aria-hidden="true"></div>
+
+    <div class="wrap hero__wrap">
+      <div class="hero__copy" data-parallax="copy">
+        <h1 class="display" aria-label="Plan for the what if.">
+          <span class="display__light" aria-hidden="true">Plan for the</span>
+          <span class="display__heavy" aria-hidden="true">
+            <span class="display__word">what if.</span>
+            <svg class="brush brush--hero" viewBox="0 0 242 26" preserveAspectRatio="none" aria-hidden="true"><path d="M10 24C4 24 0 18 6 14 12 9 60 8 120 5c40-1.5 95-3.500 120-4-4 2-40 5-90 8-50 4-100 11-130 15-4 1-8 1-10 0z"/></svg>
+          </span>
+        </h1>
+        <p class="lede" data-in>Simulate disruptions, see the ripple effect, <br />and plan ahead with confidence.</p>
+        <div class="hero__ctas">
+          <a class="btn btn--cream btn--lg btn--glow" href="#cta" data-cta data-magnetic data-in>
+            <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span>Try Breakpoint</span>
+          </a>
+          <a class="link-arrow" href="#ripple" data-in><span>See how it works</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+        <div class="works" data-in>
+          <span class="works__label">Works with</span>
+          <ul class="works__list">
+            <li><svg class="logo-ico" aria-hidden="true"><use href="#i-gcal"/></svg><span>Google Calendar</span></li>
+            <li><svg class="logo-ico" aria-hidden="true"><use href="#i-notion"/></svg><span>Notion</span></li>
+            <li><svg class="logo-ico logo-ico--line" aria-hidden="true"><use href="#i-file"/></svg><span>.ics import</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- orbit + glass cards -->
+      <div class="stack" data-parallax="stack" role="img" aria-label="Schedule preview: Homework 4 to 5 PM, Practice 5 to 6:30 PM (highlighted), Project 7 to 8 PM">
+        <svg class="orbit" viewBox="780 90 760 520" aria-hidden="true">
+          <defs>
+            <filter id="dotglow" x="-300%" y="-300%" width="700%" height="700%"><feGaussianBlur stdDeviation="7"/></filter>
+            <linearGradient id="arcfade" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="590">
+              <stop offset="0" stop-color="#9bd98a" stop-opacity="0"/>
+              <stop offset=".28" stop-color="#9bd98a" stop-opacity=".55"/>
+              <stop offset=".72" stop-color="#9bd98a" stop-opacity=".55"/>
+              <stop offset="1" stop-color="#9bd98a" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path class="arc arc--a" id="arcA" d="" />
+          <path class="arc arc--b" id="arcB" d="M985 232C920 262 886 312 886 366C886 424 925 470 978 492" />
+          <path class="arc arc--c" d="M1006 262C950 290 910 330 910 366C910 410 950 450 1006 478" />
+          <path class="arc arc--d" d="M1010 288C968 306 937 334 937 366C937 398 968 426 1010 444" />
+          <g class="dot" aria-hidden="true">
+            <circle r="15" fill="#c8f5b5" opacity=".55" filter="url(#dotglow)"/>
+            <circle r="5.200" fill="#f4ffe9"/>
+          </g>
+        </svg>
+        <div class="tilt">
+          <i class="ripple"></i><i class="ripple"></i>
+          <article class="card card--a" aria-hidden="true"><div class="card__in">
+            <span class="box"></span>
+            <div class="card__txt"><b>Homework</b><span>4:00 – 5:00 PM</span></div>
+          </div></article>
+          <article class="card card--b" aria-hidden="true"><div class="card__in">
+            <svg class="card__ico" aria-hidden="true"><use href="#i-bolt-fill"/></svg>
+            <div class="card__txt"><b>Practice</b><span>5:00 – 6:30 PM</span></div>
+          </div></article>
+          <article class="card card--c" aria-hidden="true"><div class="card__in">
+            <svg class="card__ico" aria-hidden="true"><use href="#i-cal"/></svg>
+            <div class="card__txt"><b>Project</b><span>7:00 – 8:00 PM</span></div>
+          </div></article>
+        </div>
+      </div>
+    </div>
+
+    <div class="land land--hero" aria-hidden="true">
+      <img src="/art/hero-landscape.webp" alt="" width="1672" height="225" decoding="async" fetchpriority="high" />
+      <svg class="slashes" viewBox="0 0 1672 225" preserveAspectRatio="xMaxYMax slice"><path d="M1466.700 14.500L1476-6.300M1479 24L1500 8M1486 38L1508 35"/></svg>
+    </div>
+  </div>
+
+  <div class="hero__features">
+    <div class="wrap feats">
+      <div class="feat" data-in>
+        <svg class="feat__ico feat__ico--green" aria-hidden="true"><use href="#i-bolt"/></svg>
+        <div><h3>Stress test your schedule</h3><p>Simulate delays, conflicts, and what-if scenarios.</p></div>
+      </div>
+      <div class="feat" data-in>
+        <svg class="feat__ico feat__ico--purple" aria-hidden="true"><use href="#i-ripple"/></svg>
+        <div><h3>See the ripple effect</h3><p>Understand how one change affects the rest.</p></div>
+      </div>
+      <div class="feat" data-in>
+        <svg class="feat__ico feat__ico--green" aria-hidden="true"><use href="#i-shield-check"/></svg>
+        <div><h3>Plan with confidence</h3><p>Make proactive, informed decisions.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 2 · A PERFECT PLAN (light) ═════════════ -->
+<section class="light" id="ripple" data-nav="light">
+  <div class="wrap light__wrap">
+
+    <header class="lhead">
+      <h2 class="serif lhead__title" aria-label="A perfect plan. Until it isn’t.">
+        <span class="serif__a" aria-hidden="true">A perfect plan.</span>
+        <em class="serif__b" aria-hidden="true">Until it isn’t.</em>
+        <svg class="brush brush--light" viewBox="0 0 306 22" preserveAspectRatio="none" aria-hidden="true"><path d="M3 18C70 8 190 3 303 7" /></svg>
+      </h2>
+      <span class="vr" aria-hidden="true"></span>
+      <div class="lhead__copy">
+        <p>Life happens. A 45-minute delay <br />can throw off your entire day.</p>
+        <p>Breakpoint shows the ripple effect, <br />finds your breaking point, and gives <br />you a better plan forward.</p>
+      </div>
+    </header>
+
+    <!-- the plan, and what a delay does to it -->
+    <div class="tl" id="timeline">
+      <div class="tl__axis" aria-hidden="true">
+        <span style="--p:7.5%">4 PM</span><span style="--p:25.2%">5 PM</span><span style="--p:43%">6 PM</span>
+        <span style="--p:60.8%">7 PM</span><span style="--p:78.5%">8 PM</span><span style="--p:96.2%">9 PM</span>
+      </div>
+
+      <div class="tl__row tl__row--plan">
+        <div class="tl__label"><b>Your plan</b><small>Tomorrow, 4 PM – 9 PM</small></div>
+        <div class="bars" role="img" aria-label="Plan: Study 1 hour, Practice 1 hour 30 minutes, Project 1 hour, Rest 30 minutes">
+          <div class="seg seg--study"   style="--g:129"><b>Study</b><small>1h</small></div>
+          <div class="seg seg--practice" style="--g:212"><b>Practice</b><small>1h 30m</small></div>
+          <div class="seg seg--project" style="--g:166"><b>Project</b><small>1h</small></div>
+          <div class="seg seg--rest"    style="--g:84"><b>Rest</b><small>30m</small></div>
+        </div>
+      </div>
+
+      <div class="tl__row tl__row--delay">
+        <svg class="tl__arrow" viewBox="0 0 40 80" aria-hidden="true"><path d="M26 2C8 14 2 34 10 56c2 6 5 10 9 14M8 63l11 8 1-13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="tl__label"><b>After a 45-min delay</b><small>Practice runs late</small></div>
+        <div class="bars" role="img" aria-label="After a 45 minute delay: Study 1 hour, Practice 2 hours 15 minutes, Project conflict, Rest 30 minutes">
+          <div class="seg seg--study"    style="--g:132"><b>Study</b><small>1h</small></div>
+          <div class="seg seg--practice" style="--g:264" data-practice><b>Practice</b><small data-dur>2h 15m</small></div>
+          <div class="seg seg--project"  style="--g:0" data-project><b>Project</b><small>1h</small></div>
+          <div class="seg seg--alert"    style="--g:104" data-alert><span class="alert"><i>!</i></span>
+            <svg class="tl__ticks" viewBox="0 0 40 26" aria-hidden="true"><path d="M5 22L8.500 10"/><path d="M16 21l3-13"/><path d="M26 19.500l8-6"/></svg>
+          </div>
+          <div class="seg seg--rest"     style="--g:82"><b>Rest</b><small>30m</small></div>
+        </div>
+      </div>
+    </div>
+
+    <header class="lhead lhead--ways" id="ways">
+      <h2 class="serif ways__title"><span class="split">Three ways</span> <em class="split">forward.</em></h2>
+      <span class="vr" aria-hidden="true"></span>
+      <p>Once you hit a disruption, Breakpoint builds new, realistic plans <br />so you can keep your day on track.</p>
+    </header>
+
+    <div class="ways" role="radiogroup" aria-label="Recovery strategy">
+      <button class="way is-on" type="button" role="radio" aria-checked="true">
+        <span class="way__badge" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+        <span class="way__head">
+          <svg class="way__ico" aria-hidden="true"><use href="#i-shield"/></svg>
+          <span><b>Protect priorities</b><span>Keep the most important tasks on schedule.</span></span>
+        </span>
+        <span class="mini" aria-hidden="true">
+          <i class="m m--study" style="--g:80">Study</i><i class="m m--practice" style="--g:136">Practice</i><i class="m m--project" style="--g:91">Project</i><i class="m m--rest" style="--g:61">Rest</i>
+        </span>
+      </button>
+      <button class="way" type="button" role="radio" aria-checked="false">
+        <span class="way__badge" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+        <span class="way__head">
+          <svg class="way__ico" aria-hidden="true"><use href="#i-layers"/></svg>
+          <span><b>Preserve the most tasks</b><span>Fit in as many original tasks as possible.</span></span>
+        </span>
+        <span class="mini" aria-hidden="true">
+          <i class="m m--study" style="--g:77">Study</i><i class="m m--practice" style="--g:115">Practice</i><i class="m m--gap" style="--g:34"></i><i class="m m--project" style="--g:73">Project</i><i class="m m--rest" style="--g:60">Rest</i>
+        </span>
+      </button>
+      <button class="way" type="button" role="radio" aria-checked="false">
+        <span class="way__badge" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+        <span class="way__head">
+          <svg class="way__ico" aria-hidden="true"><use href="#i-swap"/></svg>
+          <span><b>Minimize changes</b><span>Make the smallest possible adjustment to your plan.</span></span>
+        </span>
+        <span class="mini" aria-hidden="true">
+          <i class="m m--study" style="--g:80">Study</i><i class="m m--practice" style="--g:130">Practice</i><i class="m m--project" style="--g:94">Project</i><i class="m m--rest" style="--g:61">Rest</i>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <div class="land land--light" aria-hidden="true">
+    <img src="/art/light-landscape.webp" alt="" width="1672" height="251" loading="lazy" decoding="async" />
+    <svg class="slashes slashes--dark" viewBox="0 0 1672 251" preserveAspectRatio="xMinYMax slice"><path d="M212.300 34.800L215.900 19.400M223.800 39.800L235 26.900M232.500 48.800L246.300 44.400"/></svg>
+  </div>
+</section>
+
+<!-- ═════════════ 3 · ALREADY HERE (dark) ═════════════ -->
+<section class="cta" id="cta" data-nav="dark">
+  <div class="wrap cta__wrap">
+    <svg class="cta__ring" viewBox="0 0 1672 941" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <filter id="dotglow2" x="-300%" y="-300%" width="700%" height="700%"><feGaussianBlur stdDeviation="8"/></filter>
+        <linearGradient id="ringgrad" gradientUnits="userSpaceOnUse" x1="214" y1="0" x2="1458" y2="0">
+          <stop offset="0" stop-color="#b6eea0" stop-opacity=".75"/>
+          <stop offset=".45" stop-color="#b6eea0" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#d8d8d0" stop-opacity=".1"/>
+        </linearGradient>
+      </defs>
+      <ellipse class="ring ring--outer" cx="836" cy="500" rx="622" ry="490" />
+      <ellipse class="ring ring--inner" cx="836" cy="520" rx="546" ry="430" />
+      <path id="ringPath" d="M214 500A622 490 0 0 1 500 87.700" fill="none" stroke="none"/>
+      <g class="dot dot--cta">
+        <circle r="17" fill="#c8f5b5" opacity=".6" filter="url(#dotglow2)"/>
+        <circle r="5.500" fill="#f7ffed"/>
+      </g>
+    </svg>
+
+    <div class="cta__content">
+      <a class="brand brand--center" href="#top" aria-label="Breakpoint — back to top" data-in>
+        <svg class="brand__mark" aria-hidden="true"><use href="#logo"/></svg><span class="brand__name">Breakpoint</span>
+      </a>
+      <h2 class="display display--cta" aria-label="Your schedule. Already here.">
+        <span class="display__light" aria-hidden="true">Your schedule.</span>
+        <span class="display__heavy" aria-hidden="true">
+          <span class="display__word">Already here.</span>
+          <svg class="brush brush--cta" viewBox="0 0 242 26" preserveAspectRatio="none" aria-hidden="true"><path d="M10 24C4 24 0 18 6 14 12 9 60 8 120 5c40-1.500 95-3.500 120-4-4 2-40 5-90 8-50 4-100 11-130 15-4 1-8 1-10 0z"/></svg>
+        </span>
+      </h2>
+      <p class="cta__lede" data-in>Import from Google Calendar, Notion, or .ics so you don’t <br />have to rebuild your life from scratch.</p>
+      <ul class="works works--center works__list" data-in>
+        <li><svg class="logo-ico" aria-hidden="true"><use href="#i-gcal"/></svg><span>Google Calendar</span></li>
+        <li><svg class="logo-ico" aria-hidden="true"><use href="#i-notion"/></svg><span>Notion</span></li>
+        <li><svg class="logo-ico logo-ico--line" aria-hidden="true"><use href="#i-file"/></svg><span>.ics import</span></li>
+      </ul>
+      <p class="cta__tag" data-in>Tomorrow is unpredictable. Your plan doesn’t have to be.</p>
+      <a class="btn btn--cream btn--xl btn--glow" href="#cta" data-cta data-magnetic data-in>
+        <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span>Try Breakpoint</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="land land--cta" aria-hidden="true">
+    <img src="/art/cta-landscape.webp" alt="" width="1672" height="301" loading="lazy" decoding="async" />
+    <svg class="slashes" viewBox="0 0 1672 301" preserveAspectRatio="xMaxYMax slice"><path d="M1432.500 36L1441 17M1445 45L1463 30M1452.500 58L1473 55"/></svg>
+  </div>
+</section>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
