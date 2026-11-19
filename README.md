@@ -10,6 +10,10 @@ npm run dev      # http://localhost:5173  (add ?static to skip animations)
 npm run build    # -> dist/
 ```
 
+## backend
+
+the scheduling engine and api live in [`server/`](server/README.md): deterministic engine (chaos engine, butterfly effect, breaking point, parallel futures, fortify), google sign-in, guest demo, read-only calendar imports. run it with `cd server && npm install && npm start`; client + integration guide in `server/docs/FRONTEND.md`.
+
 ## layout units
 
 on desktop `1rem = 100px` of the 1672px mockups, so the page scales exactly with the viewport. below 1024px it switches to a stacked layout.
