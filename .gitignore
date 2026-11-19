@@ -3,3 +3,4 @@ dist
 .wrangler
 .claude
 art/_*.png
+art/pip/

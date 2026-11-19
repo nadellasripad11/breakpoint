@@ -54,6 +54,13 @@
       <rect x="6" y="6" width="36" height="36" rx="7" fill="#fff" stroke="#111" stroke-width="3"/>
       <path d="M15.5 35.5v-23h3.4l13.2 17.4V12.5h3.3v23h-3.2L18.8 18.4v17.1z" fill="#111"/>
     </symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M20 12H5m6-6.5L5 12l6 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 32 32"><path d="M16 5v22M5 16h22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-cal-edit" viewBox="0 0 40 40"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="30" height="28" rx="5"/><path d="M13 3.5v7M27 3.5v7M5 15.5h30"/><path d="M16 29.5l1-4.5 7.5-7.5 3.5 3.5-7.5 7.5z"/></g></symbol>
+    <symbol id="i-cap" viewBox="0 0 40 32"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4L3 12.5 20 21l17-8.5z"/><path d="M10 16.5v7c0 2.4 4.5 4.5 10 4.5s10-2.1 10-4.5v-7"/><path d="M37 12.5V21"/></g></symbol>
+    <symbol id="i-dumbbell" viewBox="0 0 40 28"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7v14M5 10v8M31 7v14M35 10v8M9 14h22"/><path d="M2 12.5v3M38 12.5v3"/></g></symbol>
+    <symbol id="i-people" viewBox="0 0 40 32"><g fill="currentColor"><circle cx="20" cy="9" r="5.5"/><path d="M9.5 27c0-6 4.7-9.5 10.5-9.5S30.5 21 30.5 27z"/><circle cx="8.5" cy="12.5" r="4"/><path d="M1.5 25.5c0-4.6 3-7.2 7.2-7.2 1 0 1.9.2 2.7.5-2 1.9-3.1 4.4-3.3 7.2z"/><circle cx="31.5" cy="12.5" r="4"/><path d="M38.5 25.5c0-4.6-3-7.2-7.2-7.2-1 0-1.9.2-2.7.5 2 1.9 3.1 4.4 3.3 7.2z"/></g></symbol>
+    <symbol id="i-dots" viewBox="0 0 40 12"><g fill="currentColor"><circle cx="6" cy="6" r="3.2"/><circle cx="20" cy="6" r="3.2"/><circle cx="34" cy="6" r="3.2"/></g></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5.5 12.8l4.2 4.2 8.8-9.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </defs>
 </svg>
@@ -323,6 +330,124 @@
 </section>
 
 </main>
+
+<!-- ═════════════ ONBOARDING (opens from "Get started") ═════════════ -->
+<div class="ob" id="onboarding" role="dialog" aria-modal="true" aria-label="Set up Breakpoint" hidden>
+  <div class="ob__bg" aria-hidden="true">
+    <div class="ob__glow"></div>
+    <figure class="pip" aria-hidden="true">
+        <img class="pip__img" src="/art/pip-cutout.webp" alt="" decoding="async" />
+        <svg class="slashes pip__slashes" viewBox="0 0 60 50"><path d="M5 40L10 6"/><path d="M20 44l24-22"/><path d="M32 46h24"/></svg>
+      </figure>
+    <img class="ob__rocks" src="/art/ob-rocks.webp" alt="" decoding="async" />
+  </div>
+
+  <div class="ob__frame">
+    <header class="ob__top">
+      <span class="brand ob__brand"><svg class="brand__mark" aria-hidden="true"><use href="#logo"/></svg><span class="brand__name">Breakpoint</span></span>
+      <ol class="ob__steps" aria-label="Setup progress">
+        <li class="stp" data-step="0"><span class="stp__dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="stp__label">Welcome</span><i class="stp__line"><b></b></i></li>
+        <li class="stp" data-step="1"><span class="stp__dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="stp__label">Connect</span><i class="stp__line"><b></b></i></li>
+        <li class="stp" data-step="2"><span class="stp__dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="stp__label">Customize</span><i class="stp__line"><b></b></i></li>
+        <li class="stp" data-step="3"><span class="stp__dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="stp__label">Done</span></li>
+      </ol>
+      <button class="ob__skip" type="button" data-ob-skip>Skip</button>
+    </header>
+
+    <!-- 1 · welcome -->
+    <section class="scr scr--welcome" data-screen="0" tabindex="-1" aria-labelledby="ob-h0">
+      <h1 class="ob__h ob__h--big" id="ob-h0" aria-label="Hi there. I’m Pip.">
+        <span class="ln" aria-hidden="true">Hi there.</span>
+        <span class="ln" aria-hidden="true">I’m <em class="pipname">Pip.</em>
+          <svg class="ob__brush ob__brush--pip" viewBox="0 0 150 12" preserveAspectRatio="none" aria-hidden="true"><path d="M3 8C32 3 90 1.5 147 3.5"/></svg>
+        </span>
+      </h1>
+      <p class="ob__sub ob__sub--welcome">I’ll help you set up your schedule<br />and prepare for the <em>what ifs</em>.</p>
+      <button class="btn btn--cream ob__btn ob__btn--start" type="button" data-next>
+        <span>Let’s get started</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+      </button>
+    </section>
+
+    <!-- 2 · connect -->
+    <section class="scr scr--connect" data-screen="1" tabindex="-1" aria-labelledby="ob-h1" hidden>
+      <h2 class="ob__h ob__h--mid ob__h--center" id="ob-h1">Bring in your <em>schedule.</em></h2>
+      <p class="ob__sub ob__sub--center">Connect a tool or import an existing calendar.</p>
+      <div class="opts" role="radiogroup" aria-label="How do you want to start?">
+        <button class="opt is-on" type="button" role="radio" aria-checked="true" data-value="google">
+          <span class="opt__tick" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+          <svg class="opt__ico opt__ico--gcal" aria-hidden="true"><use href="#i-gcal"/></svg>
+          <span class="opt__txt"><b>Google Calendar</b><span>Import events, deadlines, and commitments.</span></span>
+        </button>
+        <button class="opt" type="button" role="radio" aria-checked="false" data-value="notion">
+          <span class="opt__tick" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+          <svg class="opt__ico opt__ico--notion" aria-hidden="true"><use href="#i-notion"/></svg>
+          <span class="opt__txt"><b>Notion</b><span>Bring in tasks and due dates.</span></span>
+        </button>
+        <button class="opt" type="button" role="radio" aria-checked="false" data-value="ics">
+          <span class="opt__tick" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+          <svg class="opt__ico opt__ico--line" aria-hidden="true"><use href="#i-cal-edit"/></svg>
+          <span class="opt__txt"><b>Import .ics file</b><span>Upload an existing calendar.</span></span>
+        </button>
+        <button class="opt" type="button" role="radio" aria-checked="false" data-value="scratch">
+          <span class="opt__tick" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+          <svg class="opt__ico opt__ico--plus" aria-hidden="true"><use href="#i-plus"/></svg>
+          <span class="opt__txt"><b>Start from scratch</b><span>Create a new schedule manually.</span></span>
+        </button>
+      </div>
+      <div class="ob__nav">
+        <button class="ob__back" type="button" data-back><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg><span>Back</span></button>
+        <button class="btn btn--cream ob__btn ob__btn--continue" type="button" data-next><span>Continue</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+      </div>
+    </section>
+
+    <!-- 3 · customize -->
+    <section class="scr scr--custom" data-screen="2" tabindex="-1" aria-labelledby="ob-h2" hidden>
+      <h2 class="ob__h ob__h--mid" id="ob-h2">Make it <em>yours.</em></h2>
+      <p class="ob__sub ob__sub--left">Set a few preferences so Breakpoint can adapt to you.</p>
+      <div class="col col--prio">
+        <h3 class="col__h">What matters most?</h3>
+        <p class="col__p">We’ll protect these first when things change.</p>
+        <div class="prio" role="group" aria-label="What matters most?">
+          <button class="pri is-on" type="button" role="checkbox" aria-checked="true" data-value="school"><svg class="pri__ico" aria-hidden="true"><use href="#i-cap"/></svg><b>School</b><span class="pri__radio" aria-hidden="true"><svg><use href="#i-check"/></svg></span></button>
+          <button class="pri" type="button" role="checkbox" aria-checked="false" data-value="fitness"><svg class="pri__ico" aria-hidden="true"><use href="#i-dumbbell"/></svg><b>Health &amp; Fitness</b><span class="pri__radio" aria-hidden="true"><svg><use href="#i-check"/></svg></span></button>
+          <button class="pri" type="button" role="checkbox" aria-checked="false" data-value="extra"><svg class="pri__ico" aria-hidden="true"><use href="#i-people"/></svg><b>Extracurriculars</b><span class="pri__radio" aria-hidden="true"><svg><use href="#i-check"/></svg></span></button>
+          <button class="pri" type="button" role="checkbox" aria-checked="false" data-value="other"><svg class="pri__ico pri__ico--dots" aria-hidden="true"><use href="#i-dots"/></svg><b>Other</b><span class="pri__radio" aria-hidden="true"><svg><use href="#i-check"/></svg></span></button>
+        </div>
+      </div>
+      <i class="ob__vr" aria-hidden="true"></i>
+      <div class="col col--flex">
+        <h3 class="col__h" id="flex-h">How flexible is your schedule?</h3>
+        <p class="col__p">This helps us find the best recovery plan.</p>
+        <div class="flex" style="--v:1">
+          <input class="flex__range" type="range" min="0" max="2" step="1" value="1" aria-labelledby="flex-h" aria-valuetext="Balanced (recommended)" />
+          <div class="flex__ticks" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="flex__labels">
+            <button type="button" data-v="0"><b>Fixed</b><span>(stick to plan)</span></button>
+            <button type="button" data-v="1" class="is-on"><b>Balanced</b><span>(recommended)</span></button>
+            <button type="button" data-v="2"><b>Flexible</b><span>(allow bigger changes)</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="ob__nav">
+        <button class="ob__back" type="button" data-back><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg><span>Back</span></button>
+        <button class="btn btn--cream ob__btn ob__btn--continue" type="button" data-next><span>Continue</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+      </div>
+    </section>
+
+    <!-- 4 · done -->
+    <section class="scr scr--done" data-screen="3" tabindex="-1" aria-labelledby="ob-h3" hidden>
+      <div class="polaroid" aria-hidden="true">
+        <i class="polaroid__tape"></i>
+        <div class="polaroid__photo"><img src="/art/pip-photo.webp" alt="" decoding="async" /></div>
+      </div>
+      <svg class="slashes done__slashes" viewBox="0 0 40 50" aria-hidden="true"><path d="M4 12L24 5"/><path d="M12 28l20-3"/><path d="M8 44l22 6"/></svg>
+      <h2 class="ob__h ob__h--done" id="ob-h3">You’re all <em>set.</em></h2>
+      <p class="ob__sub ob__sub--done">Your schedule is ready. Let’s find your <br />breaking point.</p>
+      <button class="btn btn--cream ob__btn ob__btn--go btn--glow" type="button" data-finish><span>Go to my plan</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+      <svg class="ob__brush ob__brush--go" viewBox="0 0 112 10" preserveAspectRatio="none" aria-hidden="true"><path d="M3 6C30 2 70 1.5 109 3"/></svg>
+    </section>
+  </div>
+</div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>

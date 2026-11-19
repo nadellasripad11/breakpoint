@@ -80,8 +80,12 @@ async function cropFeather(im, { x, y, w, h }, feather = {}) {
   }
   return { data: rgba, w, h };
 }
-const toWebp = (img, name, q = 92) =>
-  sharp(img.data, { raw: { width: img.w, height: img.h, channels: 4 } })
+// 2x Lanczos upscale + light unsharp mask: stays crisp on retina screens instead of
+// being bilinear-stretched by the browser
+const crisp = (pipeline, w) =>
+  pipeline.resize({ width: w * 2, kernel: 'lanczos3' }).sharpen({ sigma: 0.9, m1: 0.8, m2: 1.4 });
+const toWebp = (img, name, q = 90) =>
+  crisp(sharp(img.data, { raw: { width: img.w, height: img.h, channels: 4 } }), img.w)
     .webp({ quality: q, alphaQuality: 100, effort: 6 })
     .toFile(`${OUT}/${name}`);
 
@@ -132,13 +136,13 @@ const toWebp = (img, name, q = 92) =>
   const right = await cropFeather(im, { x: 1612, y: 770, w: 60, h: 171 }, { top: 40, left: 20 });
 
   const png = (img) => sharp(img.data, { raw: { width: img.w, height: img.h, channels: 4 } }).png().toBuffer();
-  const out = await canvas
+  const out = await crisp(canvas
     .composite([
       { input: await png(strip), left: 0, top: 878 - Y0 },
       { input: await png(right), left: 1612, top: 770 - Y0 },
       { input: await png(left), left: 0, top: 0 },
-    ])
-    .webp({ quality: 92, alphaQuality: 100, effort: 6 })
+    ]), W)
+    .webp({ quality: 90, alphaQuality: 100, effort: 6 })
     .toFile(`${OUT}/light-landscape.webp`);
   console.log('light', out.width, out.height);
 }

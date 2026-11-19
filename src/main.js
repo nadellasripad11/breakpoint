@@ -7,12 +7,14 @@ import '@fontsource-variable/figtree/wght-italic.css';
 import '@fontsource-variable/newsreader/wght.css';
 import '@fontsource-variable/newsreader/wght-italic.css';
 import 'lenis/dist/lenis.css';
+import './onboarding.css';
 
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
+import { initOnboarding } from './onboarding.js';
 
 gsap.registerPlugin(ScrollTrigger, SplitText, DrawSVGPlugin);
 if (import.meta.env.DEV) { window.gsap = gsap; window.ScrollTrigger = ScrollTrigger; }
@@ -76,6 +78,8 @@ function say(msg) {
   toastTimer = setTimeout(() => toast.classList.remove('is-on'), 2800);
 }
 
+const onboarding = initOnboarding({ getLenis: () => lenis, say });
+
 /* ───────────────────────── nav ───────────────────────── */
 const nav = $('#nav');
 const navToggle = $('.nav__toggle');
@@ -91,7 +95,8 @@ $$('a[href^="#"]').forEach((a) => {
     const id = a.getAttribute('href');
     if (a.hasAttribute('data-cta')) {
       e.preventDefault();
-      say('Breakpoint is almost ready — launching soon.');
+      setMenu(false);
+      onboarding.open(a);
       return;
     }
     const target = id === '#top' ? document.body : $(id);
@@ -208,10 +213,10 @@ function heroIntro() {
 
   const tl = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.1 });
   tl.fromTo('.nav__bar > *', { y: -22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, stagger: 0.07 }, 0)
-    .fromTo(light.words, { yPercent: 80, opacity: 0, filter: 'blur(12px)' }, { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 1.2, stagger: 0.1, ease: 'expo.out' }, 0.2)
-    .fromTo(heavy.chars, { yPercent: 60, opacity: 0, scale: 0.72, rotate: 7, filter: 'blur(16px)' }, { yPercent: 0, opacity: 1, scale: 1, rotate: 0, filter: 'blur(0px)', duration: 1.25, stagger: 0.06, ease: 'back.out(1.6)' }, 0.42)
+    .fromTo(light.words, { yPercent: 80, opacity: 0, filter: 'blur(12px)' }, { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 1.2, stagger: 0.1, ease: 'expo.out', clearProps: 'transform,filter' }, 0.2)
+    .fromTo(heavy.chars, { yPercent: 60, opacity: 0, scale: 0.72, rotate: 7, filter: 'blur(16px)' }, { yPercent: 0, opacity: 1, scale: 1, rotate: 0, filter: 'blur(0px)', duration: 1.25, stagger: 0.06, ease: 'back.out(1.6)', clearProps: 'transform,filter' }, 0.42)
     .fromTo('.brush--hero', { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 1.1, ease: 'power2.inOut' }, 1.15)
-    .fromTo('.lede', { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 1 }, 0.9)
+    .fromTo('.lede', { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 1, clearProps: 'transform' }, 0.9)
     .fromTo('.hero__ctas > *', { y: 24, opacity: 0, scale: 0.94 }, { y: 0, opacity: 1, scale: 1, duration: 0.9, stagger: 0.1, ease: 'back.out(1.5)' }, 1.05)
     .fromTo('.hero .works', { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9 }, 1.25)
     .fromTo(arcs, { drawSVG: '0%' }, { drawSVG: '100%', duration: 2, stagger: 0.12, ease: 'power2.inOut' }, 0.5)
@@ -275,7 +280,7 @@ function lightSection() {
 
   const head = SplitText.create('.lhead__title .serif__a, .lhead__title .serif__b', { type: 'words' });
   gsap.fromTo(head.words, { yPercent: 55, opacity: 0, filter: 'blur(8px)' }, {
-    yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 1.2, stagger: 0.09, ease: 'expo.out', scrollTrigger: reveal('.light'),
+    yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 1.2, stagger: 0.09, ease: 'expo.out', clearProps: 'transform,filter', scrollTrigger: reveal('.light'),
   });
   gsap.fromTo('.brush--light path', { drawSVG: '0%' }, { drawSVG: '100%', duration: 1.1, delay: 0.55, ease: 'power2.inOut', scrollTrigger: reveal('.light') });
   gsap.fromTo('.lhead:not(.lhead--ways) .vr', { scaleY: 0 }, { scaleY: 1, duration: 1, delay: 0.3, ease: 'expo.out', scrollTrigger: reveal('.light') });
@@ -311,11 +316,11 @@ function lightSection() {
 
   /* three ways forward */
   const wt = SplitText.create('.ways__title .split', { type: 'words' });
-  gsap.fromTo(wt.words, { yPercent: 55, opacity: 0, filter: 'blur(8px)' }, { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 1.1, stagger: 0.09, ease: 'expo.out', scrollTrigger: reveal('#ways', 'top 88%') });
+  gsap.fromTo(wt.words, { yPercent: 55, opacity: 0, filter: 'blur(8px)' }, { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 1.1, stagger: 0.09, ease: 'expo.out', clearProps: 'transform,filter', scrollTrigger: reveal('#ways', 'top 88%') });
   gsap.fromTo('.lhead--ways .vr', { scaleY: 0 }, { scaleY: 1, duration: 0.9, delay: 0.3, ease: 'expo.out', scrollTrigger: reveal('#ways', 'top 88%') });
   gsap.fromTo('.lhead--ways p', { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 1, delay: 0.4, scrollTrigger: reveal('#ways', 'top 88%') });
   const wayTl = gsap.timeline({ scrollTrigger: reveal('.ways', 'top 88%'), defaults: { ease: 'expo.out' } });
-  wayTl.fromTo('.way', { y: 70, opacity: 0, rotate: 1.2 }, { y: 0, opacity: 1, rotate: 0, duration: 1.3, stagger: 0.13 }, 0)
+  wayTl.fromTo('.way', { y: 70, opacity: 0, rotate: 1.2 }, { y: 0, opacity: 1, rotate: 0, duration: 1.3, stagger: 0.13, clearProps: 'transform,translate,scale,rotate' }, 0)
     .fromTo('.way .m', { scaleX: 0 }, { scaleX: 1, duration: 0.9, stagger: 0.035 }, 0.45)
     .fromTo('.way.is-on .way__badge', { scale: 0 }, { scale: 1, duration: 0.7, ease: 'back.out(2.6)' }, 1.0);
 
@@ -337,8 +342,8 @@ function ctaSection() {
 
   const tl = gsap.timeline({ scrollTrigger: at, defaults: { ease: 'power3.out' } });
   tl.fromTo('.brand--center', { y: -16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9 }, 0)
-    .fromTo(light.words, { yPercent: 80, opacity: 0, filter: 'blur(12px)' }, { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 1.2, stagger: 0.1, ease: 'expo.out' }, 0.1)
-    .fromTo(heavy.chars, { yPercent: 60, opacity: 0, scale: 0.75, rotate: 6, filter: 'blur(14px)' }, { yPercent: 0, opacity: 1, scale: 1, rotate: 0, filter: 'blur(0px)', duration: 1.2, stagger: 0.045, ease: 'back.out(1.6)' }, 0.3)
+    .fromTo(light.words, { yPercent: 80, opacity: 0, filter: 'blur(12px)' }, { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 1.2, stagger: 0.1, ease: 'expo.out', clearProps: 'transform,filter' }, 0.1)
+    .fromTo(heavy.chars, { yPercent: 60, opacity: 0, scale: 0.75, rotate: 6, filter: 'blur(14px)' }, { yPercent: 0, opacity: 1, scale: 1, rotate: 0, filter: 'blur(0px)', duration: 1.2, stagger: 0.045, ease: 'back.out(1.6)', clearProps: 'transform,filter' }, 0.3)
     .fromTo('.brush--cta', { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 1.1, ease: 'power2.inOut' }, 1.05)
     .fromTo('.cta__lede', { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 1 }, 0.9)
     .fromTo('.works--center li', { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, stagger: 0.1 }, 1.1)

@@ -55,7 +55,8 @@ a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
 ul { list-style: none; padding: 0; }
 svg { display: block; }
-img { max-width: none; }
+img { max-width: none; image-rendering: auto; }
+.land img { image-rendering: -webkit-optimize-contrast; }
 
 :focus-visible { outline: 2px solid var(--green); outline-offset: 3px; border-radius: 6px; }
 
@@ -73,14 +74,14 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 }
 .nav.is-hidden { transform: translateY(-110%); }
 .nav.is-scrolled {
-  background: rgba(13, 12, 15, 0.62);
-  -webkit-backdrop-filter: blur(16px) saturate(1.3);
-  backdrop-filter: blur(16px) saturate(1.3);
+  background: rgba(13, 12, 15, 0.82);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 .nav[data-theme='light'] { color: #1b1c18; }
 .nav[data-theme='light'].is-scrolled {
-  background: rgba(251, 248, 242, 0.7);
+  background: rgba(251, 248, 242, 0.88);
   border-bottom-color: rgba(0, 0, 0, 0.06);
 }
 .nav__bar {
@@ -117,7 +118,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.14rem;
   border-radius: 999px; font-weight: 700; line-height: 1; white-space: nowrap; cursor: pointer;
-  position: relative; isolation: isolate; will-change: transform;
+  position: relative; isolation: isolate;
   transition: box-shadow 0.5s var(--ease), background-color 0.3s, color 0.3s, height 0.5s var(--ease), padding 0.5s var(--ease), font-size 0.5s var(--ease);
 }
 .btn .ico { width: 0.9em; height: 0.9em; flex: none; }
@@ -165,8 +166,8 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
   font-size: 1.595rem; line-height: 0.92; letter-spacing: -0.035em; margin-top: -0.02rem; padding-right: 0.08em;
 }
 .display__word { display: inline-block; }
-.display__char { display: inline-block; will-change: transform; }
-.display__w { display: inline-block; will-change: transform; white-space: pre; }
+.display__char { display: inline-block; }
+.display__w { display: inline-block; white-space: pre; }
 
 .brush { position: absolute; fill: #b3e39f; pointer-events: none; overflow: visible; }
 .brush--hero { left: 1.423em; top: 0.856em; width: 1.505em; height: 0.157em; }
@@ -196,14 +197,13 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 .dot { transform-box: fill-box; }
 
 .tilt { position: absolute; left: 4.5em; top: 2.4em; width: 0; height: 0; rotate: -8.5deg; }
-.card { position: absolute; will-change: transform; }
+.card { position: absolute; }
 .card__in {
   width: 100%; height: 100%; display: flex; align-items: center; border-radius: 0.28em;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035));
   border: 0.012em solid rgba(255, 255, 255, 0.13);
   box-shadow: 0 0.14em 0.34em rgba(0, 0, 0, 0.5), inset 0 0.012em 0 rgba(255, 255, 255, 0.14);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  will-change: transform;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
 }
 .card__txt b { display: block; font-weight: 700; color: #f3ece0; line-height: 1.1; letter-spacing: -0.01em; }
 .card__txt span { display: block; font-weight: 500; color: #a8a398; margin-top: 0.04em; letter-spacing: 0; }
@@ -236,7 +236,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 
 /* — landscape art (capybara + moss rocks) — */
 .land { position: absolute; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 1; }
-.land img { display: block; width: 100%; height: auto; will-change: transform; }
+.land img { display: block; width: 100%; height: auto; }
 .land .slashes { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke: #f6ecdf; stroke-width: 5.200; stroke-linecap: round; }
 .slashes--dark { stroke: #1a1a18 !important; stroke-width: 3 !important; }
 
@@ -311,10 +311,9 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 .way {
   position: relative; text-align: left; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between;
   height: 1.71rem; padding: 0.25rem 0.28rem 0.23rem; border-radius: 0.26rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(246, 242, 231, 0.75));
+  background: linear-gradient(180deg, #fdfbf6, #f6f2e7);
   border: 1px solid rgba(60, 50, 30, 0.09);
   box-shadow: 0 0.05rem 0.22rem rgba(60, 50, 30, 0.05);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   transition: translate 0.6s var(--ease), scale 0.4s var(--ease), box-shadow 0.6s var(--ease), border-color 0.4s, background 0.4s;
 }
 .way:hover { translate: 0 -0.05rem; box-shadow: 0 0.14rem 0.36rem rgba(60, 50, 30, 0.12); }
