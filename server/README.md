@@ -20,7 +20,7 @@ Requires **Node 24+** (it runs TypeScript and SQLite natively: no build step, no
 ```powershell
 cd server
 npm install
-npm test            # 83 tests, ~1 minute (typecheck separately: npm run typecheck)
+npm test            # 84 tests, ~1 minute (typecheck separately: npm run typecheck)
 npm start           # http://localhost:8787
 ```
 
@@ -28,6 +28,7 @@ In a second terminal, drive the real server end to end (guest session, simulatio
 
 ```powershell
 npm run smoke       # 15 checks against http://localhost:8787
+npm run sim         # API + pretend Google + pretend Notion: try every connector with no credentials (docs/SETUP-CONNECTORS.md)
 ```
 
 Or try it by hand: the landing-page scenario is served ready to use.
@@ -70,6 +71,7 @@ server/
   client/breakpoint-client.js  browser client (copy into the frontend)
   docs/API.md  docs/FRONTEND.md
   scripts/smoke.ts           end-to-end check against a running server
+  scripts/sim.ts             local simulator: the real API against a pretend Google + Notion
 ```
 
 ## How the engine reasons

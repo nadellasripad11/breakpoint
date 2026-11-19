@@ -22,25 +22,34 @@ export class BreakpointError extends Error {
 
 export class BreakpointApi {
   /**
-   * @param {{ baseUrl: string, token?: string|null, onToken?: (t: string|null) => void, fetch?: typeof fetch }} opts
+   * @param {{ baseUrl: string, token?: string|null, onToken?: (t: string|null) => void, fetch?: typeof fetch, timeoutMs?: number }} opts
    */
   constructor(opts) {
     this.baseUrl = opts.baseUrl.replace(/\/$/, '');
+    this.timeoutMs = opts.timeoutMs ?? 20000; // every request is abandoned after this (capabilities() uses 4 s)
     this.token = opts.token ?? null;
     this.onToken = opts.onToken ?? null;
     this._fetch = opts.fetch ?? ((...a) => fetch(...a));
   }
 
-  async request(method, path, body) {
+  async request(method, path, body, timeoutMs = this.timeoutMs) {
     const headers = { 'X-Breakpoint-Client': '1' }; // CSRF guard: forces a CORS preflight for cross-site pages
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (this.token) headers.Authorization = `Bearer ${this.token}`;
-    const res = await this._fetch(this.baseUrl + path, {
-      method,
-      headers,
-      credentials: 'include',
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
+    let res;
+    try {
+      res = await this._fetch(this.baseUrl + path, {
+        method,
+        headers,
+        credentials: 'include',
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: ctl ? ctl.signal : undefined,
+      });
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
     if (res.status === 204) return null;
     let json = null;
     try {
@@ -56,6 +65,9 @@ export class BreakpointApi {
     this.token = t;
     if (this.onToken) this.onToken(t);
   }
+
+  /** What the server can do: { google, notion, ics, accounts }. Throws if the server is unreachable (4s timeout). */
+  capabilities() { return this.request('GET', '/api/capabilities', undefined, 4000); }
 
   /* ───────── session ───────── */
 

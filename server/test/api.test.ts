@@ -50,6 +50,16 @@ test('health, security headers, CORS allow-list, JSON errors with request ids', 
   assert.ok(nf.json.error.requestId);
 });
 
+test('capabilities tell the UI what is configured', async () => {
+  const on = await makeApp();
+  assert.deepEqual((await client(on)('GET', '/api/capabilities')).json, { ok: true, guest: true, ics: true, google: true, notion: true, accounts: true });
+  const off = await makeApp({ env: { GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '' } });
+  const j = (await client(off)('GET', '/api/capabilities')).json;
+  assert.equal(j.google, false);
+  assert.equal(j.accounts, false);
+  assert.equal(j.ics, true);
+});
+
 /* ───────────── guest demo ───────────── */
 
 test('guest demo: no login, a sandbox session, cookie flags, demo schedule seeded', async () => {

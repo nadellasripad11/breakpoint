@@ -160,6 +160,10 @@ it refreshes title/time/duration but **never overwrites** what you set (locked, 
 | `GET /api/connections/:id/google/calendars` / `.../notion/databases` | Pick what to import. |
 | `DELETE /api/connections/:id` | Revokes at Google, deletes stored tokens. |
 
+## Capabilities (public)
+
+`GET /api/capabilities` → `{ ok, guest, ics, google, notion, accounts }`. `google` / `accounts` are `false` until `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (Notion needs an account, so it needs `accounts` too). The site calls this before opening a connector and shows a plain explanation instead of a failed redirect.
+
 ## Guest demo (no login, nothing stored)
 
 `GET /api/demo/schedule?tz=America/Chicago&date=YYYY-MM-DD` returns the landing-page scenario plus ready-made request bodies in `try.*`.

@@ -61,6 +61,8 @@
     <symbol id="i-dumbbell" viewBox="0 0 40 28"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7v14M5 10v8M31 7v14M35 10v8M9 14h22"/><path d="M2 12.5v3M38 12.5v3"/></g></symbol>
     <symbol id="i-people" viewBox="0 0 40 32"><g fill="currentColor"><circle cx="20" cy="9" r="5.5"/><path d="M9.5 27c0-6 4.7-9.5 10.5-9.5S30.5 21 30.5 27z"/><circle cx="8.5" cy="12.5" r="4"/><path d="M1.5 25.5c0-4.6 3-7.2 7.2-7.2 1 0 1.9.2 2.7.5-2 1.9-3.1 4.4-3.3 7.2z"/><circle cx="31.5" cy="12.5" r="4"/><path d="M38.5 25.5c0-4.6-3-7.2-7.2-7.2-1 0-1.9.2-2.7.5 2 1.9 3.1 4.4 3.3 7.2z"/></g></symbol>
     <symbol id="i-dots" viewBox="0 0 40 12"><g fill="currentColor"><circle cx="6" cy="6" r="3.2"/><circle cx="20" cy="6" r="3.2"/><circle cx="34" cy="6" r="3.2"/></g></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11m0-11l-11 11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></g></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5.5 12.8l4.2 4.2 8.8-9.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </defs>
 </svg>
@@ -443,9 +445,19 @@
       <svg class="slashes done__slashes" viewBox="0 0 40 50" aria-hidden="true"><path d="M4 12L24 5"/><path d="M12 28l20-3"/><path d="M8 44l22 6"/></svg>
       <h2 class="ob__h ob__h--done" id="ob-h3">You’re all <em>set.</em></h2>
       <p class="ob__sub ob__sub--done">Your schedule is ready. Let’s find your <br />breaking point.</p>
+      <p class="ob__import" id="ob-import" hidden><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg><span></span></p>
       <button class="btn btn--cream ob__btn ob__btn--go btn--glow" type="button" data-finish><span>Go to my plan</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></button>
       <svg class="ob__brush ob__brush--go" viewBox="0 0 112 10" preserveAspectRatio="none" aria-hidden="true"><path d="M3 6C30 2 70 1.5 109 3"/></svg>
     </section>
+  </div>
+
+  <!-- connector sheet: opens over the Connect step (src/connect.js fills it) -->
+  <div class="sheet" id="sheet" hidden>
+    <div class="sheet__scrim" data-sheet-close></div>
+    <div class="sheet__card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <button class="sheet__x" type="button" data-sheet-close aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+      <div class="sheet__body" id="sheet-body"></div>
+    </div>
   </div>
 </div>
 

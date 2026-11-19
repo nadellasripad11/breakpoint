@@ -361,7 +361,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 
 /* ═════════════════════ TOAST ═════════════════════ */
 .toast {
-  position: fixed; left: 50%; bottom: 0.4rem; z-index: 90; transform: translate(-50%, 160%);
+  position: fixed; left: 50%; bottom: 0.4rem; z-index: 130; transform: translate(-50%, 160%);
   padding: 0.16rem 0.3rem; border-radius: 999px; font: 600 0.18rem/1 var(--f-ui);
   background: rgba(246, 236, 223, 0.96); color: #17140f; box-shadow: 0 0.12rem 0.4rem rgba(0, 0, 0, 0.35);
   opacity: 0; pointer-events: none; transition: transform 0.7s var(--ease), opacity 0.4s;

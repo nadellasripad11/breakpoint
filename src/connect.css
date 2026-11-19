@@ -1,0 +1,161 @@
+/* ───────────────────────────────────────────────────────────
+   Connector sheet: opens over the onboarding "Connect" step.
+   Same design-px units as onboarding.css (`52u`); --u comes from .ob.
+   ─────────────────────────────────────────────────────────── */
+
+.sheet { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; }
+.sheet [hidden], .sheet[hidden] { display: none !important; }
+.sheet__scrim { position: absolute; inset: 0; background: rgba(7, 7, 9, 0.8); }
+.sheet__card {
+  position: relative; width: 410u; max-height: 440u; display: flex; flex-direction: column; outline: none; color: #e6dfd2;
+  background: linear-gradient(#1c1b21, #141318); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16u;
+  box-shadow: 0 36u 90u rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.sheet__body { overflow-y: auto; overscroll-behavior: contain; padding: 26u 28u 22u; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.22) transparent; }
+.sheet__x { position: absolute; top: 12u; right: 12u; z-index: 2; width: 28u; height: 28u; border-radius: 50%; display: grid; place-items: center; color: #b6afa2; transition: background-color 0.3s, color 0.3s; }
+.sheet__x:hover { background: rgba(255, 255, 255, 0.09); color: #fff; }
+.sheet__x .ico { width: 14u; height: 14u; }
+.sheet button:focus-visible, .sheet a:focus-visible, .sheet select:focus-visible { outline: 2px solid var(--ob-green); outline-offset: 2px; }
+
+/* header */
+.sh__badge { width: 36u; height: 36u; margin-bottom: 12u; display: grid; place-items: center; border-radius: 10u; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--ob-line); }
+.sh__badge .ico { width: 20u; height: 20u; }
+.sh__title { margin: 0; padding-right: 26u; font-family: var(--f-sans); font-size: 21u; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; color: #f6efe4; outline: none; }
+.sh__title em { font-family: var(--f-serif); font-style: italic; font-weight: 600; font-size: 1.14em; letter-spacing: -0.015em; }
+.sh__sub { margin: 8u 0 0; font-size: 12.6u; line-height: 18.5u; color: #bdb6a9; }
+.sh__hint { margin: 12u 0 0; font-size: 12u; line-height: 17u; color: #cfc8bb; }
+.sh__label { margin: 14u 0 0; font-size: 11.5u; font-weight: 600; color: #bdb6a9; }
+.sh__map { margin: 10u 0 0; font-size: 11.2u; line-height: 16u; color: var(--ob-muted); }
+.sh__wait, .drop__wait { display: flex; align-items: center; justify-content: center; gap: 10u; padding: 26u 0 14u; font-size: 12.6u; color: #bdb6a9; }
+.drop__wait { margin: 16u 0 0; }
+
+/* consent list */
+.sh__list { list-style: none; margin: 16u 0 0; padding: 0; display: grid; gap: 9u; }
+.sh__list li { display: flex; align-items: flex-start; gap: 11u; font-size: 12.8u; line-height: 17u; color: #d9d2c5; }
+.sh__mark { flex: none; width: 18u; height: 18u; padding: 3.5u; border-radius: 50%; margin-top: -0.5u; }
+.sh__list .is-yes .sh__mark { background: var(--ob-green); color: #0d0c0f; }
+.sh__list .is-no .sh__mark { background: rgba(242, 169, 154, 0.16); color: #f2a99a; }
+
+/* Notion steps + inputs */
+.sh__steps { margin: 14u 0 12u; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 8u; }
+.sh__steps li { counter-increment: s; position: relative; padding-left: 26u; font-size: 12.4u; line-height: 17u; color: #d3ccbf; }
+.sh__steps li::before { content: counter(s); position: absolute; left: 0; top: -0.5u; width: 18u; height: 18u; border-radius: 50%; display: grid; place-items: center; font-size: 10.5u; font-weight: 700; background: rgba(255, 255, 255, 0.09); color: #f1e9dc; }
+.sh__steps a { color: var(--ob-green); text-decoration: underline; text-underline-offset: 2px; }
+.sh__steps b { color: #f6efe4; font-weight: 600; }
+.sh__input, .sh__select {
+  width: 100%; height: 40u; padding: 0 14u; border-radius: 10u; color: #f6efe4; font-family: var(--f-sans); font-size: 13u;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.18); color-scheme: dark; transition: border-color 0.3s, box-shadow 0.3s;
+}
+.sh__input:focus, .sh__select:focus { outline: none; border-color: var(--ob-green); box-shadow: 0 0 0 3px rgba(155, 217, 138, 0.25); }
+.sh__input::placeholder { color: #7f7a70; }
+.sh__field { display: grid; gap: 6u; margin-top: 12u; font-size: 11.5u; font-weight: 600; color: #bdb6a9; }
+
+/* messages */
+.sh__msg { margin: 14u 0 0; padding: 9u 12u; border-radius: 9u; font-size: 12.2u; line-height: 17u; }
+.sh__msg--err { background: rgba(242, 169, 154, 0.1); color: #f6c4b9; border: 1px solid rgba(242, 169, 154, 0.28); }
+.sh__msg--ok { background: rgba(155, 217, 138, 0.1); color: #c9eebb; border: 1px solid rgba(155, 217, 138, 0.3); }
+
+/* actions */
+.sh__bar { position: sticky; bottom: -22u; z-index: 1; margin: 0 -28u -22u; padding: 16u 28u 22u; background: linear-gradient(rgba(20, 19, 24, 0), #141318 14u); }
+.sh__actions { display: flex; align-items: center; justify-content: flex-end; gap: 12u; }
+.sheet .ob__btn { height: 40u; padding: 0 20u; font-size: 13.5u; gap: 8u; }
+.sheet .ob__btn .ico { width: 14u; height: 14u; }
+.sh__ghost { margin-right: auto; margin-left: -8u; padding: 10u 8u; font-size: 12.8u; font-weight: 600; color: #cfc8bb; transition: color 0.3s; }
+.sh__ghost:hover { color: #fff; }
+.sh__primary:disabled { cursor: progress; }
+.sh__primary.is-busy .ico { display: none; }
+.sh__primary.is-busy::before { content: ''; width: 13u; height: 13u; border-radius: 50%; border: 2px solid rgba(23, 20, 15, 0.22); border-top-color: #17140f; animation: sh-spin 0.7s linear infinite; }
+.spin { flex: none; width: 15u; height: 15u; border-radius: 50%; border: 2px solid rgba(246, 236, 223, 0.2); border-top-color: var(--cream); animation: sh-spin 0.7s linear infinite; }
+@keyframes sh-spin { to { transform: rotate(360deg); } }
+.sh__foot { display: flex; align-items: flex-start; gap: 7u; margin: 12u 0 0; font-size: 10.8u; line-height: 15u; color: #8f8a7f; }
+.sh__lock { flex: none; width: 11u; height: 11u; margin-top: 2u; }
+
+/* .ics drop zone */
+.drop { position: relative; display: grid; justify-items: center; gap: 6u; margin-top: 14u; padding: 20u 18u; text-align: center; cursor: pointer; border: 1.5px dashed rgba(255, 255, 255, 0.26); border-radius: 13u; background: rgba(255, 255, 255, 0.025); transition: border-color 0.3s, background-color 0.3s; }
+.drop:hover, .drop.is-over, .drop:focus-within { border-color: var(--ob-green); background: rgba(155, 217, 138, 0.07); }
+.drop__input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.drop__ico { width: 26u; height: 26u; color: #f1e9dc; }
+.drop__t { font-size: 13.4u; color: #f1e9dc; }
+.drop__t b { color: var(--ob-green); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.drop__s { max-width: 270u; font-size: 11.2u; line-height: 15u; color: var(--ob-muted); }
+.chk { display: flex; align-items: center; gap: 9u; margin-top: 14u; font-size: 12.2u; color: #cfc8bb; cursor: pointer; }
+.chk__box { appearance: none; flex: none; width: 16u; height: 16u; display: grid; place-items: center; border-radius: 4u; border: 1.5px solid rgba(255, 255, 255, 0.34); background: transparent; cursor: pointer; transition: background-color 0.25s, border-color 0.25s; }
+.chk__box:checked { background: var(--ob-green); border-color: var(--ob-green); }
+.chk__box:checked::after { content: ''; width: 8u; height: 4u; border-left: 2px solid #0d0c0f; border-bottom: 2px solid #0d0c0f; rotate: -45deg; translate: 0 -1px; }
+.chk__box:focus-visible { outline: 2px solid var(--ob-green); outline-offset: 2px; }
+
+/* calendar / database / range pickers */
+.pick { display: grid; gap: 7u; margin: 16u -2u 0; padding: 2u; max-height: 168u; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.22) transparent; }
+.pick__row { display: flex; align-items: center; gap: 12u; min-height: 44u; padding: 8u 14u; text-align: left; color: inherit; cursor: pointer; border-radius: 11u; border: 1px solid var(--ob-line); background: rgba(255, 255, 255, 0.04); transition: border-color 0.3s, background-color 0.3s; }
+.pick__row:hover { border-color: rgba(255, 255, 255, 0.24); }
+.pick__row.is-on { border-color: var(--ob-green); background: linear-gradient(135deg, rgba(155, 217, 138, 0.14), rgba(155, 217, 138, 0.04)); }
+.pick__radio { flex: none; width: 16u; height: 16u; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid rgba(255, 255, 255, 0.36); }
+.pick__row.is-on .pick__radio { border-color: var(--ob-green); }
+.pick__row.is-on .pick__radio::after { content: ''; width: 8u; height: 8u; border-radius: 50%; background: var(--ob-green); }
+.pick__txt { flex: 1; min-width: 0; }
+.pick__txt b { display: block; font-size: 13.2u; font-weight: 600; color: #f6efe4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick__txt span { display: block; margin-top: 1u; font-size: 11u; color: var(--ob-muted); }
+.pick__tag { font-style: normal; font-size: 9.5u; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ob-green); }
+.pick--seg { grid-template-columns: repeat(3, 1fr); max-height: none; margin-top: 8u; }
+.pick--seg .pick__row { min-height: 36u; justify-content: center; padding: 6u 8u; }
+.pick--seg .pick__radio { display: none; }
+.pick--seg .pick__txt { flex: none; }
+
+/* preview */
+.prev { list-style: none; margin: 14u 0 0; padding: 0; border: 1px solid var(--ob-line); border-radius: 11u; overflow: hidden; }
+.prev li { display: grid; gap: 1u; padding: 9u 14u; border-top: 1px solid var(--ob-line); }
+.prev li:first-child { border-top: 0; }
+.prev b { font-size: 12.8u; font-weight: 600; color: #f1e9dc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prev span { font-size: 11u; color: var(--ob-muted); }
+.prev__more { margin: 9u 0 0; font-size: 11.4u; color: var(--ob-muted); }
+.prev__x { margin: 10u 0 0; padding-left: 16u; font-size: 11.2u; line-height: 16u; color: var(--ob-muted); }
+
+/* "N items imported" line on the Done screen */
+.ob__import { left: 426u; top: 240u; display: flex; align-items: center; gap: 6u; margin: 0; font-size: 12.4u; font-weight: 600; color: var(--ob-green); }
+.ob__import .ico { width: 13u; height: 13u; flex: none; }
+
+/* ═════════════════ phones + narrow / portrait screens: a bottom sheet ═════════════════ */
+@media (max-width: 820px), (max-aspect-ratio: 4/5) {
+  .ob__import { margin-top: 10u; font-size: 14u; }
+  .ob__import .ico { width: 15u; height: 15u; }
+
+  .sheet { place-items: end center; }
+  .sheet__card { width: min(100%, 520px); max-height: 92%; border-radius: 22u 22u 0 0; border-bottom: 0; }
+  .sheet__body { padding: 28u 22u calc(22u + env(safe-area-inset-bottom, 0px)); }
+  .sh__bar { bottom: calc(-22u - env(safe-area-inset-bottom, 0px)); margin: 0 -22u calc(-22u - env(safe-area-inset-bottom, 0px)); padding: 16u 22u calc(22u + env(safe-area-inset-bottom, 0px)); }
+  .sheet__x { width: 36u; height: 36u; }
+  .sheet__x .ico { width: 16u; height: 16u; }
+  .sh__title { font-size: 23u; }
+  .sh__sub { font-size: 14.4u; line-height: 21u; }
+  .sh__hint, .sh__label, .sh__field { font-size: 13.4u; line-height: 19u; }
+  .sh__map { font-size: 12.8u; line-height: 18u; }
+  .sh__list li, .sh__steps li { font-size: 14.2u; line-height: 20u; }
+  .sh__steps li { padding-left: 30u; }
+  .sh__steps li::before { width: 21u; height: 21u; font-size: 12u; }
+  .sh__mark { width: 21u; height: 21u; padding: 4u; }
+  .sh__input, .sh__select { height: 48u; font-size: 17.5u; }
+  .sh__msg { font-size: 13.6u; line-height: 19.5u; }
+  .sheet .ob__btn { height: 46u; padding: 0 22u; font-size: 15.4u; }
+  .sh__ghost { font-size: 14.4u; }
+  .sh__foot { font-size: 12u; line-height: 17u; }
+  .sh__lock { width: 13u; height: 13u; }
+  .drop { padding: 30u 18u; }
+  .drop__t { font-size: 15.4u; }
+  .drop__s, .chk { font-size: 13.2u; line-height: 18u; }
+  .chk__box { width: 20u; height: 20u; }
+  .pick { max-height: 40vh; }
+  .pick__row { min-height: 54u; }
+  .pick__txt b { font-size: 15u; }
+  .pick__txt span { font-size: 12.6u; }
+  .pick__tag { font-size: 11u; }
+  .pick--seg .pick__row { min-height: 46u; }
+  .prev b { font-size: 14.2u; }
+  .prev span, .prev__more, .prev__x { font-size: 12.6u; line-height: 17u; }
+  .spin { width: 18u; height: 18u; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin, .sh__primary.is-busy::before { animation-duration: 2s; }
+}
+
+.ob__import[hidden] { display: none; }

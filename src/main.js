@@ -79,6 +79,7 @@ function say(msg) {
 }
 
 const onboarding = initOnboarding({ getLenis: () => lenis, say });
+onboarding.resumeFromRedirect(); // back from Google sign-in / consent? reopen the connector sheet where the user left off
 
 /* ───────────────────────── nav ───────────────────────── */
 const nav = $('#nav');

@@ -1,5 +1,6 @@
 import gsap from 'gsap';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
+import { initConnect, readReturn } from './connect.js';
 
 gsap.registerPlugin(DrawSVGPlugin);
 
@@ -26,8 +27,13 @@ export function initOnboarding({ getLenis, say }) {
   const pageRegions = ['#main', '#nav'].map((s) => $(s)).filter(Boolean);
 
   const state = { source: 'google', priorities: ['school'], flexibility: 1 };
-  let idx = 0, busy = false, isOpen = false, returnFocus = null;
+  let idx = 0, busy = false, isOpen = false, returnFocus = null, working = false;
   let idle = [], slashTl = null, introTl = null;
+  let imported = null; // what the connector brought in, for the Done screen
+
+  /** Saves the picks so far. Called before anything redirects away (Google), so the page can pick up where it left off. */
+  const persist = () => store.write({ source: state.source, priorities: state.priorities, flexibility: state.flexibility, draft: true });
+  const connect = initConnect({ ob, say, reduce, persist });
 
   /* ───────── selections ───────── */
   const optBtns = $$('.opt', ob);
@@ -46,12 +52,13 @@ export function initOnboarding({ getLenis, say }) {
     });
   });
 
+  // priorities keep the order they were picked in: the first one picked is protected first
   const priBtns = $$('.pri', ob);
-  const syncPriorities = () => { state.priorities = priBtns.filter((b) => b.classList.contains('is-on')).map((b) => b.dataset.value); };
+  const paintPriorities = () => priBtns.forEach((b) => { const on = state.priorities.includes(b.dataset.value); b.classList.toggle('is-on', on); b.setAttribute('aria-checked', String(on)); });
   priBtns.forEach((b) => b.addEventListener('click', () => {
-    const on = !b.classList.contains('is-on');
-    b.classList.toggle('is-on', on); b.setAttribute('aria-checked', String(on));
-    syncPriorities();
+    const v = b.dataset.value;
+    state.priorities = state.priorities.includes(v) ? state.priorities.filter((x) => x !== v) : [...state.priorities, v];
+    paintPriorities();
   }));
 
   const flex = $('.flex', ob), range = $('.flex__range', ob), flexLabels = $$('.flex__labels button', ob);
@@ -67,10 +74,10 @@ export function initOnboarding({ getLenis, say }) {
   const saved = store.read();
   if (saved && !saved.skipped) {
     if (saved.source) setSource(saved.source);
-    if (Array.isArray(saved.priorities)) { priBtns.forEach((b) => { const on = saved.priorities.includes(b.dataset.value); b.classList.toggle('is-on', on); b.setAttribute('aria-checked', String(on)); }); syncPriorities(); }
+    if (Array.isArray(saved.priorities)) state.priorities = saved.priorities.filter((v) => priBtns.some((b) => b.dataset.value === v));
     if (typeof saved.flexibility === 'number') setFlex(saved.flexibility);
   }
-  setSource(state.source); setFlex(state.flexibility);
+  setSource(state.source); setFlex(state.flexibility); paintPriorities();
 
   /* ───────── stepper ───────── */
   const paint = (i) => {
@@ -190,7 +197,46 @@ export function initOnboarding({ getLenis, say }) {
     setTimeout(() => { busy = false; }, reduce ? 0 : 450);
   }
 
-  $$('[data-next]', ob).forEach((b) => b.addEventListener('click', () => go(idx + 1)));
+  const importNote = $('#ob-import', ob);
+  const describeImport = (r) => {
+    if (!r) return '';
+    if (r.scratch) return 'Your new schedule is ready for you to fill in.';
+    const n = r.total || 0;
+    const noun = r.noun || 'item';
+    return n ? `${n} ${n === 1 ? noun : noun + 's'} imported from ${r.label}.` : `Connected to ${r.label}. Nothing new to import.`;
+  };
+  const showImport = () => {
+    const text = describeImport(imported);
+    importNote.hidden = !text;
+    $('span', importNote).textContent = text;
+  };
+
+  /** What "Continue" does on the Connect and Customize steps: run the connector, or save the preferences. */
+  async function proceed(btn) {
+    if (working || busy) return;
+    if (idx !== 1 && idx !== 2) return go(idx + 1);
+    working = true;
+    btn.setAttribute('aria-busy', 'true');
+    try {
+      if (idx === 1) {
+        persist();
+        const r = await connect.start(state.source);
+        if (!r.advance) return;
+        imported = r.imported || null;
+        showImport();
+      } else {
+        const label = $('span', btn), was = label.textContent;
+        label.textContent = 'Saving…';
+        await connect.savePrefs({ priorities: state.priorities, flexibility: state.flexibility });
+        label.textContent = was;
+      }
+      go(idx + 1);
+    } finally {
+      working = false;
+      btn.removeAttribute('aria-busy');
+    }
+  }
+  $$('[data-next]', ob).forEach((b) => b.addEventListener('click', () => proceed(b)));
   $$('[data-back]', ob).forEach((b) => b.addEventListener('click', () => go(idx - 1)));
   $('[data-ob-skip]', ob).addEventListener('click', () => close('skip'));
   $('[data-finish]', ob).addEventListener('click', () => close('done'));
@@ -206,23 +252,31 @@ export function initOnboarding({ getLenis, say }) {
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
 
-  function open(origin) {
+  /** `opts.step` opens straight on a later step (used when Google sends the user back); `opts.onReady` runs once it is showing. */
+  function open(origin, opts = {}) {
     if (isOpen) return;
     isOpen = true; busy = true;
+    const at = opts.step || 0;
     returnFocus = document.activeElement;
     const lenis = getLenis(); lenis && lenis.stop();
     pageRegions.forEach((r) => { r.inert = true; });
     document.body.classList.add('ob-open');
     kill();
-    screens.forEach((s, n) => { s.hidden = n !== 0; gsap.set(s, { clearProps: 'all' }); });
-    idx = 0; paint(0);
+    screens.forEach((s, n) => { s.hidden = n !== at; gsap.set(s, { clearProps: 'all' }); });
+    idx = at; paint(at);
     ob.hidden = false;
     gsap.set(pip, { autoAlpha: 0 });
 
     const rect = origin && origin.getBoundingClientRect ? origin.getBoundingClientRect() : null;
     const cx = rect ? rect.left + rect.width / 2 : innerWidth / 2, cy = rect ? rect.top + rect.height / 2 : innerHeight / 2;
     const reach = Math.hypot(Math.max(cx, innerWidth - cx), Math.max(cy, innerHeight - cy)) + 40;
-    const begin = () => { busy = false; showPip(true); if (!reduce) enter[0](); screens[0].focus({ preventScroll: true }); };
+    const begin = () => {
+      busy = false;
+      if (at === 0) showPip(true);
+      if (!reduce) enter[at](); else if (at === 3) enter[3]();
+      screens[at].focus({ preventScroll: true });
+      opts.onReady && opts.onReady();
+    };
     if (reduce) { begin(); return; }
     gsap.fromTo(ob, { clipPath: `circle(0px at ${cx}px ${cy}px)` }, { clipPath: `circle(${reach}px at ${cx}px ${cy}px)`, duration: 0.95, ease: 'power3.inOut', clearProps: 'clipPath', onStart: () => setTimeout(begin, 380) });
   }
@@ -232,6 +286,7 @@ export function initOnboarding({ getLenis, say }) {
     isOpen = false; busy = true;
     if (reason === 'done') store.write({ source: state.source, priorities: state.priorities, flexibility: state.flexibility, completedAt: new Date().toISOString() });
     else if (!store.read()) store.write({ skipped: true });
+    else if (store.read().draft) store.write({ ...store.read(), draft: false });
     const finish = () => {
       kill();
       ob.hidden = true; document.body.classList.remove('ob-open');
@@ -240,11 +295,31 @@ export function initOnboarding({ getLenis, say }) {
       const lenis = getLenis(); lenis && lenis.start();
       busy = false;
       returnFocus && returnFocus.focus && returnFocus.focus({ preventScroll: true });
-      if (reason === 'done') say('You’re all set. Your plan view is coming soon.');
+      if (reason === 'done') say(`You’re all set${imported && !imported.scratch && imported.total ? ` — ${imported.total} ${imported.total === 1 ? 'item' : 'items'} imported` : ''}. Your plan view is coming soon.`);
     };
     if (reduce) { finish(); return; }
     gsap.to(ob, { opacity: 0, scale: 1.02, duration: 0.45, ease: 'power2.in', onComplete: finish });
   }
 
-  return { open, close, get isOpen() { return isOpen; } };
+  /**
+   * After a redirect back from Google (sign-in, consent or a refusal) the URL says so: reopen the overlay on the
+   * Connect step with the connector sheet already showing the next step. Returns true when it did.
+   */
+  function resumeFromRedirect() {
+    const ret = readReturn();
+    if (!ret) return false;
+    open(null, {
+      step: 1,
+      onReady: async () => {
+        working = true;
+        try {
+          const r = await connect.resume(ret);
+          if (r.advance) { imported = r.imported || null; showImport(); go(2); }
+        } finally { working = false; }
+      },
+    });
+    return true;
+  }
+
+  return { open, close, resumeFromRedirect, get isOpen() { return isOpen; } };
 }

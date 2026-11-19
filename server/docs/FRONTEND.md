@@ -1,7 +1,7 @@
 # Frontend integration
 
-The landing page and onboarding (in the repo root) talk to this API with `client/breakpoint-client.js`.
-Copy that file to `src/api.js` in the frontend. It has no dependencies.
+The landing page and onboarding (in the repo root) talk to this API with `client/breakpoint-client.js`. It has no dependencies.
+**This is already wired up in the site:** `src/api.js` (session + schedule helpers), `src/connect.js` (the connector sheet) and `src/onboarding.js` use it, and `server/docs/SETUP-CONNECTORS.md` explains the credentials. The rest of this page describes the same flow for anyone building another frontend.
 
 ```js
 import { BreakpointApi, onboardingToPreferences } from './api.js';
