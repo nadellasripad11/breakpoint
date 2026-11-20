@@ -133,6 +133,8 @@ export class BreakpointApi {
 
   /** `text` is the contents of the .ics file (read it in the browser with file.text()). Use dryRun to preview. */
   importIcs(id, text, opts = {}) { return this.request('POST', `/api/schedules/${id}/import/ics`, { ics: text, ...opts }); }
+  /** A calendar link: Google "Secret address in iCal format" or an iCloud public calendar link. Read once by the server, never stored. `provider`: 'google' | 'apple'. */
+  importLink(id, url, opts = {}) { return this.request('POST', `/api/schedules/${id}/import/link`, { url, ...opts }); }
   importGoogle(id, { connectionId, calendarId, from, to, dryRun }) { return this.request('POST', `/api/schedules/${id}/import/google`, { connectionId, calendarId, from, to, confirm: true, dryRun }); }
   importNotion(id, { connectionId, databaseId, mapping, dryRun }) { return this.request('POST', `/api/schedules/${id}/import/notion`, { connectionId, databaseId, mapping: mapping || {}, confirm: true, dryRun }); }
 

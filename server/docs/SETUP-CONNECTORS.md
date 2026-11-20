@@ -6,10 +6,30 @@ nothing is ever written back to Google, Notion or your file.
 | Connector | Needs | Works without any setup? |
 |---|---|---|
 | **.ics file** | nothing | yes, even for guests |
-| **Google Calendar** | a Google OAuth client on the API server | no |
-| **Notion** | a read-only integration token (no sign-in: a guest sandbox is enough) | no |
+| **Google Calendar (link)** | the calendar's "Secret address in iCal format" | **yes**: no sign-in, no Google Cloud project, no verification |
+| **Apple Calendar (link)** | an iCloud "Public Calendar" link (or an exported .ics) | **yes** |
+| **Notion** | a read-only integration token (no sign-in: a guest sandbox is enough) | yes |
+| **Google sign-in + Calendar (OAuth)** | a Google OAuth client on the API server, **and Google's app verification for public use** | no (optional) |
 
 The site asks the server what it can do (`GET /api/capabilities`) and shows plain explanations when something is off.
+
+---
+
+## 0 · Google and Apple calendars without any approval (use this)
+
+Google makes you verify an app before the public can use `calendar.readonly` sign-in, so Breakpoint does not depend on it. Both calendars can be imported from a link the user already controls:
+
+* **Google**: Google Calendar on a computer → *Settings* → the calendar under *Settings for my calendars* → *Integrate calendar* → copy **Secret address in iCal format** → paste it in Breakpoint. Resetting that link in the same page cuts off access.
+* **Apple**: in the Calendar app (or iCloud.com), open the calendar's sharing options → turn on **Public Calendar** → copy the link → paste it in Breakpoint. Turn Public Calendar off again afterwards if you like.
+
+How the server treats these links (`src/calendar/link.ts`, tested in `test/calendarLink.test.ts`): it is the only place the server fetches a URL a user typed, so it is deliberately narrow.
+
+* https only (`webcal://` is converted), only `calendar.google.com` for Google and `*.icloud.com` for Apple; no IP addresses, no ports, no usernames in the URL; look-alike hosts are refused.
+* Every redirect is re-checked against the same list (at most 3), so a redirect cannot lead somewhere else. GET only, no cookies or credentials sent, 10 second timeout, 6 MB cap.
+* The link is **used once and never stored, logged or echoed back**: it is a secret, because anyone holding it can read that calendar. (The test dumps every database table and proves the secret is in none of them.)
+* Events that ended more than 30 days ago are left out (a calendar feed holds every event ever); recurring series are kept. Re-importing the same link updates items instead of duplicating them.
+
+**Why not Apple's "sign in" or CalDAV?** Apple has no OAuth for calendars. The only other route is CalDAV with an *app-specific password*, which cannot be limited to read-only or to calendars (it also opens Mail and Contacts) and would mean Breakpoint holding your Apple credentials. That breaks the "read-only, explicit, minimal" rule, so it is intentionally not offered.
 
 ---
 
@@ -34,7 +54,10 @@ The simulator uses an in-memory database (everything vanishes when you stop it) 
 
 ---
 
-## 2 · Real Google Calendar
+## 2 · Google sign-in and Calendar with OAuth (optional)
+
+> Not needed any more: section 0 covers Google Calendar. OAuth is only worth it if you want users to sign in with Google and have Breakpoint keep a long-lived read-only connection. Google requires **app verification** for the sensitive `calendar.readonly` scope before the general public can use it without a warning screen; until then the app is limited to 100 users (and, in *Testing*, only listed test users, with refresh tokens that expire after 7 days).
+
 
 1. Open <https://console.cloud.google.com/>, create a project, and enable the **Google Calendar API**.
 2. **OAuth consent screen** → External. Add the scopes `openid`, `email`, `profile` and `https://www.googleapis.com/auth/calendar.readonly` (that last one is the only calendar permission Breakpoint ever asks for). While the app is in **Testing**, add your own Google account under *Test users*.

@@ -15,7 +15,7 @@ npm test         # frontend unit tests
 
 the scheduling engine and api live in [`server/`](server/README.md): deterministic engine (chaos engine, butterfly effect, breaking point, parallel futures, fortify), google sign-in, guest demo, read-only calendar imports. run it with `cd server && npm install && npm start`; client + integration guide in `server/docs/FRONTEND.md`.
 
-the onboarding connectors (google calendar, notion, .ics) are wired to it. try them with no credentials: `cd server && npm run sim`, then `npm run dev` here. real credentials: `server/docs/SETUP-CONNECTORS.md`. the api is hosted on a cloudflare worker with d1 (free): see `server/docs/HOSTING.md`, which also explains why not supabase. a production build only talks to the api when `VITE_API_URL` is set at build time.
+the onboarding connectors (google calendar and apple calendar by private link, notion, .ics) are wired to it, and none of them needs an oauth approval or a sign-in. try them with no credentials: `cd server && npm run sim`, then `npm run dev` here. real credentials: `server/docs/SETUP-CONNECTORS.md`. the api is hosted on a cloudflare worker with d1 (free): see `server/docs/HOSTING.md`, which also explains why not supabase. a production build only talks to the api when `VITE_API_URL` is set at build time.
 
 ## rescue my day
 

@@ -174,6 +174,18 @@ export const icsImportBody = z
   })
   .strict();
 
+/** A calendar link (Google "Secret address in iCal format", iCloud public calendar). Fetched once by the server, never stored. */
+export const icsLinkBody = z
+  .object({
+    url: z.string().min(12).max(2000),
+    provider: z.enum(['google', 'apple']).optional(),
+    defaultTimezone: timezone.optional(),
+    allDayBlocks: z.boolean().optional(),
+    defaultTaskMinutes: z.number().int().min(5).max(1440).optional(),
+    dryRun: z.boolean().optional(),
+  })
+  .strict();
+
 export const googleImportBody = z
   .object({ connectionId: uuid, calendarId: z.string().min(1).max(300), from: isoDateTime, to: isoDateTime, confirm: z.literal(true), dryRun: z.boolean().optional() })
   .strict();

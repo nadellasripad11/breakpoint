@@ -50,6 +50,7 @@
       <rect x="12.5" y="12.5" width="23" height="23" rx="2.5" fill="#fff"/>
       <text x="24" y="29.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="700" fill="#1a73e8">31</text>
     </symbol>
+    <symbol id="i-apple-cal" viewBox="0 0 48 48"><rect x="5" y="5" width="38" height="38" rx="9" fill="#fbfbfd"/><path d="M5 14a9 9 0 0 1 9-9h20a9 9 0 0 1 9 9v3H5z" fill="#ff453a"/><text x="24" y="37" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif" font-size="19" font-weight="700" fill="#1c1c1e">20</text></symbol>
     <symbol id="i-notion" viewBox="0 0 48 48">
       <rect x="6" y="6" width="36" height="36" rx="7" fill="#fff" stroke="#111" stroke-width="3"/>
       <path d="M15.5 35.5v-23h3.4l13.2 17.4V12.5h3.3v23h-3.2L18.8 18.4v17.1z" fill="#111"/>
@@ -381,6 +382,11 @@
           <span class="opt__tick" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
           <svg class="opt__ico opt__ico--gcal" aria-hidden="true"><use href="#i-gcal"/></svg>
           <span class="opt__txt"><b>Google Calendar</b><span>Import events, deadlines, and commitments.</span></span>
+        </button>
+        <button class="opt" type="button" role="radio" aria-checked="false" data-value="apple">
+          <span class="opt__tick" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+          <svg class="opt__ico opt__ico--apple" aria-hidden="true"><use href="#i-apple-cal"/></svg>
+          <span class="opt__txt"><b>Apple Calendar</b><span>Import from an iCloud calendar link.</span></span>
         </button>
         <button class="opt" type="button" role="radio" aria-checked="false" data-value="notion">
           <span class="opt__tick" aria-hidden="true"><svg><use href="#i-check"/></svg></span>

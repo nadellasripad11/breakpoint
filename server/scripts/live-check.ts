@@ -48,6 +48,14 @@ check('items are all there', items.status === 200 && items.json.items.length >= 
 const bad = await api('POST', '/api/connections/notion', token, { acknowledge: true, token: 'secret_this_is_not_a_real_notion_token_xx' });
 check('Notion refuses a fake token with a clear message', bad.status === 422 && /Notion rejected/.test(bad.json?.error?.message ?? ''), `${bad.status} ${bad.json?.error?.message ?? bad.text.slice(0, 100)}`);
 
+// calendar links: the server must refuse foreign hosts without fetching, and must be able to reach Google and iCloud (a made-up secret gets a 404/403 from them)
+const foreign = await api('POST', `/api/schedules/${sid}/import/link`, token, { url: 'https://example.com/calendar.ics' });
+check('a link on a foreign host is refused', foreign.status === 422 && foreign.json?.error?.code === 'link_not_allowed', `${foreign.status} ${foreign.json?.error?.code}`);
+const gl = await api('POST', `/api/schedules/${sid}/import/link`, token, { url: 'https://calendar.google.com/calendar/ical/nobody%40example.com/private-00000000000000000000000000000000/basic.ics', provider: 'google' });
+check('Google answers for a made-up secret link (so the server can reach Google)', gl.status === 422 && /^link_(not_found|forbidden)$/.test(gl.json?.error?.code ?? ''), `${gl.status} ${gl.json?.error?.code}: ${gl.json?.error?.message}`);
+const ic = await api('POST', `/api/schedules/${sid}/import/link`, token, { url: 'webcal://p12-caldav.icloud.com/published/2/MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA', provider: 'apple' });
+check('iCloud answers for a made-up public link (so the server can reach iCloud)', ic.status === 422 && /^link_/.test(ic.json?.error?.code ?? ''), `${ic.status} ${ic.json?.error?.code}: ${ic.json?.error?.message}`);
+
 const del = await api('DELETE', '/api/me', token, { confirm: 'delete my account' });
 check('throwaway guest deleted', del.status === 204);
 if (failures) {

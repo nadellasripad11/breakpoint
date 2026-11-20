@@ -48,6 +48,9 @@
 }
 .sh__input:focus, .sh__select:focus { outline: none; border-color: var(--ob-green); box-shadow: 0 0 0 3px rgba(155, 217, 138, 0.25); }
 .sh__input::placeholder { color: #7f7a70; }
+.sh__alts { display: flex; flex-wrap: wrap; gap: 4u 16u; margin-top: 8u; }
+.sh__linkbtn { padding: 6u 0; font-size: 11.6u; font-weight: 600; color: var(--ob-green); text-decoration: underline; text-underline-offset: 2px; }
+.sh__linkbtn:hover { color: #c9eebb; }
 .sh__field { display: grid; gap: 6u; margin-top: 12u; font-size: 11.5u; font-weight: 600; color: #bdb6a9; }
 
 /* messages */
@@ -135,6 +138,7 @@
   .sh__mark { width: 21u; height: 21u; padding: 4u; }
   .sh__input, .sh__select { height: 48u; font-size: 17.5u; }
   .sh__msg { font-size: 13.6u; line-height: 19.5u; }
+  .sh__linkbtn { font-size: 13.4u; padding: 9u 0; }
   .sheet .ob__btn { height: 46u; padding: 0 22u; font-size: 15.4u; }
   .sh__ghost { font-size: 14.4u; }
   .sh__foot { font-size: 12u; line-height: 17u; }

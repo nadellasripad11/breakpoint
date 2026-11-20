@@ -115,6 +115,17 @@ body.ob-open { overflow: hidden; }
 .opt__tick svg { width: 13u; height: 13u; }
 .opt.is-on .opt__tick { scale: 1; }
 
+/* five options: three compact rows (the last one runs the full width) */
+.scr--connect .opts { top: 166u; gap: 12u 24u; }
+.scr--connect .opt { height: 64u; padding: 0 26u; gap: 28u; }
+.scr--connect .opt.is-on { padding: 0 25u; }
+.scr--connect .opt:nth-child(5) { grid-column: 1 / -1; }
+.scr--connect .opt__ico { width: 34u; height: 34u; }
+.scr--connect .opt__ico--notion { width: 38u; height: 38u; }
+.scr--connect .opt__ico--plus { width: 28u; height: 28u; }
+.scr--connect .opt__txt span { font-size: 11.8u; line-height: 15u; margin-top: 2u; max-width: 210u; }
+.scr--connect .ob__nav { top: 396u; }
+
 /* 3 · customize */
 .scr--custom .ob__h--mid { left: 99u; top: 76u; }
 .ob__sub--left { left: 99u; top: 123u; font-size: 15.4u; line-height: 22u; color: #d6cfc2; }
@@ -204,6 +215,12 @@ body.ob-open { overflow: hidden; }
   .ob__sub--center, .ob__sub--left { text-align: left; margin-top: 10u; font-size: 14.5u; line-height: 20u; }
   .opts { grid-template-columns: 1fr; width: auto; gap: 10u; margin-top: 18u; }
   .opt { height: 74u; padding: 0 20u; gap: 16u; }
+  .scr--connect .opts { gap: 10u; }
+  .scr--connect .opt { height: 74u; padding: 0 20u; gap: 16u; }
+  .scr--connect .opt.is-on { padding: 0 19u; }
+  .scr--connect .opt:nth-child(5) { grid-column: auto; }
+  .scr--connect .opt__ico { width: 40u; height: 40u; }
+  .scr--connect .opt__txt span { font-size: 12.3u; line-height: 16u; max-width: none; }
   .opt.is-on { padding: 0 19u; }
   .opt__txt span { max-width: none; }
 

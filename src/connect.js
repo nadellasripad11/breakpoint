@@ -318,7 +318,63 @@ export function initConnect({ ob, say, reduce, persist }) {
     });
   }
 
-  /* ───────── sign-in gate (Google + Notion need an account to keep a connection safe) ───────── */
+  /* ───────── calendar links: Google "Secret address in iCal format", iCloud "Public Calendar" ───────── */
+  // No OAuth app and no Google verification: the link already grants read access, and the server reads it once and never keeps it.
+  const b = (t) => h('b', {}, t);
+  const ext = (t, href) => h('a', { href, target: '_blank', rel: 'noopener noreferrer' }, t);
+  const LINKS = {
+    google: {
+      ico: 'i-gcal',
+      label: 'Google Calendar',
+      title: ['Connect ', ['em', 'Google Calendar']],
+      steps: [
+        ['Open ', ext('Google Calendar settings', 'https://calendar.google.com/calendar/u/0/r/settings'), ' on a computer and pick your calendar under ', b('Settings for my calendars'), '.'],
+        ['Open ', b('Integrate calendar'), ' and copy the ', b('Secret address in iCal format'), '.'],
+        ['Paste it below.'],
+      ],
+      placeholder: 'https://calendar.google.com/calendar/ical/…/basic.ics',
+      foot: 'A private link: Breakpoint reads it once and never saves it. You can reset it in the same Google settings page at any time.',
+    },
+    apple: {
+      ico: 'i-apple-cal',
+      label: 'Apple Calendar',
+      title: ['Connect ', ['em', 'Apple Calendar']],
+      steps: [
+        ['In the Calendar app (or at ', ext('iCloud.com', 'https://www.icloud.com/calendar'), '), open the sharing options of the calendar you want.'],
+        ['Turn on ', b('Public Calendar'), ' and copy the link.'],
+        ['Paste it below. You can switch Public Calendar off again right after importing.'],
+      ],
+      placeholder: 'webcal://p12-caldav.icloud.com/published/2/…',
+      foot: 'Public means anyone holding the link can read that calendar, so Breakpoint reads it once and never saves it. Apple has no sign-in for calendars, so a link or a file is the safe way.',
+    },
+  };
+
+  function viewCalendarLink(provider, note) {
+    const cfg = LINKS[provider];
+    const input = h('input', { type: 'text', class: 'sh__input', inputmode: 'url', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': `${cfg.label} link`, placeholder: cfg.placeholder });
+    const preview = (btn) => run(btn, 'Reading…', async () => {
+      const url = input.value.trim();
+      if (url.length < 12 || !/^(https?|webcals?):\/\//i.test(url)) throw { message: 'Paste the whole link, starting with https:// or webcal://.' };
+      const id = await ensureSchedule();
+      const dry = await api.importLink(id, url, { provider, dryRun: true });
+      // the link lives only in this closure, so Back and Import can reuse it; it is never written anywhere
+      viewPreview({ label: cfg.label, dry, noun: 'event', back: () => viewCalendarLink(provider), commit: () => api.importLink(id, url, { provider }) });
+    });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('.sh__primary', bodyEl)?.click(); } });
+    const alt = [h('button', { class: 'sh__linkbtn', type: 'button', onclick: () => viewIcs() }, 'I have an exported .ics file instead')];
+    if (provider === 'google' && caps && caps.google) alt.push(h('button', { class: 'sh__linkbtn', type: 'button', onclick: () => gateGoogle() }, 'Connect with Google sign-in instead'));
+    render({
+      ico: icon(cfg.ico),
+      title: cfg.title,
+      body: [h('ol', { class: 'sh__steps' }, cfg.steps.map((st) => h('li', {}, st))), input, h('div', { class: 'sh__alts' }, alt)],
+      actions: [ghost('Not now', cancel), primary('Preview', preview)],
+      foot: cfg.foot,
+      focus: input,
+      note,
+    });
+  }
+
+  /* ───────── sign-in gate (only Google sign-in needs an account) ───────── */
   function viewSignIn(source, note) {
     const g = source === 'google';
     const go = (btn) => run(btn, 'Opening Google…', async () => {
@@ -562,7 +618,13 @@ export function initConnect({ ob, say, reduce, persist }) {
   }
 
   /* ───────── entry points ───────── */
-  const FLOWS = { ics: viewIcs, google: gateGoogle, notion: gateNotion };
+  // Google and Apple default to the link flow (nothing to verify or approve); Google sign-in stays available when the server has it
+  const FLOWS = {
+    ics: viewIcs,
+    google: (note) => (caps && caps.calendarLink ? viewCalendarLink('google', note) : gateGoogle(note)),
+    apple: (note) => (caps && caps.calendarLink ? viewCalendarLink('apple', note) : viewIcs(note)),
+    notion: gateNotion,
+  };
 
   async function checkServer() {
     try {

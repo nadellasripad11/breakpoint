@@ -151,6 +151,8 @@ Response: `{ imported: { created, updated }, missing: [{id,title}], skipped, war
 it refreshes title/time/duration but **never overwrites** what you set (locked, priority, category, deferrable, critical). Items that vanished from the source are listed in
 `missing` and **kept**. `dryRun: true` returns `{ wouldImport, preview[] }` and writes nothing. All-day and "free" events import as non-blocking by default.
 
+**`POST /api/schedules/:id/import/link`** `{ url, provider?: "google"|"apple", dryRun?, allDayBlocks?, defaultTaskMinutes? }` imports a calendar from its link (Google "Secret address in iCal format", iCloud public calendar; `webcal://` is accepted). Same response as the .ics import (`dryRun` returns a preview). No sign-in needed. The server fetches the link once from an allow-listed host (calendar.google.com, *.icloud.com) and never stores or echoes it; errors `link_invalid`, `link_not_allowed`, `link_not_found`, `link_forbidden`, `link_unreachable`, `not_ics`, `too_large` all carry plain-English messages. `GET /api/capabilities` now includes `calendarLink: true`.
+
 ## Connections (real accounts only; guests get `403 guest_not_allowed`)
 
 | | |

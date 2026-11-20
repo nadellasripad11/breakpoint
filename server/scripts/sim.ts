@@ -113,6 +113,33 @@ const homework = () => [
   notionPage(6, 'Already finished worksheet', -1, 30, 'Low', 'Done', 'Math'),
 ];
 
+/* ───────── pretend calendar links (Google secret iCal address, iCloud public calendar) ───────── */
+
+const icsStamp = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+function vevent(uid: string, title: string, s: Date, e: Date, extra = ''): string {
+  return `BEGIN:VEVENT\r\nUID:${uid}@sim\r\nDTSTAMP:20260101T000000Z\r\nDTSTART:${icsStamp(s)}\r\nDTEND:${icsStamp(e)}\r\nSUMMARY:${title}\r\n${extra}END:VEVENT\r\n`;
+}
+const wrapIcs = (body: string) => `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//breakpoint-sim//EN\r\n${body}END:VCALENDAR\r\n`;
+
+function googleLinkIcs(): string {
+  let out = vevent('g-ancient', 'Orientation (years ago)', dayAt(-700, 9), dayAt(-700, 10)); // old history: the importer leaves it out
+  for (let d = 0; d < 21; d++) {
+    const dow = dayAt(d, 0).getDay();
+    if (dow >= 1 && dow <= 5) out += vevent(`g-calc-${d}`, 'Calculus lecture', dayAt(d, 9), dayAt(d, 10, 15));
+    if (dow === 2 || dow === 4) out += vevent(`g-lab-${d}`, 'Chemistry lab', dayAt(d, 13), dayAt(d, 15, 30));
+  }
+  out += vevent('g-series', 'Study group (weekly)', dayAt(1, 16), dayAt(1, 17, 30), 'RRULE:FREQ=WEEKLY;COUNT=6\r\n');
+  return wrapIcs(out);
+}
+function appleLinkIcs(): string {
+  let out = vevent('a-old', 'Last year’s recital', dayAt(-300, 18), dayAt(-300, 19));
+  out += vevent('a-dentist', 'Dentist', dayAt(2, 11), dayAt(2, 12));
+  out += vevent('a-piano', 'Piano lesson (weekly)', dayAt(3, 17), dayAt(3, 18), 'RRULE:FREQ=WEEKLY;COUNT=8\r\n');
+  out += vevent('a-dinner', 'Family dinner', dayAt(4, 19), dayAt(4, 21));
+  return wrapIcs(out);
+}
+const icsResponse = (body: string) => new Response(body, { status: 200, headers: { 'content-type': 'text/calendar; charset=utf-8' } });
+
 /* ───────── the pretend internet ───────── */
 
 const simFetch: typeof fetch = async (input, init) => {
@@ -160,6 +187,18 @@ const simFetch: typeof fetch = async (input, init) => {
       log('google', `read ${items.length} events from ${id}`);
       return json({ items });
     }
+  }
+
+  // calendar links: any path containing /dead/ is a link that was reset (404), anything else is a working calendar
+  if (url.host === 'calendar.google.com' && url.pathname.startsWith('/calendar/ical/')) {
+    if (url.pathname.includes('/dead/')) return new Response('Not Found', { status: 404 });
+    log('google', 'served a secret iCal address (read once)');
+    return icsResponse(googleLinkIcs());
+  }
+  if (url.host.endsWith('.icloud.com') && url.pathname.startsWith('/published/')) {
+    if (url.pathname.includes('/dead/')) return new Response('Not Found', { status: 404 });
+    log('apple', 'served a public iCloud calendar (read once)');
+    return icsResponse(appleLinkIcs());
   }
 
   if (url.host === 'api.notion.com' && url.pathname.startsWith('/v1/')) {
@@ -258,6 +297,8 @@ serve(
     console.log(`  CORS:    ${config.appOrigins.join(', ')}`);
     console.log(`  Google:  sign in as Sam Student on the simulated consent page`);
     console.log(`  Notion:  paste this token → ${NOTION_TOKEN}`);
+    console.log('  Google link: paste https://calendar.google.com/calendar/ical/sam/private-demo/basic.ics   (…/dead/… gives the "link was reset" error)');
+    console.log('  Apple link:  paste webcal://p12-caldav.icloud.com/published/2/demo');
     console.log('  Start the site with: npm run dev   (in the project root)');
   },
 );

@@ -4,10 +4,11 @@ import type { Context } from 'hono';
 import type { AppEnv } from '../context.ts';
 import { notFound } from '../errors.ts';
 import { rateLimit, requireAccount } from '../middleware.ts';
-import { googleImportBody, icsImportBody, notionImportBody } from '../schemas.ts';
+import { googleImportBody, icsImportBody, icsLinkBody, notionImportBody } from '../schemas.ts';
 import { currentUser, loadSchedule } from './shared.ts';
 import { googleAccessToken, notionToken } from './connections.ts';
 import { parseIcs } from '../../calendar/ics.ts';
+import { fetchCalendarLink, normalizeCalendarLink, trimOldEvents } from '../../calendar/link.ts';
 import type { ImportedItem } from '../../calendar/ics.ts';
 import { fetchEvents } from '../../integrations/googleCalendar.ts';
 import { fetchDatabase } from '../../integrations/notion.ts';
@@ -52,12 +53,30 @@ export function importRoutes(): Hono<AppEnv> {
   const r = new Hono<AppEnv>();
   const big = bodyLimit({ maxSize: 2.5 * 1024 * 1024, onError: (c) => c.json({ error: { code: 'too_large', message: 'Calendar files are limited to 2 MB.' } }, 413) });
 
-  /** .ics: the file is sent by the user's own browser. No URL is ever fetched by the server. */
+  /** .ics: the file is sent by the user's own browser. (The only URL the server ever fetches is a calendar link, below.) */
   r.post('/:id/import/ics', big, rateLimit('import', 20, 3_600_000, 'user'), async (c) => {
     const s = await loadSchedule(c, c.req.param('id'));
     const body = icsImportBody.parse(await c.req.json());
     const parsed = parseIcs(body.ics, { defaultTimezone: body.defaultTimezone ?? s.timezone, allDayBlocks: body.allDayBlocks ?? false, defaultTaskMinutes: body.defaultTaskMinutes ?? 60 });
     return commit(c, s, 'ics', parsed.items, { connectionId: null, consentAt: c.get('deps').now().toISOString(), skipped: 0, warnings: parsed.warnings, dryRun: body.dryRun ?? false });
+  });
+
+  /**
+   * A calendar link (Google "Secret address in iCal format", iCloud public calendar): no OAuth app and no verification needed.
+   * The server fetches it ONCE from an allow-listed calendar host (see calendar/link.ts) and never stores, logs or echoes it.
+   */
+  r.post('/:id/import/link', bodyLimit({ maxSize: 8 * 1024, onError: (c) => c.json({ error: { code: 'too_large', message: 'That link is too long.' } }, 413) }), rateLimit('import', 20, 3_600_000, 'user'), async (c) => {
+    const deps = c.get('deps');
+    const s = await loadSchedule(c, c.req.param('id'));
+    const body = icsLinkBody.parse(await c.req.json());
+    const url = normalizeCalendarLink(body.url, body.provider);
+    const raw = await fetchCalendarLink(deps.fetch, url, body.provider ? { provider: body.provider } : {});
+    const cutoff = new Date(deps.now().getTime() - 30 * 86_400_000);
+    const ymd = `${cutoff.getUTCFullYear()}${String(cutoff.getUTCMonth() + 1).padStart(2, '0')}${String(cutoff.getUTCDate()).padStart(2, '0')}`;
+    const { text, dropped } = trimOldEvents(raw, ymd);
+    const parsed = parseIcs(text, { defaultTimezone: body.defaultTimezone ?? s.timezone, allDayBlocks: body.allDayBlocks ?? false, defaultTaskMinutes: body.defaultTaskMinutes ?? 60 });
+    const warnings = [...(dropped ? [`${dropped} ${dropped === 1 ? 'event' : 'events'} from before the last 30 days ${dropped === 1 ? 'was' : 'were'} left out.`] : []), ...parsed.warnings];
+    return commit(c, s, 'ics', parsed.items, { connectionId: null, consentAt: deps.now().toISOString(), skipped: 0, warnings, dryRun: body.dryRun ?? false });
   });
 
   r.post('/:id/import/google', requireAccount(), rateLimit('import', 20, 3_600_000, 'user'), async (c) => {
