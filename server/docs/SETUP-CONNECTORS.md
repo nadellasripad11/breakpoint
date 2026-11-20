@@ -7,7 +7,7 @@ nothing is ever written back to Google, Notion or your file.
 |---|---|---|
 | **.ics file** | nothing | yes, even for guests |
 | **Google Calendar** | a Google OAuth client on the API server | no |
-| **Notion** | a Breakpoint account (so Google sign-in must be set up) and a read-only integration token | no |
+| **Notion** | a read-only integration token (no sign-in: a guest sandbox is enough) | no |
 
 The site asks the server what it can do (`GET /api/capabilities`) and shows plain explanations when something is off.
 
@@ -72,13 +72,7 @@ The token is stored encrypted (AES-256-GCM, key from `TOKEN_ENC_KEY`) and is onl
 
 ## 4 · Putting it online
 
-* **API**: needs a Node 24 host with a persistent disk (see the main README). Set `NODE_ENV=production`, `TOKEN_ENC_KEY`, `COOKIE_SECURE=true`, `API_URL` (the API's https URL), `APP_ORIGINS` (the website's origin, e.g. `https://breakpoint-41x.pages.dev`), and the two Google variables. Add the two production redirect URIs in the Google console as well.
-* **Website** (Cloudflare Pages): tell the build where the API is:
-  ```powershell
-  $env:VITE_API_URL = "https://your-api.example.com"; npm run build
-  ```
-  then deploy `dist/` as usual (or set `VITE_API_URL` under Pages → Settings → Environment variables if the project is git-connected). With no `VITE_API_URL` the site behaves exactly as before and the connectors say they are in preview.
-* The website and API are on different sites (`*.pages.dev` vs your API domain), so browsers block third-party cookies. The site therefore keeps the session token in `sessionStorage` and sends it as a Bearer token (see [FRONTEND.md](FRONTEND.md)).
+The API is hosted on a Cloudflare Worker with D1 and the site is on Cloudflare Pages. How it is set up, how to redeploy, how to add Google credentials to the hosted API, and the limits to know are all in [HOSTING.md](HOSTING.md).
 
 ---
 
@@ -89,7 +83,8 @@ The token is stored encrypted (AES-256-GCM, key from `TOKEN_ENC_KEY`) and is onl
 | No `VITE_API_URL` in the build | A toast: connectors switch on once the server is connected. The flow carries on. |
 | API unreachable | A toast: couldn't reach the server, nothing imported. The flow carries on. |
 | Google not configured on the API | "Google Calendar isn't switched on here yet", with a button to import an .ics instead. |
-| Guest picks Google or Notion | "Sign in to connect…" (sign-in shares only name + email). Anything already added comes along. |
+| Guest picks Google | "Sign in to connect…" (sign-in shares only name + email). Anything already added comes along. |
+| Guest picks Notion | Straight to the token step: no sign-in needed. The token is stored encrypted and deleted with the guest sandbox (24 h) or on disconnect. |
 | Signed in, not connected | "Allow read-only access": lists what Breakpoint can and cannot do, then Google's own consent screen. |
 | User presses Cancel at Google | "You chose not to share, so nothing was connected." |
 | Google grants more than asked | Refused, nothing stored, grant revoked: "Google offered more access than Breakpoint asked for." |

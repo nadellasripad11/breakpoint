@@ -9,64 +9,8 @@ import type { ImportedItem } from '../calendar/ics.ts';
 import { LimitError } from './types.ts';
 import type { Connection, ImportRecord, OAuthStateRow, RunRecord, Schedule, SessionRow, Store, UpsertResult, User } from './types.ts';
 
-type Row = Record<string, unknown>;
-const b = (v: unknown): boolean => v === 1 || v === true;
-const nb = (v: unknown): boolean | null => (v === null || v === undefined ? null : b(v));
-const s = (v: unknown): string | null => (v === null || v === undefined ? null : String(v));
-const n = (v: boolean | null | undefined): number | null => (v === null || v === undefined ? null : v ? 1 : 0);
-
-function userFrom(r: Row): User {
-  return { id: String(r.id), email: s(r.email), name: s(r.name), picture: s(r.picture), googleSub: s(r.google_sub), isGuest: b(r.is_guest), createdAt: String(r.created_at), lastSeenAt: String(r.last_seen_at) };
-}
-function connFrom(r: Row): Connection {
-  return {
-    id: String(r.id),
-    userId: String(r.user_id),
-    provider: r.provider as 'google' | 'notion',
-    accountLabel: s(r.account_label),
-    scopes: JSON.parse(String(r.scopes)) as string[],
-    accessTokenEnc: s(r.access_token_enc),
-    refreshTokenEnc: s(r.refresh_token_enc),
-    tokenExpiresAt: s(r.token_expires_at),
-    consentAt: String(r.consent_at),
-    createdAt: String(r.created_at),
-  };
-}
-function schedFrom(r: Row): Schedule {
-  return {
-    id: String(r.id),
-    userId: String(r.user_id),
-    name: String(r.name),
-    timezone: String(r.timezone),
-    preferences: JSON.parse(String(r.preferences)) as Preferences,
-    sourceScheduleId: s(r.source_schedule_id),
-    createdAt: String(r.created_at),
-    updatedAt: String(r.updated_at),
-  };
-}
-function itemFrom(r: Row): StoredItem {
-  const rrule = s(r.rrule);
-  return {
-    id: String(r.id),
-    kind: r.kind as StoredItem['kind'],
-    title: String(r.title),
-    start: s(r.start_at),
-    durationMin: Number(r.duration_min),
-    allDay: b(r.all_day),
-    timezone: String(r.timezone),
-    locked: nb(r.locked),
-    priority: (r.priority === null || r.priority === undefined ? null : Number(r.priority)) as StoredItem['priority'],
-    category: s(r.category),
-    deadline: s(r.deadline_at),
-    release: s(r.release_at),
-    deferrable: nb(r.is_deferrable),
-    critical: nb(r.critical),
-    blocking: b(r.blocking),
-    recurrence: rrule ? { rrule, exdates: JSON.parse(String(r.exdates ?? '[]')) as string[] } : null,
-    source: r.source as StoredItem['source'],
-    externalId: s(r.external_id),
-  };
-}
+import { connFrom, itemFrom, n, s, schedFrom, userFrom } from './rows.ts';
+import type { Row } from './rows.ts';
 
 export class SqliteStore implements Store {
   readonly db: DatabaseSync;

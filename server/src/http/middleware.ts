@@ -16,6 +16,9 @@ export const requestId = (): MiddlewareHandler<AppEnv> => async (c, next) => {
 
 export function clientIp(c: Context<AppEnv>, trustProxy: boolean): string {
   if (trustProxy) {
+    // behind Cloudflare (Workers or a proxied host) this header is set by Cloudflare itself and cannot be forged by the client
+    const cf = c.req.header('cf-connecting-ip');
+    if (cf) return cf.trim().slice(0, 64);
     const xff = c.req.header('x-forwarded-for');
     if (xff) return xff.split(',')[0]!.trim().slice(0, 64);
   }

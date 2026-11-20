@@ -64,10 +64,10 @@ export async function completeSignIn() {
 
 export const currentUser = () => user;
 
-/** The schedule onboarding imports into. Re-running onboarding reuses it (imports are idempotent). */
-export async function ensureSchedule() {
+/** The visitor's schedule, if they already have one. Never creates anything. */
+export async function findSchedule() {
   if (scheduleId) return scheduleId;
-  await ensureSession();
+  if (!(await peekSession())) return null;
   const saved = ls.get(SCHEDULE_KEY);
   if (saved) {
     try {
@@ -77,9 +77,20 @@ export async function ensureSchedule() {
       if (e.status !== 404 && e.status !== 403) throw e;
     }
   }
-  // a new tab or cleared storage still has the session: reuse the schedule onboarding made earlier instead of piling up copies
+  // a new tab or cleared storage still has the session: reuse the schedule onboarding made earlier
   const existing = (await api.listSchedules()).find((s) => s.name === SCHEDULE_NAME);
-  scheduleId = existing ? existing.id : (await api.createSchedule({ name: SCHEDULE_NAME, timezone: timezone() })).id;
+  if (!existing) return null;
+  scheduleId = existing.id;
+  ls.set(SCHEDULE_KEY, scheduleId);
+  return scheduleId;
+}
+
+/** The schedule onboarding imports into. Re-running onboarding reuses it (imports are idempotent). */
+export async function ensureSchedule() {
+  const found = await findSchedule().catch((e) => { if (e.status === 401) return null; throw e; });
+  if (found) return found;
+  await ensureSession();
+  scheduleId = (await api.createSchedule({ name: SCHEDULE_NAME, timezone: timezone() })).id;
   ls.set(SCHEDULE_KEY, scheduleId);
   return scheduleId;
 }

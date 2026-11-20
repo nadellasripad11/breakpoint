@@ -87,7 +87,7 @@ test('guest demo: no login, a sandbox session, cookie flags, demo schedule seede
   assert.equal(again.json.reused, true);
 });
 
-test('guest limits: at most 3 schedules, and no external connections', async () => {
+test('guest limits: at most 3 schedules, and no Google connection without signing in', async () => {
   const t = await makeApp();
   const { call, token } = await guest(t);
   for (let i = 0; i < 2; i++) assert.equal((await call('POST', '/api/schedules', { token, body: { name: `s${i}`, timezone: 'UTC' } })).status, 201);

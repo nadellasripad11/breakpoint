@@ -14,7 +14,10 @@
     "typecheck": "tsc --noEmit",
     "smoke": "node scripts/smoke.ts",
     "check": "tsc --noEmit && node --test \"test/**/*.test.ts\"",
-    "sim": "node scripts/sim.ts"
+    "sim": "node scripts/sim.ts",
+    "test:d1": "node scripts/test-d1.mjs",
+    "cf:deploy": "npx --yes wrangler@4.50.0 deploy",
+    "cf:migrate": "npx --yes wrangler@4.50.0 d1 migrations apply breakpoint-db --remote"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.9",

@@ -2,6 +2,7 @@ import { createApp } from '../src/app.ts';
 import { loadConfig } from '../src/config.ts';
 import type { Config } from '../src/config.ts';
 import { SqliteStore } from '../src/store/sqlite.ts';
+import { makeD1TestStore } from './d1shim.ts';
 import { sha256Hex, randomToken } from '../src/auth/crypto.ts';
 import type { Fetcher } from '../src/auth/google.ts';
 import type { Deps } from '../src/http/context.ts';
@@ -20,7 +21,8 @@ export const noNetwork: Fetcher = async (url) => new Response(`no network in tes
 export async function makeApp(opts: { fetch?: Fetcher; env?: Record<string, string> } = {}): Promise<TestApp> {
   resetRateLimits();
   resetJwksCache();
-  const store = new SqliteStore(':memory:');
+  // `TEST_STORE=d1 npm test` runs the same suite against the Cloudflare D1 store (through a node:sqlite stand-in for D1)
+  const store = (process.env.TEST_STORE === 'd1' ? makeD1TestStore() : new SqliteStore(':memory:')) as SqliteStore;
   await store.migrate();
   const config = loadConfig({
     NODE_ENV: 'test',

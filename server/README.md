@@ -20,7 +20,7 @@ Requires **Node 24+** (it runs TypeScript and SQLite natively: no build step, no
 ```powershell
 cd server
 npm install
-npm test            # 110 tests, ~1 minute (typecheck separately: npm run typecheck)
+npm test            # 111 tests, ~1 minute (typecheck separately: npm run typecheck)
 npm start           # http://localhost:8787
 ```
 

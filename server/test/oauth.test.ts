@@ -312,6 +312,34 @@ test('expired Google access tokens are refreshed transparently', async () => {
   assert.equal(net.calls.at(-1)!.auth, 'Bearer FRESH-TOKEN');
 });
 
+test('Notion works for a guest with no login: encrypted token, read-only import, and everything is erased with the guest', async () => {
+  const DB = '0123456789abcdef0123456789abcdef';
+  const net = fake((c) => {
+    if (c.url === 'https://api.notion.com/v1/users/me') return json({ bot: { workspace_name: 'Guest WS' } });
+    if (c.url === 'https://api.notion.com/v1/search') return json({ results: [{ id: DB, title: [{ plain_text: 'Homework' }], properties: { Name: { type: 'title' }, Due: { type: 'date' } } }] });
+    if (c.url === `https://api.notion.com/v1/databases/${DB}/query`) return json({ results: [{ id: 'p1', archived: false, properties: { Name: { type: 'title', title: [{ plain_text: 'Essay' }] }, Due: { type: 'date', date: { start: '2026-11-25' } } } }], has_more: false });
+    return undefined;
+  });
+  const t = await makeApp({ fetch: net.f });
+  const call = client(t);
+  const g = await call('POST', '/api/auth/guest?tz=America/Chicago');
+  const token = g.json.token as string;
+  const conn = await call('POST', '/api/connections/notion', { token, body: { acknowledge: true, token: 'secret_notion_token_value_123' } });
+  assert.equal(conn.status, 201, conn.text);
+  const stored = t.store.db.prepare('SELECT access_token_enc FROM connections').get() as { access_token_enc: string };
+  assert.ok(!stored.access_token_enc.includes('secret_notion'), 'stored encrypted');
+  assert.equal((await call('GET', `/api/connections/${conn.json.connection.id}/notion/databases`, { token })).json.databases[0].title, 'Homework');
+  const res = await call('POST', `/api/schedules/${g.json.demoScheduleId}/import/notion`, { token, body: { connectionId: conn.json.connection.id, databaseId: DB, mapping: {}, confirm: true } });
+  assert.equal(res.status, 200, res.text);
+  assert.deepEqual(res.json.imported, { created: 1, updated: 0 });
+  // Google still needs a real sign-in
+  assert.equal((await call('POST', '/api/connections/google/start', { token, body: { acknowledge: true, scopes: ['https://www.googleapis.com/auth/calendar.readonly'] } })).json.error.code, 'guest_not_allowed');
+  // when the guest sandbox expires, the encrypted token goes with it
+  const future = new Date(Date.now() + 48 * 3_600_000).toISOString();
+  assert.ok((await t.store.purgeExpiredGuests(future)) >= 1);
+  assert.equal(t.store.db.prepare('SELECT COUNT(*) AS c FROM connections').get()!.c, 0);
+});
+
 /* ───────────── Notion ───────────── */
 
 test('Notion: explicit acknowledgement, encrypted token, read-only calls only, tasks with deadlines imported', async () => {

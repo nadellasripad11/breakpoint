@@ -71,7 +71,7 @@ export function importRoutes(): Hono<AppEnv> {
     return commit(c, s, 'google', res.items, { connectionId: conn.id, consentAt: conn.consentAt, skipped: res.skipped, warnings: res.truncated ? ['Only the first 2000 events were read.'] : [], dryRun: body.dryRun ?? false, truncated: res.truncated });
   });
 
-  r.post('/:id/import/notion', requireAccount(), rateLimit('import', 20, 3_600_000, 'user'), async (c) => {
+  r.post('/:id/import/notion', rateLimit('import', 20, 3_600_000, 'user'), async (c) => {
     const deps = c.get('deps');
     const s = await loadSchedule(c, c.req.param('id'));
     const body = notionImportBody.parse(await c.req.json());

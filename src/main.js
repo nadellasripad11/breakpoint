@@ -80,7 +80,7 @@ function say(msg) {
 }
 
 const onboarding = initOnboarding({ getLenis: () => lenis, say });
-const rescue = initRescue({ getLenis: () => lenis, say });
+const rescue = initRescue({ getLenis: () => lenis, say, onSetup: () => onboarding.open() });
 onboarding.resumeFromRedirect(); // back from Google sign-in / consent? reopen the connector sheet where the user left off
 
 /* ───────────────────────── nav ───────────────────────── */

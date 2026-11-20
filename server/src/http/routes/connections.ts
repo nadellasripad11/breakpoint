@@ -129,8 +129,12 @@ export function connectionRoutes(): Hono<AppEnv> {
     return c.redirect(`${deps.config.appUrl}${st.redirectPath}${st.redirectPath.includes('?') ? '&' : '?'}connected=google`, 302);
   });
 
-  /** Notion: the user creates a read-only internal integration and pastes its token, after explicitly acknowledging. */
-  r.post('/notion', requireAccount(), rateLimit('connect', 10, 60_000, 'user'), async (c) => {
+  /**
+   * Notion: the user creates a read-only internal integration and pastes its token, after explicitly acknowledging.
+   * Works for guests too: the token is stored encrypted and is deleted with the guest sandbox (24h) or on disconnect.
+   * (Google stays account-only: it needs a real sign-in to keep a refresh token safe.)
+   */
+  r.post('/notion', rateLimit('connect', 10, 60_000, 'user'), async (c) => {
     const deps = c.get('deps');
     const u = currentUser(c);
     const body = notionConnectBody.parse(await c.req.json());
@@ -172,7 +176,7 @@ export function connectionRoutes(): Hono<AppEnv> {
     return c.json({ calendars: await listCalendars(deps.fetch, await googleAccessToken(deps, conn)) });
   });
 
-  r.get('/:id/notion/databases', requireAccount(), rateLimit('provider', 30, 60_000, 'user'), async (c) => {
+  r.get('/:id/notion/databases', rateLimit('provider', 30, 60_000, 'user'), async (c) => {
     const deps = c.get('deps');
     const conn = await deps.store.getConnection(currentUser(c).id, c.req.param('id'));
     if (!conn || conn.provider !== 'notion') throw notFound('Connection');

@@ -444,15 +444,14 @@ export function initConnect({ ob, say, reduce, persist }) {
   }
 
   /* ───────── Notion ───────── */
+  /** Notion needs no login: a guest sandbox is enough (the token is stored encrypted and deleted with it). */
   async function gateNotion(note) {
-    if (!caps.accounts) return viewUnavailable('notion');
     loading(['Checking ', ['em', 'Notion']]);
     const t = token;
     try {
-      const u = await peekSession();
-      const conns = u && !u.isGuest ? await api.listConnections() : [];
+      await ensureSession();
+      const conns = await api.listConnections();
       if (t !== token) return;
-      if (!u || u.isGuest) return viewSignIn('notion', note);
       const c = conns.find((x) => x.provider === 'notion');
       return c ? viewNotionPick(c, note) : viewNotionToken(note);
     } catch (e) {
@@ -484,7 +483,7 @@ export function initConnect({ ob, say, reduce, persist }) {
         input,
       ],
       actions: [ghost('Not now', cancel), primary('Connect read-only', connect)],
-      foot: 'Stored encrypted. Used only to read the databases you share. Never to change them.',
+      foot: 'Stored encrypted and only used to read the databases you share. Deleted when you disconnect or your guest session ends (24 hours).',
       focus: input,
       note,
     });

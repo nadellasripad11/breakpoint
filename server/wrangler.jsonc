@@ -1,0 +1,30 @@
+{
+  // Breakpoint API on Cloudflare Workers + D1. Same app and engine as the Node server (see docs/HOSTING.md).
+  "name": "breakpoint-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2025-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "breakpoint-db",
+      "database_id": "293791f1-84f3-4e89-9e74-d005517f7c32",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // housekeeping: expired sessions, sign-in states and abandoned guest sandboxes
+  "triggers": { "crons": ["*/30 * * * *"] },
+  "vars": {
+    "NODE_ENV": "production",
+    "TRUST_PROXY": "true",
+    "COOKIE_SECURE": "true",
+    "APP_ORIGINS": "https://breakpoint-41x.pages.dev",
+    "API_URL": "https://breakpoint-api.nadellasripad11.workers.dev"
+  }
+  // Secrets are NOT stored here. Set them with `wrangler secret put`:
+  //   TOKEN_ENC_KEY        (required) 32 random bytes, base64: encrypts stored Notion / Google tokens
+  //   GOOGLE_CLIENT_ID     (optional) only for Google Calendar / Google sign-in
+  //   GOOGLE_CLIENT_SECRET (optional)
+}

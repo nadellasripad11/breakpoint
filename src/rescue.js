@@ -15,7 +15,7 @@ const loadEngine = () => (enginePromise ||= import('../server/src/engine/index.t
 const SNAP = 5;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-export function initRescue({ getLenis, say }) {
+export function initRescue({ getLenis, say, onSetup }) {
   const root = document.querySelector('#rescue');
   const body = root.querySelector('#rs-body');
   const tabBtns = [...root.querySelectorAll('[data-tab]')];
@@ -29,7 +29,9 @@ export function initRescue({ getLenis, say }) {
   let cleanup = () => {};
   let opened = 0; // bumps on every open/tab change so late async work can tell it is stale
 
-  const fmt = (m) => E.fmtClock(m, 'UTC');
+  /** Clock times are shown in the day's own timezone: UTC for the generated days, the schedule's timezone for yours. */
+  let TZ = 'UTC';
+  const fmt = (m) => E.fmtClock(m, TZ);
   const dur = (m) => E.fmtDuration(m);
 
   /* ═════════════ timeline pieces ═════════════ */
@@ -40,7 +42,11 @@ export function initRescue({ getLenis, say }) {
     let hi = -Infinity;
     for (const b of lists.flat()) { lo = Math.min(lo, b.start); hi = Math.max(hi, b.end); }
     if (!Number.isFinite(lo)) for (const a of plan.settings.availability) { lo = Math.min(lo, a.start); hi = Math.max(hi, a.end); }
-    return { lo: Math.floor((lo - 30) / 60) * 60, hi: Math.ceil((hi + 30) / 60) * 60 };
+    // whole LOCAL hours (not whole UTC hours: some timezones are offset by 30 or 45 minutes)
+    const minute = (t) => E.localParts(t, TZ).minute;
+    const a = lo - 30;
+    const b = hi + 30;
+    return { lo: a - minute(a), hi: b + ((60 - minute(b)) % 60) };
   };
   const pct = (m, r) => ((m - r.lo) / (r.hi - r.lo)) * 100;
   const place = (el, start, end, r) => { el.style.left = `${pct(start, r)}%`; el.style.width = `${((end - start) / (r.hi - r.lo)) * 100}%`; };
@@ -48,7 +54,7 @@ export function initRescue({ getLenis, say }) {
   const axisEl = (r) => {
     const el = h('div', { class: 'axis', 'aria-hidden': 'true' });
     for (let t = r.lo; t <= r.hi; t += 60) {
-      const hour = Math.round(((t - E.CHALLENGE_DAY) / 60) % 24);
+      const hour = E.localParts(t, TZ).hour;
       if (hour % 2 === 0 || r.hi - r.lo <= 600) el.append(h('span', { style: { left: `${pct(t, r)}%` } }, fmt(t).replace(':00', '')));
     }
     return el;
@@ -157,7 +163,7 @@ export function initRescue({ getLenis, say }) {
   const TYPE_LABEL = { overrun: 'Runs long', delay: 'Starts late', unexpected: 'Surprise commitment', lost_time: 'Lost time' };
 
   /** The "what goes wrong?" form. Builds real engine disruptions from whatever the visitor chooses. */
-  const disruptionForm = (plan, onAdd) => {
+  const disruptionForm = (plan, onAdd, atTime) => {
     const tasks = plan.items.filter((i) => i.blocking && !i.locked && i.kind !== 'break');
     const type = h('select', { 'aria-label': 'What goes wrong?' }, Object.entries(TYPE_LABEL).map(([v, l]) => h('option', { value: v }, l)));
     const target = h('select', { 'aria-label': 'Which task?' }, tasks.map((t) => h('option', { value: t.id }, t.title)));
@@ -186,7 +192,7 @@ export function initRescue({ getLenis, say }) {
         if (!(m >= 5 && m <= 480)) { err.textContent = 'Use between 5 and 480 minutes.'; err.hidden = false; return; }
         err.hidden = true;
         const [hh, mm] = time.value.split(':').map(Number);
-        const at = E.CHALLENGE_DAY + (hh || 0) * 60 + (mm || 0);
+        const at = atTime(hh || 0, mm || 0);
         const t = type.value;
         if (t === 'overrun' || t === 'delay') onAdd({ type: t, targetId: target.value, minutes: m });
         else if (t === 'unexpected') onAdd({ type: 'unexpected', start: at, duration: m, title: name.value.trim() || 'Surprise meeting', priority: 5 });
@@ -203,27 +209,148 @@ export function initRescue({ getLenis, say }) {
 
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+  /** Which day of the visitor's schedule to open first: the next day with at least two items, else the busiest. */
+  const pickDay = (items, tz) => {
+    const fmtDay = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
+    const byDay = new Map();
+    for (const it of items) {
+      if (!it.start || it.blocking === false || it.allDay) continue;
+      const d = fmtDay.format(new Date(it.start));
+      byDay.set(d, (byDay.get(d) || 0) + 1);
+    }
+    if (!byDay.size) return null;
+    const today = fmtDay.format(new Date());
+    const days = [...byDay.entries()];
+    const upcoming = days.filter(([d, n]) => d >= today && n >= 2).sort((a, b) => a[0].localeCompare(b[0]));
+    if (upcoming.length) return upcoming[0][0];
+    return days.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
+  };
+
+  /** The API's /plan answer (ISO times) -> the engine's own Plan (epoch minutes). */
+  const planFromApi = (res) => {
+    const mn = (v) => (v ? E.isoToMin(v) : undefined);
+    const horizon = { start: mn(res.settings.horizon.start), end: mn(res.settings.horizon.end) };
+    const items = [];
+    for (const i of res.items) {
+      if (i.start == null && i.blocking) continue; // could not be placed on this day: counted in res.unscheduled
+      items.push({
+        id: i.id, title: i.title, kind: i.kind, start: i.start ? mn(i.start) : horizon.start, duration: i.durationMin,
+        locked: i.locked, priority: i.priority, deferrable: i.deferrable, critical: i.critical, blocking: i.blocking,
+        ...(i.category ? { category: i.category } : {}), ...(i.deadline ? { deadline: mn(i.deadline) } : {}), ...(i.release ? { release: mn(i.release) } : {}),
+      });
+    }
+    return { items, settings: { horizon, availability: res.settings.availability.map((a) => ({ start: mn(a.start), end: mn(a.end) })), mobility: res.settings.mobility, criticalPriority: res.settings.criticalPriority, timezone: res.timezone } };
+  };
+
   /* ═════════════ tab 1: Rescue my day ═════════════ */
 
   function renderRescue() {
     const token = ++opened;
-    const S = { seed: 0, ch: null, disruptions: [], mobility: 'balanced', result: null, player: null };
+    // mode 'sample' = a generated day; mode 'mine' = the visitor's own imported schedule (needs the API)
+    const S = { mode: 'sample', seed: 0, ch: null, disruptions: [], mobility: 'balanced', result: null, player: null, mine: { status: 'idle', message: '', date: '', info: null, token: 0 }, hint: '' };
     const stop = () => { if (S.player) S.player.stop(); };
     cleanup = stop;
 
     const loadSeed = (seed) => {
+      S.mode = 'sample';
       S.seed = seed;
       S.ch = E.makeChallenge(seed);
       S.disruptions = [...S.ch.suggested];
       S.mobility = 'balanced';
+      S.hint = '';
+      TZ = 'UTC';
       draw(true);
     };
 
-    const planNow = () => ({ ...S.ch.plan, settings: { ...S.ch.plan.settings, mobility: S.mobility } });
+    /** The visitor's own schedule: read from the API (read-only), turned into an engine plan, then run in the browser. */
+    const loadMine = async (date) => {
+      S.mode = 'mine';
+      S.hint = '';
+      S.mine.status = 'loading';
+      draw(false);
+      const my = ++S.mine.token;
+      const fail = (status, message) => { if (my === S.mine.token) { S.mine.status = status; S.mine.message = message; draw(false); } };
+      try {
+        const mod = await import('./api.js');
+        if (!mod.apiEnabled) return fail('unavailable', 'This copy of the site is not connected to a Breakpoint server, so there is no schedule of yours to read yet. The generated sample days work everywhere.');
+        try { await mod.api.capabilities(); } catch { return fail('unavailable', 'Couldn’t reach the Breakpoint server. Try again in a moment.'); }
+        const id = await mod.findSchedule();
+        if (!id) return fail('empty', 'You haven’t set up a schedule yet. Connect a calendar or import an .ics file first, then come back.');
+        const sched = await mod.api.getSchedule(id);
+        const tz = sched.timezone || 'UTC';
+        const items = await mod.api.listItems(id);
+        const day = date || pickDay(items, tz);
+        if (!day) return fail('empty', 'Your schedule has nothing on a calendar day yet. Import some events or tasks, then come back.');
+        const res = await mod.api.plan(id, { date: day });
+        const plan = planFromApi(res);
+        if (my !== S.mine.token) return;
+        const blocking = plan.items.filter((i) => i.blocking);
+        if (!blocking.length) return fail('empty', `Nothing is scheduled on ${day}. Pick another day.`);
+        TZ = plan.settings.timezone;
+        S.mine = { ...S.mine, status: 'ready', date: day, token: my, info: { id, name: sched.name, tz, plan, unscheduled: (res.unscheduled || []).length, total: items.length } };
+        S.disruptions = [];
+        S.mobility = plan.settings.mobility;
+        draw(false);
+      } catch (e) {
+        fail('error', e && e.message ? e.message : 'Something went wrong reading your schedule.');
+      }
+    };
+
+    const src = () => {
+      if (S.mode === 'mine' && S.mine.status === 'ready') {
+        const plan = S.mine.info.plan;
+        const blocking = plan.items.filter((i) => i.blocking);
+        const locked = blocking.filter((i) => i.locked && i.kind !== 'break').length;
+        const due = blocking.filter((i) => i.deadline !== undefined && i.kind !== 'break').length;
+        const breaks = blocking.filter((i) => i.kind === 'break').length;
+        return { plan, title: S.mine.info.name || 'Your schedule', story: `${blocking.length} items on ${S.mine.date}: ${locked} locked, ${due} with deadlines, ${breaks} protected ${breaks === 1 ? 'break' : 'breaks'}.${S.mine.info.unscheduled ? ` ${S.mine.info.unscheduled} couldn’t be placed on this day.` : ''}`, atTime: (hh, mm) => { const [y, mo, d] = S.mine.date.split('-').map(Number); return E.zonedToMin(y, mo, d, hh, mm, plan.settings.timezone); } };
+      }
+      return { plan: S.ch.plan, title: S.ch.title, story: S.ch.story, atTime: (hh, mm) => E.CHALLENGE_DAY + hh * 60 + mm };
+    };
+
+    const planNow = () => ({ ...src().plan, settings: { ...src().plan.settings, mobility: S.mobility } });
+
+    /** Probe every item with the engine, find the one with the least slack, and break it just past what it can take. */
+    const stressTest = () => {
+      const plan = planNow();
+      if (plan.items.filter((i) => i.blocking).length > 30) { S.hint = 'This day has a lot of items. Add one disruption yourself below.'; draw(false); return; }
+      const prof = E.weakLinkProfile(plan, 240);
+      const w = prof.weakest;
+      if (!w) { S.hint = 'Nothing in this day breaks within 4 hours of delay. It is very resilient. Add a disruption yourself to see the rescue.'; draw(false); return; }
+      const useDelay = (w.delayTolerance ?? Infinity) < (w.overrunTolerance ?? Infinity);
+      const tol = useDelay ? w.delayTolerance : w.overrunTolerance;
+      const minutes = Math.min(480, Math.max(5, Math.ceil((tol + 15) / 5) * 5));
+      S.disruptions = [{ type: useDelay ? 'delay' : 'overrun', targetId: w.itemId, minutes }];
+      S.hint = `Weakest link: “${w.title}” can only take ${dur(tol)} before something critical breaks. Pushed ${dur(minutes)}.`;
+      draw(true);
+    };
 
     function draw(autoplay) {
       if (token !== opened) return;
       stop();
+      const mine = S.mode === 'mine';
+      const sourceSwitch = seg('Which day?', [['sample', 'A sample day'], ['mine', 'My schedule']], S.mode, (v) => (v === 'mine' ? loadMine(S.mine.date || undefined) : loadSeed(S.seed)));
+      const intro = (buttons) =>
+        h('div', { class: 'intro' },
+          h('div', {},
+            h('span', { class: 'eyebrow' }, 'Signature feature'),
+            h('h1', {}, 'Rescue ', h('em', {}, 'my day.')),
+            h('p', {}, 'When a day breaks, Breakpoint computes the smallest change that makes it valid again, and shows you the original, the broken day and the repaired day side by side.'),
+          ),
+          h('div', { class: 'intro__btns' }, sourceSwitch, buttons),
+        );
+
+      if (mine && S.mine.status !== 'ready') {
+        const m = S.mine;
+        const card = m.status === 'loading'
+          ? h('div', { class: 'rs__loading', role: 'status' }, h('i', { class: 'spin' }), h('span', {}, 'Reading your schedule…'))
+          : h('div', { class: `rcard ${m.status === 'error' ? 'rcard--bad' : ''}` }, h('b', {}, m.status === 'empty' ? 'Nothing to rescue yet' : m.status === 'unavailable' ? 'Your own schedule needs the server' : 'Couldn’t read your schedule'), h('p', { class: 'muted' }, m.message),
+              h('div', { class: 'result__btns' }, h('button', { class: 'btn-p', type: 'button', onclick: () => loadSeed(S.seed) }, 'Use a sample day'), m.status === 'empty' && onSetup ? h('button', { class: 'btn-g', type: 'button', onclick: () => { close(); onSetup(); } }, 'Set up my schedule') : null, m.status === 'error' ? h('button', { class: 'btn-g', type: 'button', onclick: () => loadMine(S.mine.date || undefined) }, 'Try again') : null));
+        body.replaceChildren(h('div', { class: 'rs__grid' }, h('section', { class: 'rs__main' }, intro(null), card), h('aside', { class: 'rs__side' })));
+        return;
+      }
+
+      const s = src();
       const plan = planNow();
       let result = null;
       let error = null;
@@ -232,22 +359,18 @@ export function initRescue({ getLenis, say }) {
 
       const main = h('section', { class: 'rs__main' });
       main.append(
-        h('div', { class: 'intro' },
-          h('div', {},
-            h('span', { class: 'eyebrow' }, 'Signature feature'),
-            h('h1', {}, 'Rescue ', h('em', {}, 'my day.')),
-            h('p', {}, 'When a day breaks, Breakpoint computes the smallest change that makes it valid again, and shows you the original, the broken day and the repaired day side by side.'),
-          ),
-          h('div', { class: 'intro__btns' },
-            h('button', { class: 'btn-p', type: 'button', onclick: () => loadSeed(S.seed + 1) }, icon('i-bolt'), h('span', {}, 'Try another sample day')),
-            h('button', { class: 'btn-g', type: 'button', onclick: () => { S.disruptions = []; draw(false); } }, 'Start without a disruption'),
-          ),
-        ),
-        h('div', { class: 'story rcard' }, h('b', {}, S.ch.title), h('span', {}, S.ch.story)),
+        intro(mine
+          ? h('div', { class: 'intro__row' },
+              h('label', { class: 'f f--date' }, h('span', {}, 'Day'), h('input', { type: 'date', value: S.mine.date, 'aria-label': 'Which day of your schedule?', onchange: (e) => e.target.value && loadMine(e.target.value) })),
+              h('button', { class: 'btn-p', type: 'button', onclick: stressTest }, icon('i-bolt'), h('span', {}, 'Stress-test my day')))
+          : h('div', { class: 'intro__row' },
+              h('button', { class: 'btn-p', type: 'button', onclick: () => loadSeed(S.seed + 1) }, icon('i-bolt'), h('span', {}, 'Try another sample day')),
+              h('button', { class: 'btn-g', type: 'button', onclick: () => { S.disruptions = []; draw(false); } }, 'Start without a disruption'))),
+        h('div', { class: 'story rcard' }, h('b', {}, s.title), h('span', {}, s.story), S.hint ? h('span', { class: 'story__hint' }, S.hint) : null),
         h('div', { class: 'controls rcard' },
           h('div', { class: 'controls__row' }, h('span', { class: 'lbl' }, 'How flexible is the day?'), seg('Flexibility', [['fixed', 'Fixed'], ['balanced', 'Balanced'], ['flexible', 'Flexible']], S.mobility, (v) => { S.mobility = v; draw(true); })),
           chips(plan, S.disruptions, (i) => { S.disruptions.splice(i, 1); draw(true); }),
-          disruptionForm(plan, (d) => { S.disruptions.push(d); draw(true); }),
+          disruptionForm(plan, (d) => { S.disruptions.push(d); draw(true); }, s.atTime),
         ),
       );
 
@@ -258,8 +381,8 @@ export function initRescue({ getLenis, say }) {
         return;
       }
       if (!result) {
-        const r0 = rangeFor(plan, S.ch.plan.items.map((i) => ({ start: i.start, end: i.start + i.duration })));
-        const blocks0 = S.ch.plan.items.filter((i) => i.blocking).map((i) => ({ id: i.id, title: i.title, kind: i.kind, start: i.start, end: i.start + i.duration, pieces: [{ start: i.start, end: i.start + i.duration }], locked: i.locked, injected: false, protectedBreak: i.kind === 'break', deadline: i.deadline ?? null, release: i.release ?? null, state: 'ok', shiftedBy: 0, conflictCodes: [] }));
+        const r0 = rangeFor(plan, s.plan.items.filter((i) => i.blocking).map((i) => ({ start: i.start, end: i.start + i.duration })));
+        const blocks0 = s.plan.items.filter((i) => i.blocking).map((i) => ({ id: i.id, title: i.title, kind: i.kind, start: i.start, end: i.start + i.duration, pieces: [{ start: i.start, end: i.start + i.duration }], locked: i.locked, injected: false, protectedBreak: i.kind === 'break', deadline: i.deadline ?? null, release: i.release ?? null, state: 'ok', shiftedBy: 0, conflictCodes: [] }));
         main.append(h('div', { class: 'compare rcard' }, scrollX(axisEl(r0), laneEl({ title: 'Your day as planned', sub: 'Add a disruption above to break it', tone: 'original', blocks: blocks0, r: r0, plan }))));
         body.replaceChildren(h('div', { class: 'rs__grid' }, main, side));
         return;
@@ -370,9 +493,11 @@ export function initRescue({ getLenis, say }) {
 
   function renderChallenge() {
     const token = ++opened;
+    TZ = 'UTC';
     const C = { seed: 3, ch: null, disruptions: [], placements: {}, deferred: new Set(), selected: null, report: null, drag: null };
     cleanup = () => {};
 
+    const atChallenge = (hh, mm) => E.CHALLENGE_DAY + hh * 60 + mm;
     const planNow = () => C.ch.plan;
     const load = (seed) => { C.seed = seed; C.ch = E.makeChallenge(seed); C.disruptions = []; C.report = null; C.selected = null; C.placements = {}; C.deferred = new Set(); draw(); };
 
@@ -432,7 +557,7 @@ export function initRescue({ getLenis, say }) {
             h('div', { class: 'controls__row' }, h('b', {}, 'Step 1: make something go wrong'),
               h('button', { class: 'btn-p', type: 'button', onclick: () => { C.disruptions = [...C.ch.suggested]; startFix(); draw(); } }, icon('i-bolt'), h('span', {}, cap(E.describeDisruption(C.ch.suggested[0], plan))))),
             h('p', { class: 'muted' }, 'Or choose your own:'),
-            disruptionForm(plan, (d) => { C.disruptions = [d]; startFix(); draw(); })),
+            disruptionForm(plan, (d) => { C.disruptions = [d]; startFix(); draw(); }, atChallenge)),
         );
         side.append(h('section', { class: 'rcard' }, h('h3', {}, 'How it works'), h('ul', { class: 'cf' },
           h('li', {}, h('p', {}, 'The day is generated from a seed, so every visitor can get a different one.')),
@@ -450,7 +575,7 @@ export function initRescue({ getLenis, say }) {
       main.append(h('div', { class: 'rcard controls' },
         h('div', { class: 'controls__row' }, h('b', {}, 'What went wrong'), h('button', { class: 'btn-g btn-g--sm', type: 'button', onclick: () => { C.disruptions = []; C.report = null; draw(); } }, 'Undo the disruption')),
         chips(plan, C.disruptions, (i) => { C.disruptions.splice(i, 1); if (C.disruptions.length) startFix(); C.report = null; draw(); }),
-        disruptionForm(plan, (d) => { C.disruptions.push(d); startFix(); draw(); })));
+        disruptionForm(plan, (d) => { C.disruptions.push(d); startFix(); draw(); }, atChallenge)));
 
       // editable lane
       const lane = editableLane(blocks, r, plan, violations);
