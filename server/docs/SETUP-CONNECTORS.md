@@ -97,6 +97,8 @@ Good to know:
 
 ## 3a · "Log in with Notion" (no pasting a token)
 
+> Shortcut for giving the API the two values: from `server/`, run `npm run secrets:notion` (or `npm run secrets:google`). It asks you to paste each one.
+
 This needs a Notion **public** integration. Notion does not review these, so there is no approval to wait for. Once it is set up, connecting Notion is two clicks and Notion itself asks which pages and databases to share.
 
 1. <https://www.notion.so/profile/integrations> → **New integration** → type **Public**.

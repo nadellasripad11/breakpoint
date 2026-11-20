@@ -17,7 +17,9 @@
     "sim": "node scripts/sim.ts",
     "test:d1": "node scripts/test-d1.mjs",
     "cf:deploy": "npx --yes wrangler@4.50.0 deploy",
-    "cf:migrate": "npx --yes wrangler@4.50.0 d1 migrations apply breakpoint-db --remote"
+    "cf:migrate": "npx --yes wrangler@4.50.0 d1 migrations apply breakpoint-db --remote",
+    "secrets:notion": "node scripts/set-secrets.mjs notion",
+    "secrets:google": "node scripts/set-secrets.mjs google"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.9",
