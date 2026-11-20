@@ -8,6 +8,7 @@ import {
   isoToMin,
   minToZonedIso,
   parallelFutures,
+  rescueDay,
   runChaos,
   simulateCascade,
   weakLinkProfile,
@@ -18,7 +19,7 @@ import type { BuiltPlan, StoredItem } from '../calendar/expand.ts';
 import type { DisruptionInput } from './schemas.ts';
 import { withIsoTimes } from './serialize.ts';
 
-export type EngineKind = 'plan' | 'simulate' | 'chaos' | 'breaking_point' | 'futures' | 'fortify';
+export type EngineKind = 'plan' | 'simulate' | 'chaos' | 'breaking_point' | 'futures' | 'fortify' | 'rescue';
 
 export interface Window {
   date?: string;
@@ -140,6 +141,8 @@ export function runEngine(kind: EngineKind, p: PreparedPlan, req: EngineRequest)
       const r = parallelFutures(plan, ds);
       return { ...common, result: iso(r) };
     }
+    case 'rescue':
+      return { ...common, result: iso(rescueDay(plan, ds)) };
     case 'fortify': {
       const r = fortifyDay(plan, { ...(req.maxChanges !== undefined ? { maxChanges: req.maxChanges } : {}), ...(req.maxShiftMinutes !== undefined ? { maxShiftMinutes: req.maxShiftMinutes } : {}), ...(req.scenarios !== undefined ? { scenarios: req.scenarios } : {}), ...(req.seed !== undefined ? { seed: req.seed } : {}), ...(req.severity ? { severity: req.severity } : {}) });
       return { ...common, result: iso(r) };

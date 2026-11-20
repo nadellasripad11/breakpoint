@@ -85,6 +85,8 @@ record (`GET /api/schedules/:id/runs`, `GET /api/runs/:runId`). Heavy ones are l
 `{ items[], issues[], unscheduled[], warnings[], settings, diagnosis? }`. `issues` are problems *already in your plan* (overlaps, deadline violations); they are reported, never silently fixed.
 Items that could not be placed appear with `start: null` and in `unscheduled[]` with an explanation.
 
+**`POST /api/schedules/:id/rescue`** (Rescue My Day) `{ window, disruptions[1..20] }` returns the original, disrupted and repaired schedules side by side, the exact conflicts, the smallest set of changes, re-verified guarantees, a replay and Pip's computed explanation. Also stateless at `POST /api/engine/rescue`. Full description, including what "smallest" means and how it is tested: [RESCUE.md](RESCUE.md).
+
 **`POST /api/schedules/:id/simulate`** (Butterfly Effect) `{ window, disruptions[1..20] }`
 
 ```json

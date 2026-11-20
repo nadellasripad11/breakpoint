@@ -261,6 +261,132 @@ export function improveByOrder(free: readonly Interval[], tasks: readonly Placed
   return best;
 }
 
+/* ───────────── exact minimum movement ───────────── */
+
+export interface DispTask {
+  id: string;
+  duration: number;
+  release: number;
+  deadline: number;
+  origStart: number;
+}
+
+export interface DispResult {
+  placed: Map<string, number>;
+  /** sum over tasks of |start - origStart|, minutes */
+  cost: number;
+  /** true when proven minimal (integer-minute exact DP); false when the task count or time span forced the heuristic */
+  exact: boolean;
+  ops: number;
+}
+
+export const DISP_MAX_TASKS = 9;
+export const DISP_MAX_SPAN = 2000;
+
+/**
+ * Places ALL the given tasks (non-preemptive, inside the free gaps, between each task's release and deadline, never
+ * overlapping each other) so that the total distance from their original starts is the SMALLEST possible, over every
+ * order and every integer-minute start. Returns null when they cannot all be placed.
+ *
+ * Exact dynamic programme over (set of tasks placed, minute the last one ends): f[set][end] = least movement so far.
+ * With `ordered` the tasks keep their original order (fixed mobility). Beyond DISP_MAX_TASKS tasks (or a span longer
+ * than DISP_MAX_SPAN minutes) it falls back to the exhaustive-order slide heuristic and says so (`exact: false`).
+ */
+export function minDisplacementPlacement(freeIn: readonly Interval[], tasksIn: readonly DispTask[], opts: { ordered?: boolean } = {}): DispResult | null {
+  const free = mergeIntervals(freeIn);
+  const tasks = [...tasksIn].sort((a, b) => a.origStart - b.origStart || a.id.localeCompare(b.id));
+  const n = tasks.length;
+  if (n === 0) return { placed: new Map(), cost: 0, exact: true, ops: 0 };
+  if (free.length === 0) return null;
+  const t0 = Math.max(Math.min(...tasks.map((t) => t.release)), free[0]!.start);
+  const t1 = Math.min(Math.max(...tasks.map((t) => t.deadline)), free[free.length - 1]!.end);
+  if (t1 <= t0) return null;
+  const span = t1 - t0;
+
+  if (n > DISP_MAX_TASKS || span > DISP_MAX_SPAN) {
+    const floaters: Floater[] = tasks.map((t) => ({ id: t.id, title: t.id, kind: 'task', duration: t.duration, release: t.release, deadline: t.deadline, origStart: t.origStart, priority: 3, deferrable: false, critical: false }));
+    const s = solveFloaters(free, floaters, { ordered: opts.ordered });
+    if (!s.feasible) return null;
+    const start: Placed[] = floaters.map((f) => ({ id: f.id, start: s.placed.get(f.id)!, duration: f.duration, release: f.release, deadline: f.deadline, origStart: f.origStart }));
+    const out = improveByOrder(free, start, { ordered: opts.ordered, maxTasks: 6 });
+    return { placed: new Map(out.map((p) => [p.id, p.start])), cost: out.reduce((c, p) => c + Math.abs(p.start - p.origStart), 0), exact: false, ops: s.ops };
+  }
+
+  const W = span + 1;
+  const full = (1 << n) - 1;
+  const size = (1 << n) * W;
+  const f = new Float64Array(size).fill(Infinity);
+  const g = new Float64Array(size).fill(Infinity);
+  const ga = new Int32Array(size).fill(-1);
+  const choiceTask = new Int8Array(size).fill(-1);
+  const choiceStart = new Int32Array(size).fill(0);
+  f[0] = 0;
+  let ops = 0;
+
+  for (let m = 0; m <= full; m++) {
+    if (opts.ordered && m !== (1 << popBits(m)) - 1) continue; // only prefixes of the original order
+    const base = m * W;
+    let best = Infinity;
+    let arg = -1;
+    for (let k = 0; k < W; k++) {
+      if (f[base + k]! < best) {
+        best = f[base + k]!;
+        arg = k;
+      }
+      g[base + k] = best;
+      ga[base + k] = arg;
+    }
+    if (best === Infinity) continue;
+    for (let j = 0; j < n; j++) {
+      if (m & (1 << j)) continue;
+      if (opts.ordered && j !== popBits(m)) continue;
+      const t = tasks[j]!;
+      const nm = m | (1 << j);
+      for (const seg of free) {
+        const lo = Math.max(seg.start, t.release, t0);
+        const hi = Math.min(seg.end, t.deadline, t1) - t.duration;
+        for (let s = lo; s <= hi; s++) {
+          ops++;
+          const prev = g[base + (s - t0)]!;
+          if (prev === Infinity) continue;
+          const cost = prev + Math.abs(s - t.origStart);
+          const idx = nm * W + (s + t.duration - t0);
+          if (cost < f[idx]!) {
+            f[idx] = cost;
+            choiceTask[idx] = j;
+            choiceStart[idx] = s;
+          }
+        }
+      }
+    }
+  }
+
+  const fb = full * W;
+  let bestK = -1;
+  for (let k = 0; k < W; k++) if (f[fb + k]! < (bestK < 0 ? Infinity : f[fb + bestK]!)) bestK = k;
+  if (bestK < 0) return null;
+  const cost = f[fb + bestK]!;
+
+  const placed = new Map<string, number>();
+  let m = full;
+  let k = bestK;
+  while (m > 0) {
+    const idx = m * W + k;
+    const j = choiceTask[idx]!;
+    const s = choiceStart[idx]!;
+    placed.set(tasks[j]!.id, s);
+    m ^= 1 << j;
+    k = ga[m * W + (s - t0)]!;
+  }
+  return { placed, cost, exact: true, ops };
+}
+
+function popBits(m: number): number {
+  let c = 0;
+  for (let x = m; x; x &= x - 1) c++;
+  return c;
+}
+
 /** Can `t` keep its original slot given the currently free time? */
 export function anchorFits(free: readonly Interval[], t: Floater): boolean {
   return t.origStart >= t.release && t.origStart + t.duration <= t.deadline && fitsFree(free, t.origStart, t.duration);

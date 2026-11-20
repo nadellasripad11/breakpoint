@@ -139,6 +139,7 @@ export const breakingPointBody = z
   .object({ window: windowSchema, probe: probeSchema.optional(), mode: z.enum(['cascade', 'recover', 'both']).optional(), limitMinutes: z.number().int().min(1).max(1440).optional(), weakLinks: z.boolean().optional(), save })
   .strict();
 export const futuresBody = z.object({ window: windowSchema, disruptions: z.array(disruptionSchema).max(20).optional(), save }).strict();
+export const rescueBody = z.object({ window: windowSchema, disruptions: z.array(disruptionSchema).min(1).max(20) }).strict();
 export const fortifyBody = z
   .object({ window: windowSchema, maxChanges: z.number().int().min(1).max(8).optional(), maxShiftMinutes: z.number().int().min(5).max(180).optional(), scenarios: z.number().int().min(20).max(400).optional(), seed: z.number().int().min(0).max(4294967295).optional(), severity: severity.optional(), save })
   .strict();

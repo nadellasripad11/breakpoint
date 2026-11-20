@@ -13,3 +13,6 @@ export * from './chaos.ts';
 export * from './fortify.ts';
 export * from './preferences.ts';
 export * from './baseline.ts';
+export * from './explain.ts';
+export * from './rescue.ts';
+export * from './challenge.ts';

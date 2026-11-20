@@ -2,7 +2,7 @@ import type { CascadeResult, Disruption, Interval, ItemKind, Minutes, Plan } fro
 import type { Floater, World } from './world.ts';
 import { buildWorld, describeDisruption, freeTime, lockedInterval } from './world.ts';
 import { freeWithin, subtractIntervals } from './intervals.ts';
-import { anchorFits, improveByOrder, solveFloaters, weightByCount, weightByPriority } from './solver.ts';
+import { DISP_MAX_TASKS, anchorFits, improveByOrder, minDisplacementPlacement, solveFloaters, weightByCount, weightByPriority } from './solver.ts';
 import type { Placed } from './solver.ts';
 import { diagnoseWorld } from './diagnose.ts';
 import type { Diagnosis } from './diagnose.ts';
@@ -201,6 +201,14 @@ function planStrategy(world: World, plan: Plan, disruptions: readonly Disruption
       const placedList: Placed[] = rest
         .filter((f) => r.placed.has(f.id))
         .map((f) => ({ id: f.id, start: r.placed.get(f.id)!, duration: f.duration, release: f.release, deadline: f.deadline, origStart: f.origStart }));
+      // exact minimum movement for this anchor choice (integer minutes, every order); heuristic only for very large days
+      if (placedList.length <= DISP_MAX_TASKS - 1) {
+        const ex = minDisplacementPlacement(freeA, placedList, { ordered });
+        if (ex) {
+          ops += ex.ops;
+          return ex.cost;
+        }
+      }
       return improveByOrder(freeA, placedList, { ordered, maxTasks: 5 }).reduce((s, p) => s + Math.abs(p.start - p.origStart), 0);
     };
     const dfs = (i: number, cur: Floater[]) => {
@@ -244,7 +252,10 @@ function planStrategy(world: World, plan: Plan, disruptions: readonly Disruption
   const restPlaced: Placed[] = rest
     .filter((f) => res.placed.has(f.id))
     .map((f) => ({ id: f.id, start: res.placed.get(f.id)!, duration: f.duration, release: f.release, deadline: f.deadline, origStart: f.origStart }));
-  const relaxed = improveByOrder(freeA, restPlaced, { ordered, maxTasks: 6 });
+  const exactRest = restPlaced.length <= DISP_MAX_TASKS ? minDisplacementPlacement(freeA, restPlaced, { ordered }) : null;
+  if (exactRest) ops += exactRest.ops;
+  const relaxed: Placed[] = exactRest ? restPlaced.map((p) => ({ ...p, start: exactRest.placed.get(p.id)! })) : improveByOrder(freeA, restPlaced, { ordered, maxTasks: 6 });
+  if (!exactRest && restPlaced.length > 0) optimal = false; // large day: movement is minimised by the slide heuristic, not proven minimal
 
   const placed = new Map<string, number>();
   for (const a of anchors) placed.set(a.id, a.origStart);

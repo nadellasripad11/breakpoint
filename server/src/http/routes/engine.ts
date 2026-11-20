@@ -5,7 +5,7 @@ import type { AppEnv } from '../context.ts';
 import { HttpError, notFound } from '../errors.ts';
 import { rateLimit } from '../middleware.ts';
 import {
-  adoptBody, breakingPointBody, chaosBody, fortifyBody, futuresBody, inlineScheduleSchema, planBody, simulateBody, statelessWrap,
+  adoptBody, breakingPointBody, chaosBody, fortifyBody, futuresBody, inlineScheduleSchema, planBody, rescueBody, simulateBody, statelessWrap,
 } from '../schemas.ts';
 import { prepare, resolveHorizon, runEngine, toEngineDisruption } from '../engineService.ts';
 import type { EngineKind, EngineRequest } from '../engineService.ts';
@@ -18,7 +18,7 @@ import type { PreferencesInput } from '../schemas.ts';
 import { buildPreferences } from './shared.ts';
 import { z } from 'zod';
 
-const RUN_KIND: Record<Exclude<EngineKind, 'plan'>, RunKind> = { simulate: 'simulate', chaos: 'chaos', breaking_point: 'breaking_point', futures: 'futures', fortify: 'fortify' };
+const RUN_KIND: Partial<Record<EngineKind, RunKind>> = { simulate: 'simulate', chaos: 'chaos', breaking_point: 'breaking_point', futures: 'futures', fortify: 'fortify' };
 
 const ENGINE_ROUTES: { path: string; kind: EngineKind; schema: ZodType; heavy: boolean }[] = [
   { path: 'plan', kind: 'plan', schema: planBody, heavy: false },
@@ -27,6 +27,7 @@ const ENGINE_ROUTES: { path: string; kind: EngineKind; schema: ZodType; heavy: b
   { path: 'breaking-point', kind: 'breaking_point', schema: breakingPointBody, heavy: true },
   { path: 'futures', kind: 'futures', schema: futuresBody, heavy: true },
   { path: 'fortify', kind: 'fortify', schema: fortifyBody, heavy: true },
+  { path: 'rescue', kind: 'rescue', schema: rescueBody, heavy: true },
 ];
 
 type Body = { window: { date?: string; from?: string; to?: string }; save?: boolean } & EngineRequest;
@@ -43,9 +44,9 @@ export function engineRoutes(): Hono<AppEnv> {
       const prefs = schedulePrefs(s);
       const stored = await deps.store.listItems(s.id);
       const out = runEngine(route.kind, prepare(stored, prefs, resolveHorizon(body.window, prefs.timezone)), body);
-      if (body.save && route.kind !== 'plan') {
+      if (body.save && RUN_KIND[route.kind]) {
         const { save: _s, ...request } = body;
-        await deps.store.saveRun({ id: deps.newId(), scheduleId: s.id, userId: s.userId, kind: RUN_KIND[route.kind], request, result: out, createdAt: deps.now().toISOString() }, deps.config.limits.maxRunsPerSchedule);
+        await deps.store.saveRun({ id: deps.newId(), scheduleId: s.id, userId: s.userId, kind: RUN_KIND[route.kind]!, request, result: out, createdAt: deps.now().toISOString() }, deps.config.limits.maxRunsPerSchedule);
       }
       return c.json(out);
     });
@@ -139,6 +140,7 @@ const statelessBodies: Record<string, ZodType> = {
   'breaking-point': statelessWrap(breakingPointBody),
   futures: statelessWrap(futuresBody),
   fortify: statelessWrap(fortifyBody),
+  rescue: statelessWrap(rescueBody),
 };
 
 export function statelessRoutes(): Hono<AppEnv> {

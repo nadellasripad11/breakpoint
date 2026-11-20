@@ -97,7 +97,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 .brand__mark { width: 0.44rem; height: 0.29rem; flex: none; color: currentColor; transition: transform 0.6s var(--ease); }
 .brand:hover .brand__mark { transform: skewX(-8deg) scale(1.06); }
 
-.nav__links { display: flex; gap: 0.74rem; margin-left: 4.01rem; font-size: 0.2rem; font-weight: 500; }
+.nav__links { display: flex; gap: 0.62rem; margin-left: 3.55rem; font-size: 0.2rem; font-weight: 500; }
 .nav__links a { position: relative; padding: 0.06rem 0; opacity: 0.92; transition: opacity 0.3s; }
 .nav__links a::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px;

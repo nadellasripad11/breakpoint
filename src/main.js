@@ -15,6 +15,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import { initOnboarding } from './onboarding.js';
+import { initRescue } from './rescue.js';
 
 gsap.registerPlugin(ScrollTrigger, SplitText, DrawSVGPlugin);
 if (import.meta.env.DEV) { window.gsap = gsap; window.ScrollTrigger = ScrollTrigger; }
@@ -79,6 +80,7 @@ function say(msg) {
 }
 
 const onboarding = initOnboarding({ getLenis: () => lenis, say });
+const rescue = initRescue({ getLenis: () => lenis, say });
 onboarding.resumeFromRedirect(); // back from Google sign-in / consent? reopen the connector sheet where the user left off
 
 /* ───────────────────────── nav ───────────────────────── */
@@ -94,6 +96,12 @@ navToggle.addEventListener('click', () => setMenu(!nav.classList.contains('nav--
 $$('a[href^="#"]').forEach((a) => {
   a.addEventListener('click', (e) => {
     const id = a.getAttribute('href');
+    if (a.hasAttribute('data-rescue')) {
+      e.preventDefault();
+      setMenu(false);
+      rescue.open(a.dataset.rescue);
+      return;
+    }
     if (a.hasAttribute('data-cta')) {
       e.preventDefault();
       setMenu(false);

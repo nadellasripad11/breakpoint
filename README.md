@@ -17,6 +17,10 @@ the scheduling engine and api live in [`server/`](server/README.md): determinist
 
 the onboarding connectors (google calendar, notion, .ics) are wired to it. try them with no credentials: `cd server && npm run sim`, then `npm run dev` here. real credentials and hosting: `server/docs/SETUP-CONNECTORS.md`. a production build only talks to the api when `VITE_API_URL` is set at build time.
 
+## rescue my day
+
+the signature feature: when a schedule breaks, breakpoint computes the smallest change that makes it valid again and shows the original, the broken day and the repaired day side by side, with a timeline replay, exact conflict explanations and pip explaining why in plain english (every number computed, no language model). there is also a "can you save this day?" challenge anyone can try with no account. the engine runs in the browser, so it works on the static site. see `server/docs/RESCUE.md`.
+
 ## layout units
 
 on desktop `1rem = 100px` of the 1672px mockups, so the page scales exactly with the viewport. below 1024px it switches to a stacked layout.

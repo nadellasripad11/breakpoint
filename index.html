@@ -61,6 +61,7 @@
     <symbol id="i-dumbbell" viewBox="0 0 40 28"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7v14M5 10v8M31 7v14M35 10v8M9 14h22"/><path d="M2 12.5v3M38 12.5v3"/></g></symbol>
     <symbol id="i-people" viewBox="0 0 40 32"><g fill="currentColor"><circle cx="20" cy="9" r="5.5"/><path d="M9.5 27c0-6 4.7-9.5 10.5-9.5S30.5 21 30.5 27z"/><circle cx="8.5" cy="12.5" r="4"/><path d="M1.5 25.5c0-4.6 3-7.2 7.2-7.2 1 0 1.9.2 2.7.5-2 1.9-3.1 4.4-3.3 7.2z"/><circle cx="31.5" cy="12.5" r="4"/><path d="M38.5 25.5c0-4.6-3-7.2-7.2-7.2-1 0-1.9.2-2.7.5 2 1.9 3.1 4.4 3.3 7.2z"/></g></symbol>
     <symbol id="i-dots" viewBox="0 0 40 12"><g fill="currentColor"><circle cx="6" cy="6" r="3.2"/><circle cx="20" cy="6" r="3.2"/><circle cx="34" cy="6" r="3.2"/></g></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5h3.4v15H7zM13.6 4.5H17v15h-3.4z"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11m0-11l-11 11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></g></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5.5 12.8l4.2 4.2 8.8-9.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -78,7 +79,7 @@
       <a href="#ripple">Features</a>
       <a href="#cta">Integrations</a>
       <a href="#ways">Use Cases</a>
-      <a href="#cta">About</a>
+      <a href="#rescue" data-rescue="rescue">Rescue my day</a>
     </nav>
     <a class="btn btn--cream nav__cta" href="#cta" data-cta>
       <span>Get started</span>
@@ -111,6 +112,7 @@
             <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span>Try Breakpoint</span>
           </a>
           <a class="link-arrow" href="#ripple" data-in><span>See how it works</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a class="link-arrow link-arrow--rescue" href="#rescue" data-rescue="challenge" data-in><span>Can you save this day?</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
         </div>
         <div class="works" data-in>
           <span class="works__label">Works with</span>
@@ -459,6 +461,19 @@
       <div class="sheet__body" id="sheet-body"></div>
     </div>
   </div>
+</div>
+
+<!-- ═════════════ RESCUE MY DAY + CAN YOU SAVE THIS DAY? (src/rescue.js fills it) ═════════════ -->
+<div class="rs" id="rescue" role="dialog" aria-modal="true" aria-label="Rescue my day" hidden>
+  <header class="rs__top">
+    <span class="brand rs__brand"><svg class="brand__mark" aria-hidden="true"><use href="#logo"/></svg><span class="brand__name">Breakpoint</span></span>
+    <div class="rs__tabs" role="tablist" aria-label="Choose a demo">
+      <button type="button" role="tab" data-tab="rescue" aria-selected="true">Rescue my day</button>
+      <button type="button" role="tab" data-tab="challenge" aria-selected="false">Can you save this day?</button>
+    </div>
+    <button class="rs__x" type="button" data-rs-close aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+  </header>
+  <main class="rs__body" id="rs-body"></main>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
