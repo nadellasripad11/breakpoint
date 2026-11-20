@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Disruption, Interval, Minutes, Plan } from '../src/engine/index.ts';
-import { Rng, bufferFor, buildWorld, freeTime, minDisplacementPlacement, rescueDay, simulateCascade } from '../src/engine/index.ts';
+import { Rng, adoptRepair, bufferFor, buildWorld, freeTime, minDisplacementPlacement, rescueDay, simulateCascade } from '../src/engine/index.ts';
 import { at, item, mkPlan, settings } from './helpers.ts';
 import { randomPlan } from './random.ts';
 
@@ -437,3 +437,71 @@ test('replay: starts at the original, ends at the repaired day, and every frame 
 
 export type { Plan, Minutes };
 void item;
+
+/* ═══════════════════ three ways forward + "test it again" ═══════════════════ */
+
+test('options: all three strategies come back, the top-level repair is the smallest one, and each option passes every rule', () => {
+  let checked = 0;
+  for (let seed = 1; seed <= 150; seed++) {
+    const plan = randomPlan(seed);
+    if (!plan) continue;
+    const t = plan.items.find((i) => !i.locked && i.blocking);
+    if (!t) continue;
+    const r = rescueDay(plan, [{ type: 'overrun', targetId: t.id, minutes: 45 }]);
+    assert.deepEqual(r.options.map((o) => o.strategy).sort(), ['maximize_completion', 'minimize_changes', 'protect_priorities']);
+    const smallest = r.options.find((o) => o.strategy === 'minimize_changes')!;
+    assert.equal(r.strategy, 'minimize_changes');
+    if (r.status === 'impossible') {
+      assert.ok(r.options.every((o) => !o.feasible && o.view === null && o.note.length > 0));
+      continue;
+    }
+    assert.deepEqual(smallest.view!.lane, r.lanes.repaired);
+    assert.deepEqual(smallest.view!.changes, r.changes);
+    for (const o of r.options.filter((x) => x.feasible)) {
+      checked++;
+      assert.ok(o.view, `seed ${seed}: ${o.strategy} has a view`);
+      for (const g of o.view!.guarantees) assert.ok(g.ok, `seed ${seed}: ${o.strategy} broke "${g.key}" (${g.detail})`);
+      assert.equal(o.view!.replay[o.view!.replay.length - 1]!.phase, 'done');
+      // the smallest repair never moves more than another way forward that also defers nothing
+      if (o.view!.deferred.length === 0 && smallest.view!.deferred.length === 0) assert.ok(smallest.view!.metrics.moved <= o.view!.metrics.moved, `seed ${seed}: ${o.strategy} moved fewer than "minimize changes"`);
+    }
+    assert.equal(r.options.filter((o) => o.recommended).length <= 1, true);
+    // "same as" is honest: it points at an earlier option whose repaired day is identical
+    for (const o of r.options) {
+      if (!o.sameAs) continue;
+      const twin = r.options.find((x) => x.strategy === o.sameAs)!;
+      assert.deepEqual(o.view!.lane.blocks.map((b) => [b.id, b.start, b.end]), twin.view!.lane.blocks.map((b) => [b.id, b.start, b.end]));
+    }
+  }
+  assert.ok(checked > 150, `checked ${checked} options`);
+});
+
+test('adoptRepair: the repaired day becomes a plan that has no conflicts left, locked events stay put, nothing is lost', () => {
+  let adopted = 0;
+  for (let seed = 1; seed <= 150; seed++) {
+    const plan = randomPlan(seed);
+    if (!plan) continue;
+    const t = plan.items.find((i) => !i.locked && i.blocking);
+    if (!t) continue;
+    const d: Disruption[] = [{ type: 'overrun', targetId: t.id, minutes: 30 }];
+    const r = rescueDay(plan, d);
+    for (const strategy of ['minimize_changes', 'protect_priorities', 'maximize_completion'] as const) {
+      const next = adoptRepair(plan, d, strategy);
+      const o = r.options.find((x) => x.strategy === strategy)!;
+      if (!o.feasible) { assert.equal(next, null); continue; }
+      assert.ok(next);
+      adopted++;
+      // the input plan was not touched
+      assert.equal(plan.items.find((i) => i.id === t.id)!.duration, t.duration);
+      // every locked item is where it was
+      for (const it of plan.items) if (it.locked && it.blocking) assert.equal(next!.items.find((x) => x.id === it.id)!.start, it.start);
+      // the adopted plan simulates clean: nothing overlaps and no deadline is missed with no further disruption
+      const sim = simulateCascade(next!, []);
+      assert.equal(sim.conflicts.length, 0, `seed ${seed} ${strategy}: ${sim.conflicts.map((c) => c.message).join(' | ')}`);
+      // same blocks as the option's repaired lane
+      const lane = new Map(o.view!.lane.blocks.map((b) => [b.id, `${b.start}:${b.end}`]));
+      for (const it of next!.items) if (it.blocking && it.start !== undefined) assert.equal(lane.get(it.id), `${it.start}:${it.start + it.duration}`, `seed ${seed} ${strategy}: ${it.id}`);
+    }
+  }
+  assert.ok(adopted > 150, `adopted ${adopted}`);
+});

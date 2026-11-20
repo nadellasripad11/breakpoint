@@ -1,6 +1,9 @@
 import './rescue.css';
 import { h, icon, emphasize } from './dom.js';
 
+/** Element.append, but a missing card (null) adds nothing, instead of the text "null". */
+const put = (el, ...kids) => el.append(...kids.filter((k) => k != null && k !== false));
+
 /**
  * Rescue My Day + "Can you save this day?"
  *
@@ -248,8 +251,10 @@ export function initRescue({ getLenis, say, onSetup }) {
   function renderRescue() {
     const token = ++opened;
     // mode 'sample' = a generated day; mode 'mine' = the visitor's own imported schedule (needs the API)
-    const S = { mode: 'sample', seed: 0, ch: null, disruptions: [], mobility: 'balanced', result: null, player: null, mine: { status: 'idle', message: '', date: '', info: null, token: 0 }, hint: '' };
+    const S = { mode: 'sample', seed: 0, ch: null, disruptions: [], mobility: 'balanced', result: null, player: null, mine: { status: 'idle', message: '', date: '', info: null, token: 0 }, hint: '', option: null, optKey: '', adopted: null, showDone: false };
     const stop = () => { if (S.player) S.player.stop(); };
+    // which generated day opens first: day 0, or ?day=N so a particular day can be linked to
+    const firstDay = () => { const n = Number(new URLSearchParams(location.search).get('day')); return Number.isInteger(n) && n >= 0 && n < 1000 ? n : 0; };
     cleanup = stop;
 
     const loadSeed = (seed) => {
@@ -259,6 +264,7 @@ export function initRescue({ getLenis, say, onSetup }) {
       S.disruptions = [...S.ch.suggested];
       S.mobility = 'balanced';
       S.hint = '';
+      S.adopted = null;
       TZ = 'UTC';
       draw(true);
     };
@@ -290,6 +296,7 @@ export function initRescue({ getLenis, say, onSetup }) {
         TZ = plan.settings.timezone;
         S.mine = { ...S.mine, status: 'ready', date: day, token: my, info: { id, name: sched.name, tz, plan, unscheduled: (res.unscheduled || []).length, total: items.length } };
         S.disruptions = [];
+        S.adopted = null;
         S.mobility = plan.settings.mobility;
         draw(false);
       } catch (e) {
@@ -297,16 +304,25 @@ export function initRescue({ getLenis, say, onSetup }) {
       }
     };
 
-    const src = () => {
+    const srcBase = () => {
       if (S.mode === 'mine' && S.mine.status === 'ready') {
-        const plan = S.mine.info.plan;
+        const plan = S.adopted || S.mine.info.plan;
         const blocking = plan.items.filter((i) => i.blocking);
         const locked = blocking.filter((i) => i.locked && i.kind !== 'break').length;
         const due = blocking.filter((i) => i.deadline !== undefined && i.kind !== 'break').length;
         const breaks = blocking.filter((i) => i.kind === 'break').length;
         return { plan, title: S.mine.info.name || 'Your schedule', story: `${blocking.length} items on ${S.mine.date}: ${locked} locked, ${due} with deadlines, ${breaks} protected ${breaks === 1 ? 'break' : 'breaks'}.${S.mine.info.unscheduled ? ` ${S.mine.info.unscheduled} couldn’t be placed on this day.` : ''}`, atTime: (hh, mm) => { const [y, mo, d] = S.mine.date.split('-').map(Number); return E.zonedToMin(y, mo, d, hh, mm, plan.settings.timezone); } };
       }
-      return { plan: S.ch.plan, title: S.ch.title, story: S.ch.story, atTime: (hh, mm) => E.CHALLENGE_DAY + hh * 60 + mm };
+      return { plan: S.adopted || S.ch.plan, title: S.ch.title, story: S.ch.story, atTime: (hh, mm) => E.CHALLENGE_DAY + hh * 60 + mm };
+    };
+    const src = () => {
+      const b = srcBase();
+      return S.adopted ? { ...b, title: 'Your repaired day', story: 'This is the schedule you chose, with every item where the repair put it. Breakpoint is testing it again: what is its weakest link now?' } : b;
+    };
+    const resetAdopted = () => {
+      S.adopted = null;
+      S.option = null;
+      if (S.mode === 'mine') { S.disruptions = []; S.hint = ''; draw(false); } else loadSeed(S.seed);
     };
 
     const planNow = () => ({ ...src().plan, settings: { ...src().plan.settings, mobility: S.mobility } });
@@ -322,7 +338,7 @@ export function initRescue({ getLenis, say, onSetup }) {
       const tol = useDelay ? w.delayTolerance : w.overrunTolerance;
       const minutes = Math.min(480, Math.max(5, Math.ceil((tol + 15) / 5) * 5));
       S.disruptions = [{ type: useDelay ? 'delay' : 'overrun', targetId: w.itemId, minutes }];
-      S.hint = `Weakest link: “${w.title}” can only take ${dur(tol)} before something critical breaks. Pushed ${dur(minutes)}.`;
+      S.hint = `${S.adopted ? 'Testing your repaired day again. ' : ''}Weakest link: “${w.title}” can only take ${dur(tol)} before something critical breaks. Pushed ${dur(minutes)}.`;
       draw(true);
     };
 
@@ -357,9 +373,16 @@ export function initRescue({ getLenis, say, onSetup }) {
       let error = null;
       try { result = S.disruptions.length ? E.rescueDay(plan, S.disruptions) : null; } catch (e) { error = e; }
       S.result = result;
+      const optKey = JSON.stringify([S.mode, S.seed, S.mobility, S.disruptions, !!S.adopted, S.mine.date]);
+      if (optKey !== S.optKey) { S.optKey = optKey; S.option = null; } // a new disruption starts again from the smallest change
+      const picked = result && S.option ? result.options.find((o) => o.strategy === S.option && o.feasible) : null;
+      if (picked) {
+        const v = picked.view;
+        result = { ...result, strategy: picked.strategy, status: v.status, headline: v.headline, lanes: { ...result.lanes, repaired: v.lane }, changes: v.changes, deferred: v.deferred, metrics: v.metrics, guarantees: v.guarantees, pip: v.pip, replay: v.replay, optimal: v.optimal };
+      }
 
       const main = h('section', { class: 'rs__main' });
-      main.append(
+      put(main, 
         intro(mine
           ? h('div', { class: 'intro__row' },
               h('label', { class: 'f f--date' }, h('span', {}, 'Day'), h('input', { type: 'date', value: S.mine.date, 'aria-label': 'Which day of your schedule?', onchange: (e) => e.target.value && loadMine(e.target.value) })),
@@ -367,7 +390,7 @@ export function initRescue({ getLenis, say, onSetup }) {
           : h('div', { class: 'intro__row' },
               h('button', { class: 'btn-p', type: 'button', onclick: () => loadSeed(S.seed + 1) }, icon('i-bolt'), h('span', {}, 'Try another sample day')),
               h('button', { class: 'btn-g', type: 'button', onclick: () => { S.disruptions = []; draw(false); } }, 'Start without a disruption'))),
-        h('div', { class: 'story rcard' }, h('b', {}, s.title), h('span', {}, s.story), S.hint ? h('span', { class: 'story__hint' }, S.hint) : null),
+        h('div', { class: 'story rcard' }, h('b', {}, s.title), h('span', {}, s.story.replace(/ Then: .*$/, '')), S.hint ? h('span', { class: 'story__hint' }, S.hint) : null, S.adopted ? h('button', { class: 'btn-g btn-g--sm story__back', type: 'button', onclick: resetAdopted }, 'Back to the original day') : null),
         h('div', { class: 'controls rcard' },
           h('div', { class: 'controls__row' }, h('span', { class: 'lbl' }, 'How flexible is the day?'), seg('Flexibility', [['fixed', 'Fixed'], ['balanced', 'Balanced'], ['flexible', 'Flexible']], S.mobility, (v) => { S.mobility = v; draw(true); })),
           chips(plan, S.disruptions, (i) => { S.disruptions.splice(i, 1); draw(true); }),
@@ -377,14 +400,14 @@ export function initRescue({ getLenis, say, onSetup }) {
 
       const side = h('aside', { class: 'rs__side' });
       if (error) {
-        main.append(h('div', { class: 'rcard rcard--bad' }, h('b', {}, 'That disruption can’t be applied'), h('p', {}, error.message)));
+        put(main, h('div', { class: 'rcard rcard--bad' }, h('b', {}, 'That disruption can’t be applied'), h('p', {}, error.message)));
         body.replaceChildren(h('div', { class: 'rs__grid' }, main, side));
         return;
       }
       if (!result) {
         const r0 = rangeFor(plan, s.plan.items.filter((i) => i.blocking).map((i) => ({ start: i.start, end: i.start + i.duration })));
         const blocks0 = s.plan.items.filter((i) => i.blocking).map((i) => ({ id: i.id, title: i.title, kind: i.kind, start: i.start, end: i.start + i.duration, pieces: [{ start: i.start, end: i.start + i.duration }], locked: i.locked, injected: false, protectedBreak: i.kind === 'break', deadline: i.deadline ?? null, release: i.release ?? null, state: 'ok', shiftedBy: 0, conflictCodes: [] }));
-        main.append(h('div', { class: 'compare rcard' }, scrollX(axisEl(r0), laneEl({ title: 'Your day as planned', sub: 'Add a disruption above to break it', tone: 'original', blocks: blocks0, r: r0, plan }))));
+        put(main, h('div', { class: 'compare rcard' }, scrollX(axisEl(r0), laneEl({ title: 'Your day as planned', sub: 'Add a disruption above to break it', tone: 'original', blocks: blocks0, r: r0, plan }))));
         body.replaceChildren(h('div', { class: 'rs__grid' }, main, side));
         return;
       }
@@ -392,7 +415,19 @@ export function initRescue({ getLenis, say, onSetup }) {
       const allBlocks = [result.lanes.original.blocks, result.lanes.disrupted.blocks, result.lanes.repaired ? result.lanes.repaired.blocks : [], ...result.replay.map((f) => f.blocks)];
       const r = rangeFor(plan, ...allBlocks);
 
-      main.append(h('div', { class: `banner banner--${result.status}` }, h('b', {}, bannerTitle(result.status)), h('span', {}, result.headline)));
+      put(main, h('div', { class: `banner banner--${result.status}` }, h('b', {}, bannerTitle(result.status)), h('span', {}, result.headline)));
+      put(main, waysCard(result, (k) => { S.option = k === 'minimize_changes' ? null : k; S.showDone = true; draw(false); })); // picking a way shows its repaired day at once; Replay still plays it through
+
+      // "test it again": adopt this repair as the day, then break its weakest link
+      const retest = () => {
+        const next = E.adoptRepair(plan, S.disruptions, result.strategy);
+        if (!next) return;
+        S.adopted = next;
+        S.disruptions = [];
+        S.option = null;
+        S.hint = '';
+        stressTest();
+      };
 
       // replay
       const stage = makeStage(r, plan, result.replay[0]);
@@ -422,8 +457,9 @@ export function initRescue({ getLenis, say, onSetup }) {
       S.player = { stop: () => { clearInterval(timer); timer = null; } };
       go(0);
       stopP();
+      if (S.showDone) { S.showDone = false; go(result.replay.length - 1); stopP(); }
 
-      main.append(
+      put(main, 
         h('div', { class: 'stage rcard' },
           h('header', { class: 'stage__head' }, h('b', {}, 'Replay'), phase),
           scrollX(axisEl(r), h('section', { class: 'lane lane--stage' }, stage.track)),
@@ -436,7 +472,7 @@ export function initRescue({ getLenis, say, onSetup }) {
           caption,
         ),
         h('div', { class: 'compare rcard' },
-          h('header', { class: 'stage__head' }, h('b', {}, 'Side by side')),
+          h('header', { class: 'stage__head' }, h('b', {}, 'Side by side'), result.lanes.repaired ? h('button', { class: 'btn-p btn-p--sm', type: 'button', onclick: retest }, icon('i-bolt'), h('span', {}, 'Test this schedule again')) : null),
           scrollX(axisEl(r),
           laneEl({ title: 'Original', sub: result.lanes.original.summary, tone: 'original', blocks: result.lanes.original.blocks, r, plan }),
           laneEl({ title: 'After the disruption', sub: result.lanes.disrupted.summary, tone: 'disrupted', blocks: result.lanes.disrupted.blocks, r, plan }),
@@ -447,7 +483,7 @@ export function initRescue({ getLenis, say, onSetup }) {
         ),
       );
 
-      side.append(
+      put(side, 
         pipCard(result.pip),
         result.conflicts.length ? conflictsCard(result) : null,
         result.changes.length ? changesCard(result) : null,
@@ -461,8 +497,8 @@ export function initRescue({ getLenis, say, onSetup }) {
     if (startOnMine) {
       startOnMine = false;
       // their own schedule when this site has an API, otherwise the generated sample day
-      import('./api.js').then((m) => (m.apiEnabled ? loadMine() : loadSeed(0)));
-    } else loadSeed(0);
+      import('./api.js').then((m) => (m.apiEnabled ? loadMine() : loadSeed(firstDay())));
+    } else loadSeed(firstDay());
   }
 
   const PHASE = { original: 'As planned', disruption: 'Something goes wrong', conflicts: 'If you carry on', repair: 'The repair', done: 'Repaired' };
@@ -473,15 +509,31 @@ export function initRescue({ getLenis, say, onSetup }) {
       h('li', {}, h('i', { class: 'sw sw--task' }), 'Flexible task'), h('li', {}, h('i', { class: 'sw sw--locked' }), 'Locked (never moves)'), h('li', {}, h('i', { class: 'sw sw--break' }), 'Protected break'),
       h('li', {}, h('i', { class: 'sw sw--injected' }), 'Unexpected'), h('li', {}, h('i', { class: 'sw sw--conflict' }), 'In conflict'), h('li', {}, h('i', { class: 'sw sw--moved' }), 'Moved by the repair'));
 
+  const waysCard = (res, onPick) =>
+    h('section', { class: 'rcard rways', 'aria-label': 'Three ways forward' },
+      h('header', { class: 'stage__head' }, h('b', {}, 'Three ways forward'), h('span', { class: 'muted muted--sm' }, 'Same disruption, three different priorities. Pick one.')),
+      h('div', { class: 'rways__row', role: 'radiogroup', 'aria-label': 'Way forward' },
+        res.options.map((o) => {
+          const on = o.strategy === res.strategy;
+          const v = o.view;
+          return h('button', { type: 'button', role: 'radio', 'aria-checked': String(on), disabled: !o.feasible, class: `rway${on ? ' is-on' : ''}`, onclick: () => onPick(o.strategy) },
+            h('span', { class: 'rway__top' }, h('b', {}, o.title), o.recommended ? h('i', { class: 'rway__tag' }, 'Recommended') : null),
+            h('span', { class: 'rway__desc' }, o.description),
+            o.feasible
+              ? h('span', { class: 'rway__nums' }, `${v.metrics.moved} moved · ${dur(v.metrics.totalMinutes)}`, v.metrics.deferred ? h('em', {}, ` · ${v.metrics.deferred} deferred`) : null)
+              : h('span', { class: 'rway__nums rway__nums--no' }, 'No valid schedule'),
+            o.sameAs ? h('span', { class: 'rway__same' }, `Same day as “${res.options.find((x) => x.strategy === o.sameAs).title}”`) : null);
+        })));
+
   const conflictsCard = (res) =>
     h('section', { class: 'rcard' }, h('h3', {}, `${res.conflicts.length} ${res.conflicts.length === 1 ? 'conflict' : 'conflicts'} if you carry on`),
       h('ul', { class: 'cf' }, res.conflicts.map((c) => h('li', { class: `cf__i cf__i--${c.severity}` }, h('span', { class: 'cf__tag' }, c.severity), h('p', {}, emphasize(c.detail))))));
 
   const changesCard = (res) =>
-    h('section', { class: 'rcard' }, h('h3', {}, 'The smallest fix'),
-      h('p', { class: 'muted' }, `${res.changes.length} ${res.changes.length === 1 ? 'item moves' : 'items move'}, ${dur(res.metrics.totalMinutes)} in total.${res.optimal ? ' Proven the smallest.' : ''}`),
+    h('section', { class: 'rcard' }, h('h3', {}, res.strategy === 'minimize_changes' ? 'The smallest fix' : `Fix: ${res.options.find((o) => o.strategy === res.strategy).title}`),
+      h('p', { class: 'muted' }, `${res.changes.length} ${res.changes.length === 1 ? 'item moves' : 'items move'}, ${dur(res.metrics.totalMinutes)} in total.${res.optimal ? (res.strategy === 'minimize_changes' ? ' Proven the smallest.' : ' Proven best for this way forward.') : ''}`),
       h('ul', { class: 'ch' }, res.changes.map((c) => h('li', {}, h('div', { class: 'ch__top' }, h('b', {}, c.title), h('span', { class: `ch__d ${c.deltaMinutes > 0 ? 'is-later' : 'is-earlier'}` }, `${c.deltaMinutes > 0 ? '+' : '−'}${Math.abs(c.deltaMinutes)}m`)), h('p', {}, `${fmt(c.from.start)} → ${fmt(c.to.start)}`)))),
-      res.alternatives.length ? h('p', { class: 'muted muted--sm' }, 'Other strategies: ', res.alternatives.map((a) => `${a.title} moves ${a.moved} (${dur(a.totalMinutes)})`).join(' · ')) : null);
+      null);
 
   const deferredCard = (res) =>
     h('section', { class: 'rcard rcard--warn' }, h('h3', {}, 'Deferred, not deleted'), h('ul', { class: 'cf' }, res.deferred.map((d) => h('li', {}, h('p', {}, d.message)))));
@@ -544,7 +596,7 @@ export function initRescue({ getLenis, say, onSetup }) {
       const steps = h('ol', { class: 'steps' },
         ...[['1', 'Break it'], ['2', 'Fix it'], ['3', 'Compare']].map(([n, t], k) => h('li', { class: ['break', 'fix', 'result'].indexOf(phase) >= k ? 'is-on' : '' }, h('i', {}, n), t)));
       const main = h('section', { class: 'rs__main' });
-      main.append(
+      put(main, 
         h('div', { class: 'intro' },
           h('div', {}, h('span', { class: 'eyebrow' }, 'Interactive challenge'), h('h1', {}, 'Can you save ', h('em', {}, 'this day?')),
             h('p', {}, 'You get a deliberately fragile day. Break it, then fix it by hand without moving a locked event, missing a deadline or touching the lunch. Breakpoint then shows how it would have done it.')),
@@ -556,7 +608,7 @@ export function initRescue({ getLenis, say, onSetup }) {
       if (phase === 'break') {
         const r0 = rangeFor(plan, plan.items.map((i) => ({ start: i.start, end: i.start + i.duration })));
         const blocks0 = plan.items.filter((i) => i.blocking).map((i) => ({ id: i.id, title: i.title, kind: i.kind, start: i.start, end: i.start + i.duration, pieces: [{ start: i.start, end: i.start + i.duration }], locked: i.locked, injected: false, protectedBreak: i.kind === 'break', deadline: i.deadline ?? null, release: i.release ?? null, state: 'ok', shiftedBy: 0, conflictCodes: [] }));
-        main.append(
+        put(main, 
           h('div', { class: 'compare rcard' }, scrollX(axisEl(r0), laneEl({ title: 'Your day', sub: 'Looks fine. Looks.', tone: 'original', blocks: blocks0, r: r0, plan })), legend()),
           h('div', { class: 'rcard controls' },
             h('div', { class: 'controls__row' }, h('b', {}, 'Step 1: make something go wrong'),
@@ -564,7 +616,7 @@ export function initRescue({ getLenis, say, onSetup }) {
             h('p', { class: 'muted' }, 'Or choose your own:'),
             disruptionForm(plan, (d) => { C.disruptions = [d]; startFix(); draw(); }, atChallenge)),
         );
-        side.append(h('section', { class: 'rcard' }, h('h3', {}, 'How it works'), h('ul', { class: 'cf' },
+        put(side, h('section', { class: 'rcard' }, h('h3', {}, 'How it works'), h('ul', { class: 'cf' },
           h('li', {}, h('p', {}, 'The day is generated from a seed, so every visitor can get a different one.')),
           h('li', {}, h('p', {}, 'Your fix is checked by the same engine that Breakpoint uses. No account, no server.')),
           h('li', {}, h('p', {}, 'You are scored against the smallest valid change, computed exactly.')))));
@@ -577,7 +629,7 @@ export function initRescue({ getLenis, say, onSetup }) {
       const blocks = blocksNow(violations);
       const r = rangeFor(plan, blocks, world().locked.map((l) => ({ start: l.start, end: l.start + l.duration })));
 
-      main.append(h('div', { class: 'rcard controls' },
+      put(main, h('div', { class: 'rcard controls' },
         h('div', { class: 'controls__row' }, h('b', {}, 'What went wrong'), h('button', { class: 'btn-g btn-g--sm', type: 'button', onclick: () => { C.disruptions = []; C.report = null; draw(); } }, 'Undo the disruption')),
         chips(plan, C.disruptions, (i) => { C.disruptions.splice(i, 1); if (C.disruptions.length) startFix(); C.report = null; draw(); }),
         disruptionForm(plan, (d) => { C.disruptions.push(d); startFix(); draw(); }, atChallenge)));
@@ -585,7 +637,7 @@ export function initRescue({ getLenis, say, onSetup }) {
       // editable lane
       const lane = editableLane(blocks, r, plan, violations);
       const sel = C.selected && blocks.find((b) => b.id === C.selected && !b.locked);
-      main.append(h('div', { class: 'compare rcard' },
+      put(main, h('div', { class: 'compare rcard' },
         h('header', { class: 'stage__head' }, h('b', {}, 'Step 2: fix it'), h('span', { class: `count ${violations.length ? 'is-bad' : 'is-ok'}` }, violations.length ? `${violations.length} ${violations.length === 1 ? 'problem' : 'problems'}` : 'No problems')),
         scrollX(axisEl(r), lane),
         h('p', { class: 'muted muted--sm' }, 'Drag a flexible block (or select it and use the buttons). Locked blocks cannot move. Arrow keys nudge a selected block by 5 minutes.'),
@@ -594,14 +646,14 @@ export function initRescue({ getLenis, say, onSetup }) {
         legend()));
 
       const check = h('button', { class: 'btn-p', type: 'button', disabled: violations.length > 0, onclick: () => { try { C.report = E.judgeAttempt(plan, attempt()); } catch (e) { say(e.message); return; } draw(); } }, icon('i-check'), h('span', {}, violations.length ? 'Fix the problems to check' : 'Check my fix'));
-      main.append(h('div', { class: 'checkrow' }, check, h('button', { class: 'btn-g', type: 'button', onclick: () => { startFix(); draw(); } }, 'Reset my fix')));
+      put(main, h('div', { class: 'checkrow' }, check, h('button', { class: 'btn-g', type: 'button', onclick: () => { startFix(); draw(); } }, 'Reset my fix')));
 
       // side: live problems, or the result
       if (C.report) {
-        main.append(resultCard(C.report, blocks, r, plan));
-        side.append(pipCard(C.report.pip, 'Pip compares'), ...(C.report.rescue.status !== 'impossible' ? [guaranteesCard(C.report.rescue)] : [impossibleCard(C.report.rescue)]));
+        put(main, resultCard(C.report, blocks, r, plan));
+        put(side, pipCard(C.report.pip, 'Pip compares'), ...(C.report.rescue.status !== 'impossible' ? [guaranteesCard(C.report.rescue)] : [impossibleCard(C.report.rescue)]));
       } else {
-        side.append(
+        put(side, 
           h('section', { class: `rcard ${violations.length ? 'rcard--bad' : ''}` }, h('h3', {}, violations.length ? 'What still breaks the rules' : 'Looks valid'),
             violations.length ? h('ul', { class: 'cf' }, violations.map((v) => h('li', {}, h('p', {}, emphasize(v.message))))) : h('p', { class: 'muted' }, 'No lock, deadline, break or overlap is broken. Press “Check my fix” to see how it compares with Breakpoint’s.')),
           pipCard(E.rescueDay(plan, C.disruptions).conflicts.slice(0, 2).map((c) => ({ kind: 'shortfall', text: c.detail })), 'What would have happened'),

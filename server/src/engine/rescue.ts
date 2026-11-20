@@ -1,8 +1,8 @@
 import type { CascadeResult, Conflict, Disruption, Interval, ItemKind, ItemOutcome, Minutes, Plan, PlanItem } from './types.ts';
 import { simulateCascade } from './cascade.ts';
 import { describeDisruption } from './world.ts';
-import { parallelFutures } from './futures.ts';
-import type { Future, FutureItem, FuturesResult } from './futures.ts';
+import { STRATEGIES, parallelFutures } from './futures.ts';
+import type { Future, FutureItem, FuturesResult, StrategyId } from './futures.ts';
 import type { Diagnosis } from './diagnose.ts';
 import { baselineIssues } from './validate.ts';
 import type { BaselineIssue } from './validate.ts';
@@ -102,7 +102,37 @@ export interface ReplayFrame {
   focus: string[];
 }
 
+/** Everything about one way of repairing the day: the repaired lane, what moves, the rules re-checked, Pip's words and the replay. */
+export interface RescueView {
+  status: RescueStatus;
+  headline: string;
+  lane: Lane;
+  changes: Change[];
+  deferred: Future['deferred'];
+  metrics: { moved: number; kept: number; totalMinutes: number; maxMinutes: number; deferred: number; conflictsBefore: number };
+  guarantees: Guarantee[];
+  pip: PipLine[];
+  replay: ReplayFrame[];
+  optimal: boolean;
+}
+
+/** One of the three ways forward. `view` is null when that strategy has no valid schedule (`note` says why). */
+export interface RescueOption {
+  strategy: StrategyId;
+  title: string;
+  description: string;
+  feasible: boolean;
+  /** the engine's own pick: keeps every task and changes the least */
+  recommended: boolean;
+  /** the earlier way forward (in the order listed) that lands on exactly the same schedule, or null when this one is different */
+  sameAs: StrategyId | null;
+  view: RescueView | null;
+  note: string;
+}
+
 export interface RescueResult {
+  /** which strategy the top-level repaired lane, changes and metrics come from (always the smallest change) */
+  strategy: StrategyId;
   status: RescueStatus;
   headline: string;
   timezone: string;
@@ -119,6 +149,8 @@ export interface RescueResult {
   diagnosis: Diagnosis | null;
   pip: PipLine[];
   replay: ReplayFrame[];
+  /** all three ways forward, each with its own repaired lane (same disruption, different priorities) */
+  options: RescueOption[];
   /** other strategies' cost, for comparison */
   alternatives: { strategy: string; title: string; moved: number; totalMinutes: number; deferred: number }[];
   /** true when the repair is proven the smallest by the rule above */
@@ -307,10 +339,60 @@ export function rescueDay(plan: Plan, disruptions: readonly Disruption[]): Rescu
     .filter((f) => f.feasible && f.strategy !== 'minimize_changes')
     .map((f) => ({ strategy: f.strategy, title: f.title, moved: f.metrics.movedCount, totalMinutes: f.metrics.totalDisplacementMinutes, deferred: f.deferred.length }));
 
-  if (!repaired.feasible) {
+  /** one repaired day, built from one strategy's future */
+  const view = (f: Future): RescueView => {
+    const lane = repairedLane(plan, f);
+    const changes = buildChanges(plan, f, lane, disrupted, tz);
+    const status: RescueStatus = f.deferred.length ? 'repaired_with_deferrals' : conflicts.length === 0 ? 'absorbed' : 'repaired';
+    const m = f.metrics;
+    const moves = `${changes.length} ${changes.length === 1 ? 'item moves' : 'items move'}, ${fmtDuration(m.totalDisplacementMinutes)} of movement in total`;
+    const headline =
+      status === 'absorbed' && changes.length === 0
+        ? 'Your day absorbs this disruption: no conflicts and nothing has to move.'
+        : status === 'repaired_with_deferrals'
+          ? `Rescued, but ${f.deferred.length} ${f.deferred.length === 1 ? 'task' : 'tasks'} had to be deferred (never deleted): ${changes.length} moved, ${fmtDuration(m.totalDisplacementMinutes)} of movement.`
+          : f.strategy === 'minimize_changes'
+            ? `Rescued with the smallest change: ${moves}. Locked events, deadlines and protected breaks are untouched.`
+            : `Rescued with "${f.title}": ${moves}. Locked events, deadlines and protected breaks are untouched.`;
+    return {
+      status,
+      headline,
+      lane,
+      changes,
+      deferred: f.deferred,
+      metrics: { moved: m.movedCount, kept: m.keptCount, totalMinutes: m.totalDisplacementMinutes, maxMinutes: m.maxDisplacementMinutes, deferred: m.deferredCount, conflictsBefore: conflicts.length },
+      guarantees: checkGuarantees(plan, lane, f),
+      pip: explainRescue({ plan, disruptions, cascade, futures, repaired: f, changes, status }),
+      replay: buildReplay(plan, disruptions, original, disrupted, lane, changes, conflicts, tz),
+      optimal: f.optimal,
+    };
+  };
+
+  const smallest = repaired.feasible ? view(repaired) : null;
+  // two strategies can land on the very same day; say so instead of showing two identical cards as if they were different
+  const slots = (f: Future) => f.deferred.map((d) => d.id).sort().join(',') + '|' + f.items.map((i) => `${i.id}@${i.start}:${i.end}`).sort().join(',');
+  const firstWith = new Map<string, StrategyId>();
+  const options: RescueOption[] = futures.futures.map((f) => {
+    const key = f.feasible ? slots(f) : null;
+    const sameAs = key !== null ? firstWith.get(key) ?? null : null;
+    if (key !== null && sameAs === null) firstWith.set(key, f.strategy);
+    return {
+      strategy: f.strategy,
+      title: STRATEGIES[f.strategy].title,
+      description: STRATEGIES[f.strategy].description,
+      feasible: f.feasible,
+      recommended: futures.recommended === f.strategy,
+      sameAs,
+      view: f === repaired ? smallest : f.feasible ? view(f) : null,
+      note: f.feasible ? f.explanation[0] ?? '' : f.diagnosis?.summary ?? 'No valid schedule exists for this strategy.',
+    };
+  });
+
+  if (!smallest) {
     const diagnosis = repaired.diagnosis ?? null;
     const pip = explainRescue({ plan, disruptions, cascade, futures, repaired: null, changes: [], status: 'impossible' });
     return {
+      strategy: 'minimize_changes',
       status: 'impossible',
       headline: diagnosis?.summary ?? 'No valid schedule exists under these constraints. Nothing was changed.',
       timezone: tz,
@@ -326,42 +408,58 @@ export function rescueDay(plan: Plan, disruptions: readonly Disruption[]): Rescu
       diagnosis,
       pip,
       replay: buildReplay(plan, disruptions, original, disrupted, null, [], conflicts, tz),
+      options,
       alternatives,
       optimal: repaired.optimal,
     };
   }
 
-  const lane = repairedLane(plan, repaired);
-  const changes = buildChanges(plan, repaired, lane, disrupted, tz);
-  const status: RescueStatus = repaired.deferred.length ? 'repaired_with_deferrals' : conflicts.length === 0 ? 'absorbed' : 'repaired';
-  const pip = explainRescue({ plan, disruptions, cascade, futures, repaired, changes, status });
-  const m = repaired.metrics;
-  const headline =
-    status === 'absorbed' && changes.length === 0
-      ? 'Your day absorbs this disruption: no conflicts and nothing has to move.'
-      : status === 'repaired_with_deferrals'
-        ? `Rescued, but ${repaired.deferred.length} ${repaired.deferred.length === 1 ? 'task' : 'tasks'} had to be deferred (never deleted): ${changes.length} moved, ${fmtDuration(m.totalDisplacementMinutes)} of movement.`
-        : `Rescued with the smallest change: ${changes.length} ${changes.length === 1 ? 'item moves' : 'items move'}, ${fmtDuration(m.totalDisplacementMinutes)} of movement in total. Locked events, deadlines and protected breaks are untouched.`;
-
   return {
-    status,
-    headline,
+    strategy: 'minimize_changes',
+    status: smallest.status,
+    headline: smallest.headline,
     timezone: tz,
     window: plan.settings.horizon,
     disruptions: descs,
     baselineIssues: baselineIssues(plan),
-    lanes: { original, disrupted, repaired: lane },
+    lanes: { original, disrupted, repaired: smallest.lane },
     conflicts,
-    changes,
-    deferred: repaired.deferred,
-    metrics: { moved: m.movedCount, kept: m.keptCount, totalMinutes: m.totalDisplacementMinutes, maxMinutes: m.maxDisplacementMinutes, deferred: m.deferredCount, conflictsBefore: conflicts.length },
-    guarantees: checkGuarantees(plan, lane, repaired),
+    changes: smallest.changes,
+    deferred: smallest.deferred,
+    metrics: smallest.metrics,
+    guarantees: smallest.guarantees,
     diagnosis: null,
-    pip,
-    replay: buildReplay(plan, disruptions, original, disrupted, lane, changes, conflicts, tz),
+    pip: smallest.pip,
+    replay: smallest.replay,
+    options,
     alternatives,
-    optimal: repaired.optimal,
+    optimal: smallest.optimal,
   };
+}
+
+/**
+ * "Test it again": the same day with one way forward adopted, as a new plan. Every item sits where that repair put it (an
+ * overrun keeps its new length, an unexpected commitment becomes a locked event) and deferred tasks are set aside (kept, but no longer taking time).
+ * Pure: the original plan is untouched. Null when that strategy has no valid schedule.
+ */
+export function adoptRepair(plan: Plan, disruptions: readonly Disruption[], strategy: StrategyId = 'minimize_changes'): Plan | null {
+  const f = parallelFutures(plan, disruptions).futures.find((x) => x.strategy === strategy);
+  if (!f || !f.feasible) return null;
+  const placed = new Map(f.items.filter((i) => !i.injected).map((i) => [i.id, i]));
+  const deferred = new Set(f.deferred.map((d) => d.id));
+  const items: PlanItem[] = [];
+  for (const it of plan.items) {
+    const p = placed.get(it.id);
+    if (p) items.push({ ...it, start: p.start, duration: p.end - p.start });
+    else if (deferred.has(it.id)) {
+      // set aside, not deleted: it stays in the plan but no longer takes time until the visitor places it
+      items.push({ ...it, blocking: false });
+    } else items.push(it);
+  }
+  for (const i of f.items) {
+    if (i.injected) items.push({ id: i.id, title: i.title, kind: 'event', start: i.start, duration: i.end - i.start, locked: true, priority: 5, deferrable: false, critical: false, blocking: true });
+  }
+  return { ...plan, items };
 }
 
 function buildChanges(plan: Plan, f: Future, lane: Lane, disrupted: Lane, tz: string): Change[] {

@@ -45,7 +45,12 @@ How this is checked (not just claimed), in `test/rescue.test.ts` and `test/chall
 | `diagnosis` | when impossible: reasons, minimal conflicting set, suggestions |
 | `replay[]` | frames for the timeline replay: original → each disruption in turn → conflicts → each move → done |
 | `pip[]` | Pip's explanation (below) |
-| `alternatives[]` | what the other two strategies would cost |
+| `options[]` | **three ways forward** for the same disruption (protect priorities / preserve the most tasks / minimize changes). Each has its own `view`: repaired lane, changes, guarantees, Pip's words and replay. `sameAs` says when two ways land on the identical day. The top-level fields above always describe the smallest change |
+| `alternatives[]` | what the other two strategies would cost (kept for older clients) |
+
+**Test it again.** `adoptRepair(plan, disruptions, strategy)` turns one way forward into a new plan (every item where that repair put it, an overrun keeps its new length, a surprise commitment becomes a locked event, deferred tasks are set aside, not deleted). The Rescue screen's "Test this schedule again" uses it, then breaks the repaired day's weakest link. The tests prove the adopted day has no conflicts left.
+
+The site opens on generated day 0. Link to another with `?day=N` (for example `?day=4`, where the three ways genuinely differ).
 
 API: `POST /api/engine/rescue` (no login, inline schedule) and `POST /api/schedules/:id/rescue` (saved schedule). Body: `{ window, disruptions[1..20] }`. Times in the response are ISO strings.
 

@@ -144,6 +144,23 @@
 .sw--task { background: #e8dcc9; } .sw--locked { background: #353842; border: 1px solid rgba(255, 255, 255, 0.3); } .sw--break { background: var(--rs-green); }
 .sw--injected { background: #7a3b34; border: 1px solid var(--rs-red); } .sw--conflict { box-shadow: 0 0 0 2px #ff6b57; background: #e8dcc9; } .sw--moved { box-shadow: 0 0 0 2px var(--rs-green); background: #e8dcc9; }
 
+/* three ways forward */
+.rways__row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.rway { display: grid; gap: 6px; align-content: start; text-align: left; padding: 12px 14px 13px; border-radius: 12px; border: 1px solid var(--rs-line); background: rgba(255, 255, 255, 0.03); color: #cfc8bb; transition: border-color 0.25s, background-color 0.25s, transform 0.25s; }
+.rway:hover:not(:disabled):not(.is-on) { border-color: rgba(255, 255, 255, 0.24); background: rgba(255, 255, 255, 0.05); }
+.rway.is-on { border-color: rgba(155, 217, 138, 0.65); background: rgba(155, 217, 138, 0.09); box-shadow: 0 0 0 1px rgba(155, 217, 138, 0.18) inset; }
+.rway:disabled { opacity: 0.5; cursor: not-allowed; }
+.rway__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rway__top b { font-size: 14.5px; color: var(--cream); }
+.rway__tag { font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #c9eebb; padding: 2px 7px; border-radius: 999px; background: rgba(155, 217, 138, 0.16); white-space: nowrap; }
+.rway__desc { font-size: 12.5px; line-height: 1.4; color: var(--rs-muted); }
+.rway__nums { font-size: 13px; font-weight: 700; color: var(--cream); font-variant-numeric: tabular-nums; }
+.rway__nums em { font-style: normal; color: #f2d3a5; }
+.rway__nums--no { color: var(--rs-red); }
+.rway__same { font-size: 11.5px; color: var(--rs-muted); }
+.story__back { justify-self: start; margin-top: 8px; }
+@media (max-width: 760px) { .rways__row { grid-template-columns: 1fr; } }
+
 .banner { display: grid; gap: 2px; padding: 12px 16px; border-radius: 12px; border: 1px solid; }
 .banner b { font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; }
 .banner span { font-size: 15px; color: var(--cream); }
