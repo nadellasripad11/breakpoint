@@ -171,7 +171,7 @@ export function demoRoutes(): Hono<AppEnv> {
   /** What this server can do right now: lets the UI show the right connector states instead of guessing. */
   r.get('/capabilities', rateLimit('demo', 120, 60_000), (c) => {
     const deps = c.get('deps');
-    return c.json({ ok: true, guest: true, ics: true, calendarLink: true, google: deps.config.google !== null, notion: true, accounts: deps.config.google !== null });
+    return c.json({ ok: true, guest: true, ics: true, calendarLink: true, google: deps.config.google !== null, notionLogin: deps.config.notion !== null, notion: true, accounts: deps.config.google !== null });
   });
 
   r.get('/demo/schedule', rateLimit('demo', 60, 60_000), (c) => {

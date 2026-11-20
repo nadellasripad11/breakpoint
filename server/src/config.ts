@@ -18,6 +18,8 @@ export interface Config {
   /** 32-byte AES-256-GCM key for stored OAuth tokens. */
   tokenEncKey: Buffer;
   google: { clientId: string; clientSecret: string } | null;
+  /** "Log in with Notion" (a Notion PUBLIC integration). Optional: pasting a token always works. */
+  notion: { clientId: string; clientSecret: string } | null;
   sessionTtlDays: number;
   guestTtlHours: number;
   limits: {
@@ -43,6 +45,8 @@ const envSchema = z.object({
   TOKEN_ENC_KEY: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  NOTION_CLIENT_ID: z.string().optional(),
+  NOTION_CLIENT_SECRET: z.string().optional(),
   SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(30),
   GUEST_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(24),
 });
@@ -95,6 +99,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     trustProxy: e.TRUST_PROXY === 'true',
     tokenEncKey: key,
     google,
+    notion: e.NOTION_CLIENT_ID && e.NOTION_CLIENT_SECRET ? { clientId: e.NOTION_CLIENT_ID, clientSecret: e.NOTION_CLIENT_SECRET } : null,
     sessionTtlDays: e.SESSION_TTL_DAYS,
     guestTtlHours: e.GUEST_TTL_HOURS,
     limits: { maxSchedulesUser: 50, maxSchedulesGuest: 3, maxItemsPerSchedule: 2000, maxRunsPerSchedule: 100, maxInlineItems: 300 },

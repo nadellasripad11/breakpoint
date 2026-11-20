@@ -428,3 +428,81 @@ test('configuration is validated and production refuses unsafe settings', () => 
   assert.equal(dev.tokenEncKey.length, 32);
   assert.equal(loadConfig(base).cookie.secure, true);
 });
+
+/* ───────────── "Log in with Notion" ───────────── */
+
+test('Log in with Notion: consent -> workspace token, stored encrypted; denial, replay, bad state and missing setup are all handled; works for a guest', async () => {
+  const DB = '0123456789abcdef0123456789abcdef';
+  const net = fake((c) => {
+    if (c.url === 'https://api.notion.com/v1/oauth/token') {
+      const sent = JSON.parse(c.body) as { grant_type: string; code: string; redirect_uri: string };
+      if (sent.code !== 'notion-code-123456') return json({ error: 'invalid_grant' }, 400);
+      return json({ access_token: 'secret_oauth_workspace_token_abcdefghij', token_type: 'bearer', workspace_name: 'Sam’s School', bot_id: 'b1' });
+    }
+    if (c.url === 'https://api.notion.com/v1/search') return json({ results: [{ id: DB, title: [{ plain_text: 'Homework' }], properties: { Name: { type: 'title' }, Due: { type: 'date' } } }] });
+    return undefined;
+  });
+  const t = await makeApp({ fetch: net.f });
+  const call = client(t);
+  const g = await call('POST', '/api/auth/guest?tz=America/Chicago');
+  const token = g.json.token as string;
+  assert.equal((await call('GET', '/api/capabilities')).json.notionLogin, true);
+
+  assert.equal((await call('POST', '/api/connections/notion/start', { token, body: {} })).status, 400, 'explicit acknowledgement required');
+  const start = await call('POST', '/api/connections/notion/start', { token, body: { acknowledge: true, redirect: '/?ob=notion' } });
+  assert.equal(start.status, 200, start.text);
+  const u = new URL(start.json.url as string);
+  assert.equal(u.origin + u.pathname, 'https://api.notion.com/v1/oauth/authorize');
+  assert.equal(u.searchParams.get('client_id'), 'test-notion-client');
+  assert.equal(u.searchParams.get('response_type'), 'code');
+  assert.equal(u.searchParams.get('owner'), 'user');
+  assert.equal(u.searchParams.get('redirect_uri'), 'http://api.test/api/connections/notion/callback');
+  const state = u.searchParams.get('state')!;
+
+  // the user pressed Cancel at Notion
+  assert.equal((await call('GET', `/api/connections/notion/callback?error=access_denied&state=${state}`)).headers.get('location'), 'http://localhost:5173/?ob=notion&connect_error=access_denied');
+  // a made-up state is refused
+  assert.match((await call('GET', `/api/connections/notion/callback?code=notion-code-123456&state=${'x'.repeat(43)}`)).headers.get('location')!, /connect_error=invalid_state/);
+  // a Google connect state cannot be replayed into the Notion callback
+  const gs = await call('POST', '/api/connections/google/start', { token: (await makeUser(t)).token, body: { acknowledge: true, scopes: ['https://www.googleapis.com/auth/calendar.readonly'] } });
+  const gstate = new URL(gs.json.url as string).searchParams.get('state')!;
+  assert.match((await call('GET', `/api/connections/notion/callback?code=notion-code-123456&state=${gstate}`)).headers.get('location')!, /connect_error=invalid_state/);
+
+  // the real thing (the cancelled attempt consumed its state, so start again)
+  const state2 = new URL((await call('POST', '/api/connections/notion/start', { token, body: { acknowledge: true, redirect: '/?ob=notion' } })).json.url as string).searchParams.get('state')!;
+  const ok = await call('GET', `/api/connections/notion/callback?code=notion-code-123456&state=${state2}`);
+  assert.equal(ok.status, 302);
+  assert.equal(ok.headers.get('location'), 'http://localhost:5173/?ob=notion&connected=notion');
+  const tokenReq = net.calls.find((c) => c.url.endsWith('/oauth/token'))!;
+  assert.equal(tokenReq.auth, `Basic ${Buffer.from('test-notion-client:test-notion-secret').toString('base64')}`);
+  assert.equal(JSON.parse(tokenReq.body).grant_type, 'authorization_code');
+
+  const conns = (await call('GET', '/api/connections', { token })).json.connections as { provider: string; accountLabel: string; access: string }[];
+  assert.equal(conns.length, 1);
+  assert.deepEqual([conns[0]!.provider, conns[0]!.accountLabel, conns[0]!.access], ['notion', 'Sam’s School', 'read-only']);
+  const stored = t.store.db.prepare('SELECT access_token_enc FROM connections').get() as { access_token_enc: string };
+  assert.ok(!stored.access_token_enc.includes('secret_oauth_workspace'), 'token is encrypted at rest');
+  assert.equal(decryptSecret(stored.access_token_enc, t.config.tokenEncKey), 'secret_oauth_workspace_token_abcdefghij');
+  // replaying the same state does nothing
+  assert.match((await call('GET', `/api/connections/notion/callback?code=notion-code-123456&state=${state2}`)).headers.get('location')!, /connect_error=invalid_state/);
+
+  // the stored workspace token works for reading databases
+  const dbs = await call('GET', `/api/connections/${conns[0] && (await call('GET', '/api/connections', { token })).json.connections[0].id}/notion/databases`, { token });
+  assert.equal(dbs.json.databases[0].title, 'Homework');
+
+  // Notion refusing the code is reported without storing anything
+  const state3 = new URL((await call('POST', '/api/connections/notion/start', { token, body: { acknowledge: true } })).json.url as string).searchParams.get('state')!;
+  assert.match((await call('GET', `/api/connections/notion/callback?code=wrong-code-wrong&state=${state3}`)).headers.get('location')!, /ob=notion&connect_error=connect_failed/);
+  assert.equal((await call('GET', '/api/connections', { token })).json.connections.length, 1);
+
+  // never used for anything but reading, plus the one token exchange
+  for (const c2 of net.calls) if (c2.method !== 'GET') assert.match(c2.url, /\/v1\/(oauth\/token|search|databases\/[0-9a-f]+\/query)$/);
+
+  // not configured on the server: clear message, nothing started
+  const bare = await makeApp({ fetch: net.f, env: { NOTION_CLIENT_ID: '', NOTION_CLIENT_SECRET: '' } });
+  const bg = (await client(bare)('POST', '/api/auth/guest')).json.token as string;
+  assert.equal((await client(bare)('GET', '/api/capabilities')).json.notionLogin, false);
+  const nope = await client(bare)('POST', '/api/connections/notion/start', { token: bg, body: { acknowledge: true } });
+  assert.equal(nope.status, 501);
+  assert.equal(nope.json.error.code, 'notion_not_configured');
+});

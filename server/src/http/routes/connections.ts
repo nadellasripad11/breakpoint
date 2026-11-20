@@ -2,12 +2,12 @@ import { Hono } from 'hono';
 import type { AppEnv, Deps } from '../context.ts';
 import { HttpError, notFound } from '../errors.ts';
 import { rateLimit, requireAccount } from '../middleware.ts';
-import { googleConnectBody, notionConnectBody } from '../schemas.ts';
+import { googleConnectBody, notionConnectBody, notionStartBody } from '../schemas.ts';
 import { currentUser } from './shared.ts';
 import { decryptSecret, encryptSecret, randomToken, sha256Base64Url, sha256Hex } from '../../auth/crypto.ts';
 import { GOOGLE_READONLY_SCOPE, OAuthError, assertReadOnlyCalendarScopes, buildAuthUrl, exchangeCode, refreshAccessToken, revokeToken } from '../../auth/google.ts';
 import { listCalendars } from '../../integrations/googleCalendar.ts';
-import { listDatabases, verifyToken } from '../../integrations/notion.ts';
+import { buildNotionAuthUrl, exchangeNotionCode, listDatabases, verifyToken } from '../../integrations/notion.ts';
 import type { Connection } from '../../store/types.ts';
 
 const connDto = (c: Connection) => ({ id: c.id, provider: c.provider, accountLabel: c.accountLabel, scopes: c.scopes, consentAt: c.consentAt, createdAt: c.createdAt, access: 'read-only' as const });
@@ -16,6 +16,12 @@ function googleClient(deps: Deps) {
   const g = deps.config.google;
   if (!g) throw new HttpError(501, 'google_not_configured', 'Google is not configured on this server (set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET).');
   return { clientId: g.clientId, clientSecret: g.clientSecret, redirectUri: `${deps.config.apiUrl}/api/connections/google/callback` };
+}
+
+function notionClient(deps: Deps) {
+  const n = deps.config.notion;
+  if (!n) throw new HttpError(501, 'notion_not_configured', 'Log in with Notion is not set up on this server. You can paste an integration token instead.');
+  return { clientId: n.clientId, clientSecret: n.clientSecret, redirectUri: `${deps.config.apiUrl}/api/connections/notion/callback` };
 }
 
 /** Decrypts (and refreshes if needed) the Google access token for a stored connection. */
@@ -156,6 +162,50 @@ export function connectionRoutes(): Hono<AppEnv> {
     await deps.store.createConnection(conn);
     await deps.store.audit(u.id, 'connection.notion.connected', {}, deps.newId(), now);
     return c.json({ connection: connDto(conn) }, 201);
+  });
+
+  /**
+   * "Log in with Notion": the user agrees, Notion asks which pages to share, and we receive a workspace token. No pasting.
+   * Like the token flow it works for guests (the token is stored encrypted and goes with the sandbox) and only ever reads.
+   */
+  r.post('/notion/start', rateLimit('connect', 10, 60_000, 'user'), async (c) => {
+    const deps = c.get('deps');
+    const u = currentUser(c);
+    const body = notionStartBody.parse(await c.req.json());
+    const client = notionClient(deps);
+    const redirectPath = /^\/(?!\/)[A-Za-z0-9_\-./?=&%#]*$/.test(body.redirect ?? '/') ? (body.redirect ?? '/') : '/';
+    const state = randomToken(32);
+    await deps.store.saveOAuthState({ stateHash: sha256Hex(state), purpose: 'connect_notion', codeVerifier: 'none', nonce: null, userId: u.id, redirectPath, expiresAt: new Date(deps.now().getTime() + 600_000).toISOString() });
+    await deps.store.audit(u.id, 'connection.notion.consent_requested', {}, deps.newId(), deps.now().toISOString());
+    return c.json({ url: buildNotionAuthUrl(client, state), access: 'read-only' });
+  });
+
+  r.get('/notion/callback', rateLimit('auth', 30, 60_000), async (c) => {
+    const deps = c.get('deps');
+    const fail = (code: string) => c.redirect(`${deps.config.appUrl}/?ob=notion&connect_error=${encodeURIComponent(code)}`, 302);
+    if (c.req.query('error')) return fail('access_denied');
+    const code = c.req.query('code') ?? '';
+    const state = c.req.query('state') ?? '';
+    if (code.length < 8 || code.length > 2048 || state.length < 20 || state.length > 200) return fail('invalid_request');
+    const st = await deps.store.consumeOAuthState(sha256Hex(state), deps.now().toISOString());
+    if (!st || st.purpose !== 'connect_notion' || !st.userId) return fail('invalid_state');
+    let client;
+    try {
+      client = notionClient(deps);
+    } catch {
+      return fail('notion_not_configured');
+    }
+    let tok;
+    try {
+      tok = await exchangeNotionCode(deps.fetch, client, code);
+    } catch {
+      return fail('connect_failed');
+    }
+    for (const old of (await deps.store.listConnections(st.userId)).filter((x) => x.provider === 'notion')) await deps.store.deleteConnection(st.userId, old.id);
+    const now = deps.now().toISOString();
+    await deps.store.createConnection({ id: deps.newId(), userId: st.userId, provider: 'notion', accountLabel: tok.workspaceName, scopes: ['read_content'], accessTokenEnc: encryptSecret(tok.accessToken, deps.config.tokenEncKey), refreshTokenEnc: null, tokenExpiresAt: null, consentAt: now, createdAt: now });
+    await deps.store.audit(st.userId, 'connection.notion.connected', { via: 'oauth' }, deps.newId(), now);
+    return c.redirect(`${deps.config.appUrl}${st.redirectPath}${st.redirectPath.includes('?') ? '&' : '?'}connected=notion`, 302);
   });
 
   r.delete('/:id', async (c) => {

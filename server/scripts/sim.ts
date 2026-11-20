@@ -24,6 +24,8 @@ const config = loadConfig({
   DATABASE_PATH: ':memory:',
   GOOGLE_CLIENT_ID: 'sim-client-id.apps.googleusercontent.com',
   GOOGLE_CLIENT_SECRET: 'sim-client-secret',
+  NOTION_CLIENT_ID: 'sim-notion-client',
+  NOTION_CLIENT_SECRET: 'sim-notion-secret',
 });
 
 const READONLY = 'https://www.googleapis.com/auth/calendar.readonly';
@@ -37,6 +39,7 @@ const READING_DB = 'a1b2c3d4-0000-4000-8000-0000000000b2';
 const { privateKey, publicKey } = await generateKeyPair('RS256', { extractable: true });
 const jwk = { ...(await exportJWK(publicKey)), kid: 'sim-key', alg: 'RS256', use: 'sig' };
 
+const notionCodes = new Set<string>();
 /** codes handed out by the pretend consent page, waiting to be exchanged */
 const codes = new Map<string, { nonce: string | null; scope: string; challenge: string; extra: boolean }>();
 const log = (who: string, msg: string) => console.log(`  [${who}] ${msg}`);
@@ -201,6 +204,12 @@ const simFetch: typeof fetch = async (input, init) => {
     return icsResponse(appleLinkIcs());
   }
 
+  if (where === 'api.notion.com/v1/oauth/token' && method === 'POST') {
+    const sent = JSON.parse(String(init?.body ?? '{}')) as { code?: string };
+    if (!sent.code || !notionCodes.delete(sent.code)) return json({ error: 'invalid_grant' }, 400);
+    log('notion', 'logged in (workspace shared with Breakpoint, read-only)');
+    return json({ access_token: NOTION_TOKEN, token_type: 'bearer', workspace_name: 'Sam’s school workspace', bot_id: 'sim-bot' });
+  }
   if (url.host === 'api.notion.com' && url.pathname.startsWith('/v1/')) {
     if (auth !== `Bearer ${NOTION_TOKEN}`) return json({ object: 'error', code: 'unauthorized' }, 401);
     if (url.pathname === '/v1/users/me') return json({ bot: { workspace_name: 'Sam’s school workspace' } });
@@ -249,6 +258,36 @@ ${calendar ? '<label class="x"><input type="checkbox" name="extra" value="1"> Al
   return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 }
 
+function notionConsentPage(u: URL): Response {
+  const p = u.searchParams;
+  const hidden = ['redirect_uri', 'state'].map((k) => `<input type="hidden" name="${k}" value="${esc(p.get(k) ?? '')}">`).join('');
+  const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Simulated Notion</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;background:#f7f6f3;color:#37352f;margin:0;display:grid;place-items:center;min-height:100vh}main{background:#fff;border-radius:10px;padding:32px;width:min(430px,92vw);box-shadow:0 2px 14px #0002}
+h1{font-size:19px;margin:0 0 6px}.sim{background:#fbf3db;border:1px solid #e9c46a;border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:16px}label.r{display:flex;gap:10px;padding:9px 0;border-top:1px solid #eee}
+.row{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}button{font:inherit;border-radius:6px;padding:8px 18px;border:1px solid #ddd;background:#fff;cursor:pointer}button.go{background:#2383e2;color:#fff;border-color:#2383e2}</style>
+<main><div class="sim"><b>Simulated Notion.</b> This is the Breakpoint simulator, not Notion.</div>
+<h1>Breakpoint would like to access Sam’s school workspace</h1><p>Select the pages and databases to share. Breakpoint can only <b>read</b> them.</p>
+<form method="get" action="/sim/notion/decide">${hidden}<label class="r"><input type="checkbox" checked disabled> Homework (database)</label><label class="r"><input type="checkbox" checked disabled> Reading list (database)</label>
+<div class="row"><button name="allow" value="0" type="submit">Cancel</button><button class="go" name="allow" value="1" type="submit">Allow access</button></div></form></main>`;
+  return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+}
+
+function notionDecide(u: URL): Response {
+  const p = u.searchParams;
+  const back = new URL(p.get('redirect_uri') ?? '');
+  if (back.origin !== new URL(config.apiUrl).origin) return new Response('redirect_uri must point at this API', { status: 400 });
+  if (p.get('state')) back.searchParams.set('state', p.get('state')!);
+  if (p.get('allow') !== '1') {
+    back.searchParams.set('error', 'access_denied');
+    log('notion', 'the user pressed Cancel');
+    return Response.redirect(back.toString(), 302);
+  }
+  const code = `sim_notion_${randomToken(12)}`;
+  notionCodes.add(code);
+  back.searchParams.set('code', code);
+  return Response.redirect(back.toString(), 302);
+}
+
 function decide(u: URL): Response {
   const p = u.searchParams;
   const back = new URL(p.get('redirect_uri') ?? '');
@@ -280,11 +319,20 @@ serve(
       const u = new URL(req.url);
       if (u.pathname === '/sim/google/authorize') return consentPage(u);
       if (u.pathname === '/sim/google/decide') return decide(u);
+      if (u.pathname === '/sim/notion/authorize') return notionConsentPage(u);
+      if (u.pathname === '/sim/notion/decide') return notionDecide(u);
       const res = await app.fetch(req);
       // the real API returns Google's consent URL; point it at the pretend consent page instead
       if (res.ok && req.method !== 'OPTIONS' && /\/google\/start$/.test(u.pathname) && res.headers.get('content-type')?.includes('json')) {
         const body = (await res.json()) as { url?: string };
         if (body.url?.startsWith(GOOGLE_AUTH)) body.url = body.url.replace(GOOGLE_AUTH, `${config.apiUrl}/sim/google/authorize`);
+        const headers = new Headers(res.headers);
+        headers.delete('content-length');
+        return new Response(JSON.stringify(body), { status: res.status, headers });
+      }
+      if (res.ok && req.method !== 'OPTIONS' && /\/notion\/start$/.test(u.pathname) && res.headers.get('content-type')?.includes('json')) {
+        const body = (await res.json()) as { url?: string };
+        if (body.url?.startsWith('https://api.notion.com/v1/oauth/authorize')) body.url = body.url.replace('https://api.notion.com/v1/oauth/authorize', `${config.apiUrl}/sim/notion/authorize`);
         const headers = new Headers(res.headers);
         headers.delete('content-length');
         return new Response(JSON.stringify(body), { status: res.status, headers });
@@ -296,7 +344,7 @@ serve(
     console.log(`Breakpoint SIMULATOR on http://${info.address}:${info.port}  (pretend Google + pretend Notion, in-memory database)`);
     console.log(`  CORS:    ${config.appOrigins.join(', ')}`);
     console.log(`  Google:  sign in as Sam Student on the simulated consent page`);
-    console.log(`  Notion:  paste this token → ${NOTION_TOKEN}`);
+    console.log(`  Notion:  "Log in with Notion" opens a pretend consent page (or paste this token → ${NOTION_TOKEN})`);
     console.log('  Google link: paste https://calendar.google.com/calendar/ical/sam/private-demo/basic.ics   (…/dead/… gives the "link was reset" error)');
     console.log('  Apple link:  paste webcal://p12-caldav.icloud.com/published/2/demo');
     console.log('  Start the site with: npm run dev   (in the project root)');

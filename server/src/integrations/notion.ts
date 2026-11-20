@@ -24,6 +24,36 @@ async function call(f: Fetcher, token: string, path: string, init: { method: 'GE
   return (await res.json()) as Record<string, unknown>;
 }
 
+/* ───────────── "Log in with Notion" (OAuth for a Notion public integration) ───────────── */
+
+export interface NotionOAuthClient {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+}
+
+export function buildNotionAuthUrl(c: NotionOAuthClient, state: string): string {
+  const u = new URL('https://api.notion.com/v1/oauth/authorize');
+  u.searchParams.set('client_id', c.clientId);
+  u.searchParams.set('response_type', 'code');
+  u.searchParams.set('owner', 'user');
+  u.searchParams.set('redirect_uri', c.redirectUri);
+  u.searchParams.set('state', state);
+  return u.toString();
+}
+
+/** Trades the one-time code for the workspace token. The only non-GET call besides /search and /query, and it is how the user's consent becomes a token. */
+export async function exchangeNotionCode(f: Fetcher, c: NotionOAuthClient, code: string): Promise<{ accessToken: string; workspaceName: string }> {
+  const res = await f('https://api.notion.com/v1/oauth/token', {
+    method: 'POST',
+    headers: { authorization: `Basic ${btoa(`${c.clientId}:${c.clientSecret}`)}`, 'content-type': 'application/json', 'notion-version': VERSION },
+    body: JSON.stringify({ grant_type: 'authorization_code', code, redirect_uri: c.redirectUri }),
+  });
+  const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok || typeof j.access_token !== 'string') throw new ImportError('notion_oauth_failed', 'Notion did not accept the login. Try again.');
+  return { accessToken: j.access_token, workspaceName: String(j.workspace_name ?? 'Notion workspace').slice(0, 120) };
+}
+
 export async function verifyToken(f: Fetcher, token: string): Promise<{ label: string }> {
   const j = await call(f, token, '/users/me', { method: 'GET' });
   const bot = j.bot as { workspace_name?: string } | undefined;

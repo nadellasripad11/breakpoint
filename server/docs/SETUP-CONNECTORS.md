@@ -56,6 +56,22 @@ The simulator uses an in-memory database (everything vanishes when you stop it) 
 
 ## 2 · Google sign-in and Calendar with OAuth (optional)
 
+**What needs Google's verification and what does not.** Signing in with Google only asks for your name and email (non-sensitive), which should not trigger Google's unverified-app warning. Reading the calendar (`calendar.readonly`) is the sensitive part: until the app is verified, that one screen shows "Google hasn't verified this app" and the app is capped at 100 users. So the plan that removes the most friction without waiting for Google is: turn on Google sign-in (real accounts that persist), let the calendar permission work for you and a small group, and keep the private-link import as the path that works for everyone.
+
+Quick path:
+1. <https://console.cloud.google.com/> → new project → **APIs & Services → Library** → enable the **Google Calendar API**.
+2. **OAuth consent screen** → External → app name Breakpoint, your email as support and developer contact, homepage `https://breakpoint-41x.pages.dev`, privacy `https://breakpoint-41x.pages.dev/privacy`, terms `https://breakpoint-41x.pages.dev/terms`. Scopes: `openid`, `email`, `profile`, `.../auth/calendar.readonly`. Then **Publish app** (so it is not limited to listed test users).
+3. **Credentials → Create credentials → OAuth client ID → Web application**, with the two redirect URIs listed in the next section.
+4. From `server/`, give the API the two values (each command asks you to paste):
+   ```powershell
+   npx --yes wrangler@4.50.0 secret put GOOGLE_CLIENT_ID
+   ```
+   ```powershell
+   npx --yes wrangler@4.50.0 secret put GOOGLE_CLIENT_SECRET
+   ```
+5. The site notices by itself (`google: true` in `/api/capabilities`): the Google option now starts with sign-in, and "use a private link instead" is one tap away.
+
+
 > Not needed any more: section 0 covers Google Calendar. OAuth is only worth it if you want users to sign in with Google and have Breakpoint keep a long-lived read-only connection. Google requires **app verification** for the sensitive `calendar.readonly` scope before the general public can use it without a warning screen; until then the app is limited to 100 users (and, in *Testing*, only listed test users, with refresh tokens that expire after 7 days).
 
 
@@ -78,6 +94,27 @@ Good to know:
 * While a Google app is in **Testing**, Google expires refresh tokens after **7 days**. Breakpoint then asks the user to reconnect ("Google needs you to reconnect").
 * `calendar.readonly` is a *sensitive* scope. Letting anyone beyond your test users connect requires Google's app verification. For a hackathon demo, test users are enough.
 * The first entry in `APP_ORIGINS` is where Google sends people back to, so list the site you actually use first.
+
+## 3a · "Log in with Notion" (no pasting a token)
+
+This needs a Notion **public** integration. Notion does not review these, so there is no approval to wait for. Once it is set up, connecting Notion is two clicks and Notion itself asks which pages and databases to share.
+
+1. <https://www.notion.so/profile/integrations> → **New integration** → type **Public**.
+2. Fill in what it asks for:
+   * name: Breakpoint
+   * website: `https://breakpoint-41x.pages.dev`
+   * privacy policy: `https://breakpoint-41x.pages.dev/privacy`
+   * terms of use: `https://breakpoint-41x.pages.dev/terms`
+   * redirect URIs: `https://breakpoint-api.nadellasripad11.workers.dev/api/connections/notion/callback` (add `http://localhost:8787/api/connections/notion/callback` too if you run it locally)
+   * capabilities: **Read content** only (no insert, no update)
+3. Copy the *OAuth client ID* and *OAuth client secret*, and give them to the API (from `server/`; each command asks you to paste the value):
+   ```powershell
+   npx --yes wrangler@4.50.0 secret put NOTION_CLIENT_ID
+   ```
+   ```powershell
+   npx --yes wrangler@4.50.0 secret put NOTION_CLIENT_SECRET
+   ```
+4. `GET /api/capabilities` now shows `notionLogin: true` and the site's Notion option becomes "Log in with Notion". Pasting a token stays available as a fallback.
 
 ## 3 · Real Notion
 

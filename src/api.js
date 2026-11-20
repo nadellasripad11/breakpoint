@@ -120,8 +120,10 @@ export const RETURN_ERRORS = {
   invalid_request: 'That sign-in link wasn’t valid. Start again from here.',
   invalid_code: 'That sign-in link expired or was already used. Start again from here.',
   google_not_configured: 'Google isn’t switched on for this server yet.',
+  notion_not_configured: 'Log in with Notion isn’t switched on for this server yet. You can paste a token instead.',
+  connect_failed: 'Notion or Google couldn’t finish that, so nothing was connected. Please try again.',
   email_unverified: 'Google says that email address isn’t verified, so we couldn’t sign you in.',
 };
-export const returnError = (code) => RETURN_ERRORS[code] || 'Google couldn’t finish that. Nothing was connected. Please try again.';
+export const returnError = (code) => RETURN_ERRORS[code] || 'That couldn’t be finished, so nothing was connected. Please try again.';
 
 export function resetSessionCache() { user = null; scheduleId = null; }

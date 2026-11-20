@@ -110,6 +110,8 @@ export class BreakpointApi {
   async googleConnectUrl(redirectPath = '/') {
     return (await this.request('POST', '/api/connections/google/start', { acknowledge: true, scopes: ['https://www.googleapis.com/auth/calendar.readonly'], redirect: redirectPath })).url;
   }
+  /** "Log in with Notion": returns the Notion consent URL (navigate to it). Needs `capabilities().notionLogin`. */
+  async notionLoginUrl(redirectPath = '/') { return (await this.request('POST', '/api/connections/notion/start', { acknowledge: true, redirect: redirectPath })).url; }
   connectNotion(integrationToken) { return this.request('POST', '/api/connections/notion', { acknowledge: true, token: integrationToken }); }
   disconnect(connectionId) { return this.request('DELETE', `/api/connections/${connectionId}`); }
   googleCalendars(connectionId) { return this.request('GET', `/api/connections/${connectionId}/google/calendars`).then((r) => r.calendars); }

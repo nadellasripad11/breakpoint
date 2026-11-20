@@ -31,6 +31,8 @@ export async function makeApp(opts: { fetch?: Fetcher; env?: Record<string, stri
     TOKEN_ENC_KEY: Buffer.alloc(32, 7).toString('base64'),
     GOOGLE_CLIENT_ID: 'test-client-id',
     GOOGLE_CLIENT_SECRET: 'test-client-secret',
+    NOTION_CLIENT_ID: 'test-notion-client',
+    NOTION_CLIENT_SECRET: 'test-notion-secret',
     ...opts.env,
   });
   const deps: Deps = { store, config, fetch: opts.fetch ?? noNetwork, now: () => new Date(), newId: () => crypto.randomUUID() };

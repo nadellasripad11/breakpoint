@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>breakpoint: privacy</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0d0c0f; color: #e6dfd2; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 700px; margin: 0 auto; padding: 48px 20px 80px; }
+  h1 { font-size: 34px; letter-spacing: -0.02em; color: #f6efe4; margin: 0 0 4px; }
+  h2 { font-size: 20px; color: #f6efe4; margin: 34px 0 6px; }
+  a { color: #9bd98a; }
+  p, li { color: #d9d2c5; }
+  .muted { color: #a29d92; font-size: 15px; }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="/">← breakpoint</a></p>
+  <h1>privacy</h1>
+  <p class="muted">last updated 20 november 2026. breakpoint is a hackathon project, and this page says plainly what it does with your data.</p>
+
+  <h2>the short version</h2>
+  <p>breakpoint reads a copy of the calendar or tasks you choose to bring in, uses it to compute what happens when your day goes wrong, and never changes your original calendar or notion. you do not need an account. there are no ads, no trackers and no analytics.</p>
+
+  <h2>what breakpoint stores</h2>
+  <ul>
+    <li><b>a guest sandbox.</b> when you try breakpoint without signing in, you get an anonymous sandbox with no personal data. it is deleted after 24 hours of inactivity.</li>
+    <li><b>a copy of what you import.</b> event and task titles, start times, durations, deadlines and the few notion properties you choose. not descriptions, guests, locations or attachments.</li>
+    <li><b>connection tokens.</b> if you log in with notion or connect google calendar, the access token is stored encrypted (aes-256-gcm) and only used to read the databases or calendars you shared. it is deleted when you disconnect or when your guest sandbox is deleted.</li>
+    <li><b>if you sign in with google:</b> your name, email address and profile picture, to recognise you and keep your schedules.</li>
+    <li><b>an audit log</b> of actions such as "signed in" or "connected notion", with no calendar content in it.</li>
+  </ul>
+
+  <h2>what breakpoint does not store</h2>
+  <ul>
+    <li><b>calendar links.</b> a google "secret address in ical format" or an icloud public calendar link is used once to read the calendar and is never saved, logged or shown again.</li>
+    <li><b>passwords.</b> breakpoint never asks for your google, apple or notion password.</li>
+  </ul>
+
+  <h2>read-only, always</h2>
+  <p>breakpoint only reads. it cannot create, change or delete anything in google calendar, apple calendar or notion. the permissions it asks for are read-only, and you choose what to share.</p>
+
+  <h2>your browser</h2>
+  <p>the site keeps a session token in your browser's session storage (cleared when you close the tab) and a few choices, such as your onboarding answers, in local storage. fonts are served from the site itself. nothing is sent to advertisers or analytics services.</p>
+
+  <h2>who else touches your data</h2>
+  <p>the site and api run on cloudflare, which also hosts the database, so cloudflare processes requests and keeps normal hosting logs. google and notion are contacted only to read what you asked breakpoint to read. data is not sold or shared with anyone else.</p>
+
+  <h2>google user data</h2>
+  <p>breakpoint's use of information received from google apis adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">google api services user data policy</a>, including the limited use requirements. it is used only to show you a preview and import the events you approve.</p>
+
+  <h2>deleting your data</h2>
+  <p>guest data disappears on its own after 24 hours. you can disconnect notion or google at any time, and revoke access from your google or notion settings. to have an account and everything in it erased, open an issue at <a href="https://github.com/nadellasripad11/breakpoint/issues">github.com/nadellasripad11/breakpoint/issues</a>.</p>
+
+  <p class="muted">the code is public: <a href="https://github.com/nadellasripad11/breakpoint">github.com/nadellasripad11/breakpoint</a>. you can check every claim above.</p>
+</main>
+</body>
+</html>

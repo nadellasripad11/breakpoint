@@ -389,7 +389,7 @@ export function initConnect({ ob, say, reduce, persist }) {
       sub: g
         ? 'Breakpoint keeps your connection safe in an account. Signing in shares only your name and email. Calendar access is a separate step that you choose.'
         : 'Breakpoint stores your Notion token encrypted, in an account. Sign in with Google to continue. It shares only your name and email.',
-      body: currentUser()?.isGuest ? [h('p', { class: 'sh__hint' }, 'Anything you’ve added so far comes with you.')] : [],
+      body: [...(currentUser()?.isGuest ? [h('p', { class: 'sh__hint' }, 'Anything you’ve added so far comes with you.')] : []), ...(g && caps && caps.calendarLink ? [h('div', { class: 'sh__alts' }, h('button', { class: 'sh__linkbtn', type: 'button', onclick: () => viewCalendarLink('google') }, 'Use a private link instead (no sign-in)'))] : [])],
       actions: [ghost('Not now', cancel), primary('Continue with Google', go)],
       foot: 'You can delete your account and everything in it at any time.',
       note,
@@ -500,7 +500,7 @@ export function initConnect({ ob, say, reduce, persist }) {
   }
 
   /* ───────── Notion ───────── */
-  /** Notion needs no login: a guest sandbox is enough (the token is stored encrypted and deleted with it). */
+  /** Notion needs no sign-in. With "Log in with Notion" set up it is two clicks; otherwise a pasted token still works. */
   async function gateNotion(note) {
     loading(['Checking ', ['em', 'Notion']]);
     const t = token;
@@ -509,10 +509,29 @@ export function initConnect({ ob, say, reduce, persist }) {
       const conns = await api.listConnections();
       if (t !== token) return;
       const c = conns.find((x) => x.provider === 'notion');
-      return c ? viewNotionPick(c, note) : viewNotionToken(note);
+      if (c) return viewNotionPick(c, note);
+      return caps && caps.notionLogin ? viewNotionLogin(note) : viewNotionToken(note);
     } catch (e) {
       if (t === token) viewFatal(e, () => gateNotion(note));
     }
+  }
+
+  function viewNotionLogin(note) {
+    const go = (btn) => run(btn, 'Opening Notion…', async () => {
+      const url = await api.notionLoginUrl('/?ob=notion');
+      persist && persist();
+      location.assign(url);
+      await new Promise(() => {});
+    });
+    render({
+      ico: icon('i-notion'),
+      title: ['Log in with ', ['em', 'Notion']],
+      sub: 'Notion will ask which pages and databases to share. Breakpoint can only read what you choose. It never changes anything.',
+      body: [h('div', { class: 'sh__alts' }, h('button', { class: 'sh__linkbtn', type: 'button', onclick: () => viewNotionToken() }, 'I’d rather paste a token instead'))],
+      actions: [ghost('Not now', cancel), primary('Log in with Notion', go)],
+      foot: 'No password is shared with Breakpoint. You can remove the connection in Notion at any time.',
+      note,
+    });
   }
 
   function viewNotionToken(note) {
@@ -618,10 +637,11 @@ export function initConnect({ ob, say, reduce, persist }) {
   }
 
   /* ───────── entry points ───────── */
-  // Google and Apple default to the link flow (nothing to verify or approve); Google sign-in stays available when the server has it
+  // Google: sign in with Google when the server has it (fewest steps), otherwise the private link (nothing to approve).
+  // Apple has no sign-in for calendars, so it is always the link.
   const FLOWS = {
     ics: viewIcs,
-    google: (note) => (caps && caps.calendarLink ? viewCalendarLink('google', note) : gateGoogle(note)),
+    google: (note) => (caps && caps.google ? gateGoogle(note) : caps && caps.calendarLink ? viewCalendarLink('google', note) : gateGoogle(note)),
     apple: (note) => (caps && caps.calendarLink ? viewCalendarLink('apple', note) : viewIcs(note)),
     notion: gateNotion,
   };
@@ -669,6 +689,7 @@ export function initConnect({ ob, say, reduce, persist }) {
     }
     if (ret.error) note = { text: returnError(ret.error), tone: 'err' };
     else if (ret.connected === 'google') note = { text: 'Google Calendar connected, read-only.', tone: 'ok' };
+    else if (ret.connected === 'notion') note = { text: 'Notion connected, read-only. Pick the database to bring in.', tone: 'ok' };
     cleanLandedUrl();
     if (!(await checkServer())) { say('Couldn’t reach the Breakpoint server. Try again in a moment.'); return { advance: false }; }
     const p = openFlow();

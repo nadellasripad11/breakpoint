@@ -153,6 +153,8 @@ it refreshes title/time/duration but **never overwrites** what you set (locked, 
 
 **`POST /api/schedules/:id/import/link`** `{ url, provider?: "google"|"apple", dryRun?, allDayBlocks?, defaultTaskMinutes? }` imports a calendar from its link (Google "Secret address in iCal format", iCloud public calendar; `webcal://` is accepted). Same response as the .ics import (`dryRun` returns a preview). No sign-in needed. The server fetches the link once from an allow-listed host (calendar.google.com, *.icloud.com) and never stores or echoes it; errors `link_invalid`, `link_not_allowed`, `link_not_found`, `link_forbidden`, `link_unreachable`, `not_ics`, `too_large` all carry plain-English messages. `GET /api/capabilities` now includes `calendarLink: true`.
 
+**`POST /api/connections/notion/start`** `{ acknowledge: true, redirect? }` returns `{ url }`: send the browser to it to "Log in with Notion". Notion calls back to `GET /api/connections/notion/callback`, which stores the workspace token encrypted and redirects to the site with `?connected=notion` (or `?ob=notion&connect_error=<code>`). Works for guests. Needs `NOTION_CLIENT_ID` and `NOTION_CLIENT_SECRET`; `GET /api/capabilities` reports `notionLogin`.
+
 ## Connections (real accounts only; guests get `403 guest_not_allowed`)
 
 | | |

@@ -213,5 +213,6 @@ export const notionImportBody = z
   .strict();
 
 export const googleConnectBody = z.object({ acknowledge: z.literal(true), scopes: z.tuple([z.literal('https://www.googleapis.com/auth/calendar.readonly')]), redirect: z.string().max(200).optional() }).strict();
+export const notionStartBody = z.object({ acknowledge: z.literal(true), redirect: z.string().max(200).optional() }).strict();
 export const notionConnectBody = z.object({ acknowledge: z.literal(true), token: z.string().min(20).max(300) }).strict();
 export const deleteAccountBody = z.object({ confirm: z.literal('delete my account') }).strict();

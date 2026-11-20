@@ -18,7 +18,7 @@ Live checks that passed after deploying: the 15-step smoke test (`BASE_URL=... n
 
 * **.ics import**: yes, as a guest.
 * **Google Calendar and Apple Calendar by link**: yes, as a guest (no OAuth app, no Google verification; see SETUP-CONNECTORS.md section 0).
-* **Notion**: yes, as a guest. The user pastes a read-only integration token; it is stored encrypted and deleted when they disconnect or their guest sandbox expires (24 hours).
+* **Notion**: yes, as a guest: by pasting a token, or with "Log in with Notion" once you have added a public integration (SETUP-CONNECTORS.md 3a). The user pastes a read-only integration token; it is stored encrypted and deleted when they disconnect or their guest sandbox expires (24 hours).
 * **Rescue my day** and **Can you save this day?**: yes. They run in the browser. "My schedule" inside Rescue reads the visitor's own imported schedule from the API.
 * **Google sign-in (OAuth)**: optional, and needs a Google OAuth client plus Google's verification for public use (below). Not needed for Google Calendar: the link method works today.
 

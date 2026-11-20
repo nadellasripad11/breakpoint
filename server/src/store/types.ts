@@ -23,7 +23,7 @@ export interface SessionRow {
 
 export interface OAuthStateRow {
   stateHash: string;
-  purpose: 'login' | 'connect_google';
+  purpose: 'login' | 'connect_google' | 'connect_notion';
   codeVerifier: string;
   nonce: string | null;
   userId: string | null;
