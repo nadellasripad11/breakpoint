@@ -79,7 +79,7 @@ function say(msg) {
   toastTimer = setTimeout(() => toast.classList.remove('is-on'), 2800);
 }
 
-const onboarding = initOnboarding({ getLenis: () => lenis, say });
+const onboarding = initOnboarding({ getLenis: () => lenis, say, onDone: () => rescue.open('rescue', { mine: true }) });
 const rescue = initRescue({ getLenis: () => lenis, say, onSetup: () => onboarding.open() });
 onboarding.resumeFromRedirect(); // back from Google sign-in / consent? reopen the connector sheet where the user left off
 

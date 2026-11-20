@@ -96,8 +96,8 @@ then upload `dist/` to cloudflare pages. full steps, secrets and limits are in [
 
 ## honest limits
 
-- there is no main "plan" dashboard yet: after onboarding the useful screens are rescue my day and the challenge.
-- google sign-in and notion login are optional and need credentials of your own (see the setup guide). until then the link and token flows work, and guest data lasts 24 hours.
+- there is no separate "plan" dashboard: finishing onboarding takes you straight into rescue my day on your own schedule.
+- notion login is live. google sign-in is switched off on purpose (google wants to verify apps that read calendars), so google calendar uses its private link instead. guest data lasts 24 hours.
 - apple has no sign-in for calendars, so apple calendar uses its public link or an exported file. asking for an apple password would be a bad idea, so it is intentionally not offered.
 - the cloudflare free plan has request and cpu limits; the hosting guide says what to watch.
 

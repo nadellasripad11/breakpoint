@@ -28,6 +28,7 @@ export function initRescue({ getLenis, say, onSetup }) {
   let returnFocus = null;
   let cleanup = () => {};
   let opened = 0; // bumps on every open/tab change so late async work can tell it is stale
+  let startOnMine = false; // set by open(…, { mine: true }): after onboarding, start on the visitor's own schedule
 
   /** Clock times are shown in the day's own timezone: UTC for the generated days, the schedule's timezone for yours. */
   let TZ = 'UTC';
@@ -457,7 +458,11 @@ export function initRescue({ getLenis, say, onSetup }) {
       if (autoplay && !reduce) setTimeout(() => { if (token === opened && !timer) startP(); }, 500);
     }
 
-    loadSeed(0);
+    if (startOnMine) {
+      startOnMine = false;
+      // their own schedule when this site has an API, otherwise the generated sample day
+      import('./api.js').then((m) => (m.apiEnabled ? loadMine() : loadSeed(0)));
+    } else loadSeed(0);
   }
 
   const PHASE = { original: 'As planned', disruption: 'Something goes wrong', conflicts: 'If you carry on', repair: 'The repair', done: 'Repaired' };
@@ -743,8 +748,9 @@ export function initRescue({ getLenis, say, onSetup }) {
     else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
   });
 
-  function open(which = 'rescue') {
-    if (isOpen) { if (which !== tab) show(which); return; }
+  function open(which = 'rescue', opts = {}) {
+    startOnMine = !!opts.mine;
+    if (isOpen) { if (which !== tab) show(which); else if (startOnMine) show(which); return; }
     isOpen = true;
     returnFocus = document.activeElement;
     const lenis = getLenis();

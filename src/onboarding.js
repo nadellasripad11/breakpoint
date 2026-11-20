@@ -18,7 +18,7 @@ const store = {
  * Onboarding overlay: welcome -> connect -> customize -> done.
  * Opens from every "Get started" / "Try Breakpoint" button.
  */
-export function initOnboarding({ getLenis, say }) {
+export function initOnboarding({ getLenis, say, onDone }) {
   const ob = $('#onboarding');
   const screens = $$('.scr', ob);
   const steps = $$('.stp', ob);
@@ -295,7 +295,10 @@ export function initOnboarding({ getLenis, say }) {
       const lenis = getLenis(); lenis && lenis.start();
       busy = false;
       returnFocus && returnFocus.focus && returnFocus.focus({ preventScroll: true });
-      if (reason === 'done') say(`You’re all set${imported && !imported.scratch && imported.total ? ` — ${imported.total} ${imported.total === 1 ? 'item' : 'items'} imported` : ''}. Your plan view is coming soon.`);
+      if (reason === 'done') {
+        say(`You’re all set${imported && !imported.scratch && imported.total ? ` — ${imported.total} ${imported.total === 1 ? 'item' : 'items'} imported` : ''}.`);
+        if (onDone) onDone({ imported }); // "Go to my plan": straight into Rescue My Day on the schedule they just built
+      }
     };
     if (reduce) { finish(); return; }
     gsap.to(ob, { opacity: 0, scale: 1.02, duration: 0.45, ease: 'power2.in', onComplete: finish });
