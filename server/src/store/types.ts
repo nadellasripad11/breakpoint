@@ -84,7 +84,7 @@ export interface ImportRecord {
 export interface UpsertResult {
   created: number;
   updated: number;
-  /** previously imported items that were not in this import. They are KEPT; the user decides. */
+  /** previously imported items that were not in this import. they are kept; the user decides. */
   missing: { id: string; title: string }[];
 }
 
@@ -96,7 +96,7 @@ export class LimitError extends Error {
   }
 }
 
-/** Async so a Cloudflare D1 implementation can replace the SQLite one without touching callers. */
+/** async so a cloudflare d1 implementation can replace the sqlite one without touching callers. */
 export interface Store {
   migrate(): Promise<void>;
   close(): Promise<void>;
@@ -107,7 +107,7 @@ export interface Store {
   findUserByEmail(email: string): Promise<User | null>;
   updateUserProfile(id: string, p: { email?: string | null; name?: string | null; picture?: string | null; googleSub?: string | null; isGuest?: boolean }): Promise<void>;
   touchUser(id: string, now: string): Promise<void>;
-  /** Deletes the user and, by cascade, every schedule, item, connection, session and run they own. */
+  /** deletes the user and, by cascade, every schedule, item, connection, session and run they own. */
   deleteUser(id: string): Promise<void>;
   purgeExpiredGuests(olderThanIso: string): Promise<number>;
 
@@ -119,12 +119,12 @@ export interface Store {
   purgeExpiredSessions(nowIso: string): Promise<number>;
 
   saveOAuthState(s: OAuthStateRow): Promise<void>;
-  /** Returns the state once and deletes it (single use). */
+  /** returns the state once and deletes it (single use). */
   consumeOAuthState(stateHash: string, nowIso: string): Promise<OAuthStateRow | null>;
   purgeExpiredOAuthStates(nowIso: string): Promise<number>;
 
   saveLoginCode(codeHash: string, userId: string, expiresAt: string): Promise<void>;
-  /** Returns the user id once and deletes the code (single use). */
+  /** returns the user id once and deletes the code (single use). */
   consumeLoginCode(codeHash: string, nowIso: string): Promise<string | null>;
 
   createConnection(c: Connection): Promise<void>;

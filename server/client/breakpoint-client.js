@@ -1,12 +1,12 @@
-// Breakpoint API client. Zero dependencies, works in any browser (and Node 18+).
-// Copy this file into the frontend (e.g. src/api.js) and import it:
+// breakpoint api client. zero dependencies, works in any browser (and node 18+).
+// copy this file into the frontend (e.g. src/api.js) and import it:
 //
-//   import { BreakpointApi } from './api.js';
-//   const api = new BreakpointApi({ baseUrl: 'https://api.example.com' });
+//   import { breakpointapi } from './api.js';
+//   const api = new breakpointapi({ baseurl: 'https://api.example.com' });
 //
-// Two ways to authenticate (see docs/FRONTEND.md):
-//   cookie mode (default): the API is on the same site as the app; the browser stores an HttpOnly session cookie for you.
-//   token mode: pass `token` / `onToken` and the client sends `Authorization: Bearer ...` instead (cross-site setups).
+// two ways to authenticate (see docs/frontend.md):
+//   cookie mode (default): the api is on the same site as the app; the browser stores an httponly session cookie for you.
+//   token mode: pass `token` / `ontoken` and the client sends `authorization: bearer ...` instead (cross-site setups).
 
 export class BreakpointError extends Error {
   constructor(status, body) {
@@ -22,7 +22,7 @@ export class BreakpointError extends Error {
 
 export class BreakpointApi {
   /**
-   * @param {{ baseUrl: string, token?: string|null, onToken?: (t: string|null) => void, fetch?: typeof fetch, timeoutMs?: number }} opts
+   * @param {{ baseurl: string, token?: string|null, ontoken?: (t: string|null) => void, fetch?: typeof fetch, timeoutms?: number }} opts
    */
   constructor(opts) {
     this.baseUrl = opts.baseUrl.replace(/\/$/, '');
@@ -33,7 +33,7 @@ export class BreakpointApi {
   }
 
   async request(method, path, body, timeoutMs = this.timeoutMs) {
-    const headers = { 'X-Breakpoint-Client': '1' }; // CSRF guard: forces a CORS preflight for cross-site pages
+    const headers = { 'X-Breakpoint-Client': '1' }; // csrf guard: forces a cors preflight for cross-site pages
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (this.token) headers.Authorization = `Bearer ${this.token}`;
     const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -55,7 +55,7 @@ export class BreakpointApi {
     try {
       json = await res.json();
     } catch {
-      /* non-JSON error */
+      /* non-json error */
     }
     if (!res.ok) throw new BreakpointError(res.status, json);
     return json;
@@ -66,25 +66,25 @@ export class BreakpointApi {
     if (this.onToken) this.onToken(t);
   }
 
-  /** What the server can do: { google, notion, ics, accounts }. Throws if the server is unreachable (4s timeout). */
+  /** what the server can do: { google, notion, ics, accounts }. throws if the server is unreachable (4s timeout). */
   capabilities() { return this.request('GET', '/api/capabilities', undefined, 4000); }
 
   /* ───────── session ───────── */
 
-  /** Start (or reuse) a guest session with the demo schedule: no login needed. */
+  /** start (or reuse) a guest session with the demo schedule: no login needed. */
   async guest(timezone) {
     const r = await this.request('POST', `/api/auth/guest${timezone ? `?tz=${encodeURIComponent(timezone)}` : ''}`);
     if (r.token) this._setToken(r.token);
-    return r; // { user, token, expiresAt, demoScheduleId }
+    return r; // { user, token, expiresat, demoscheduleid }
   }
   me() { return this.request('GET', '/api/me'); }
   async logout() { await this.request('POST', '/api/auth/logout'); this._setToken(null); }
   async deleteAccount() { await this.request('DELETE', '/api/me', { confirm: 'delete my account' }); this._setToken(null); }
 
   /**
-   * Call once on every page load. If the URL has #bp_code=... (you were just redirected back from Google sign-in) this trades
-   * the single-use code for a session token (needed when the app and API are on different sites) and cleans the URL.
-   * Returns the user, or null when there was no code.
+   * call once on every page load. if the url has #bp_code=... (you were just redirected back from google sign-in) this trades
+   * the single-use code for a session token (needed when the app and api are on different sites) and cleans the url.
+   * returns the user, or null when there was no code.
    */
   async completeSignIn() {
     const m = /[#&]bp_code=([A-Za-z0-9_-]+)/.exec(typeof location !== 'undefined' ? location.hash : '');
@@ -98,7 +98,7 @@ export class BreakpointApi {
     }
   }
 
-  /** Returns the Google sign-in URL. Navigate to it: `location.href = await api.googleSignInUrl('/app')`. A guest keeps their schedules. */
+  /** returns the google sign-in url. navigate to it: `location.href = await api.googlesigninurl('/app')`. a guest keeps their schedules. */
   async googleSignInUrl(redirectPath = '/') {
     return (await this.request('GET', `/api/auth/google/start?redirect=${encodeURIComponent(redirectPath)}`)).url;
   }
@@ -106,11 +106,11 @@ export class BreakpointApi {
   /* ───────── connections (read-only, explicit consent) ───────── */
 
   listConnections() { return this.request('GET', '/api/connections').then((r) => r.connections); }
-  /** Show the user the read-only scope first. Only call this after they click "Allow read-only access". */
+  /** show the user the read-only scope first. only call this after they click "allow read-only access". */
   async googleConnectUrl(redirectPath = '/') {
     return (await this.request('POST', '/api/connections/google/start', { acknowledge: true, scopes: ['https://www.googleapis.com/auth/calendar.readonly'], redirect: redirectPath })).url;
   }
-  /** "Log in with Notion": returns the Notion consent URL (navigate to it). Needs `capabilities().notionLogin`. */
+  /** "log in with notion": returns the notion consent url (navigate to it). needs `capabilities().notionlogin`. */
   async notionLoginUrl(redirectPath = '/') { return (await this.request('POST', '/api/connections/notion/start', { acknowledge: true, redirect: redirectPath })).url; }
   connectNotion(integrationToken) { return this.request('POST', '/api/connections/notion', { acknowledge: true, token: integrationToken }); }
   disconnect(connectionId) { return this.request('DELETE', `/api/connections/${connectionId}`); }
@@ -124,7 +124,7 @@ export class BreakpointApi {
   getSchedule(id) { return this.request('GET', `/api/schedules/${id}`).then((r) => r.schedule); }
   renameSchedule(id, name) { return this.request('PATCH', `/api/schedules/${id}`, { name }); }
   deleteSchedule(id) { return this.request('DELETE', `/api/schedules/${id}`); }
-  /** Replaces the preferences. See `onboardingToPreferences` below for the onboarding screens. */
+  /** replaces the preferences. see `onboardingtopreferences` below for the onboarding screens. */
   setPreferences(id, preferences) { return this.request('PUT', `/api/schedules/${id}/preferences`, preferences).then((r) => r.preferences); }
   listItems(id) { return this.request('GET', `/api/schedules/${id}/items`).then((r) => r.items); }
   addItems(id, itemOrItems) { return this.request('POST', `/api/schedules/${id}/items`, itemOrItems).then((r) => r.items); }
@@ -133,15 +133,15 @@ export class BreakpointApi {
 
   /* ───────── imports (read-only copies) ───────── */
 
-  /** `text` is the contents of the .ics file (read it in the browser with file.text()). Use dryRun to preview. */
+  /** `text` is the contents of the .ics file (read it in the browser with file.text()). use dryrun to preview. */
   importIcs(id, text, opts = {}) { return this.request('POST', `/api/schedules/${id}/import/ics`, { ics: text, ...opts }); }
-  /** A calendar link: Google "Secret address in iCal format" or an iCloud public calendar link. Read once by the server, never stored. `provider`: 'google' | 'apple'. */
+  /** a calendar link: google "secret address in ical format" or an icloud public calendar link. read once by the server, never stored. `provider`: 'google' | 'apple'. */
   importLink(id, url, opts = {}) { return this.request('POST', `/api/schedules/${id}/import/link`, { url, ...opts }); }
   importGoogle(id, { connectionId, calendarId, from, to, dryRun }) { return this.request('POST', `/api/schedules/${id}/import/google`, { connectionId, calendarId, from, to, confirm: true, dryRun }); }
   importNotion(id, { connectionId, databaseId, mapping, dryRun }) { return this.request('POST', `/api/schedules/${id}/import/notion`, { connectionId, databaseId, mapping: mapping || {}, confirm: true, dryRun }); }
 
   /* ───────── the engine on a saved schedule ─────────
-     `window` is { date: 'YYYY-MM-DD' } (the schedule's local day) or { from, to } as ISO strings. */
+     `window` is { date: 'yyyy-mm-dd' } (the schedule's local day) or { from, to } as iso strings. */
 
   plan(id, window) { return this.request('POST', `/api/schedules/${id}/plan`, { window }); }
   simulate(id, window, disruptions, save) { return this.request('POST', `/api/schedules/${id}/simulate`, { window, disruptions, save }); }
@@ -149,7 +149,7 @@ export class BreakpointApi {
   futures(id, window, disruptions = []) { return this.request('POST', `/api/schedules/${id}/futures`, { window, disruptions }); }
   chaos(id, window, opts = {}) { return this.request('POST', `/api/schedules/${id}/chaos`, { window, ...opts }); }
   fortify(id, window, opts = {}) { return this.request('POST', `/api/schedules/${id}/fortify`, { window, ...opts }); }
-  /** Creates a NEW schedule from a future/fortify proposal. `confirm` is mandatory; list deferred task ids in acceptDeferrals. */
+  /** creates a new schedule from a future/fortify proposal. `confirm` is mandatory; list deferred task ids in acceptdeferrals. */
   adopt(id, { window, source, name, acceptDeferrals }) { return this.request('POST', `/api/schedules/${id}/adopt`, { window, source, name, acceptDeferrals, confirm: true }); }
   runs(id) { return this.request('GET', `/api/schedules/${id}/runs`).then((r) => r.runs); }
 
@@ -161,10 +161,10 @@ export class BreakpointApi {
 }
 
 /**
- * Maps the onboarding screens to API preferences.
- *   priorities: ids selected on "What matters most?", in the order the user wants them protected
+ * maps the onboarding screens to api preferences.
+ *   priorities: ids selected on "what matters most?", in the order the user wants them protected
  *               (the first gets priority 5, the next 4, ...). e.g. ['school', 'fitness']
- *   flexibility: 0 | 1 | 2  ->  'fixed' | 'balanced' | 'flexible'   ("How flexible is your schedule?")
+ *   flexibility: 0 | 1 | 2  ->  'fixed' | 'balanced' | 'flexible'   ("how flexible is your schedule?")
  */
 export function onboardingToPreferences({ priorities = [], flexibility = 1, timezone, workingHours } = {}) {
   const names = { school: 'School', fitness: 'Fitness', extra: 'Extracurriculars', other: 'Other' };

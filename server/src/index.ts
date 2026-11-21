@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   await store.migrate();
   const app = createApp({ store, config, fetch: globalThis.fetch, now: () => new Date(), newId: () => randomUUID() });
 
-  // housekeeping: expired sessions / OAuth states and abandoned guest sandboxes
+  // housekeeping: expired sessions / oauth states and abandoned guest sandboxes
   const sweep = async () => {
     const now = new Date();
     await store.purgeExpiredSessions(now.toISOString());

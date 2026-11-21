@@ -243,7 +243,7 @@ export class SqliteStore implements Store {
         const rrule = i.recurrence?.rrule ?? null;
         const exdates = JSON.stringify(i.recurrence?.exdates ?? []);
         if (have) {
-          // refresh what the SOURCE owns; never overwrite what the user decided (locked, priority, category, deferrable, critical)
+          // refresh what the source owns; never overwrite what the user decided (locked, priority, category, deferrable, critical)
           this.run('UPDATE schedule_items SET title=?, start_at=?, duration_min=?, all_day=?, timezone=?, deadline_at=?, release_at=?, blocking=?, rrule=?, exdates=?, updated_at=? WHERE id=?', i.title, i.start, Math.max(1, Math.round(i.durationMin)), n(i.allDay), i.timezone, i.deadline ?? null, i.release ?? null, n(i.blocking), rrule, exdates, nowIso, have.id);
           updated++;
         } else {

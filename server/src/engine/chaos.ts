@@ -4,9 +4,9 @@ import { describeDisruption } from './world.ts';
 import { Rng, hashString } from './prng.ts';
 
 /**
- * Chaos Engine: realistic disruptions drawn from a SEEDED random generator.
- * Same plan + same seed + same severity = byte-identical scenarios and statistics.
- * (Randomness only picks which disruptions to try; every outcome is computed by the deterministic cascade.)
+ * chaos engine: realistic disruptions drawn from a seeded random generator.
+ * same plan + same seed + same severity = byte-identical scenarios and statistics.
+ * (randomness only picks which disruptions to try; every outcome is computed by the deterministic cascade.)
  */
 
 export type ChaosSeverity = 'mild' | 'realistic' | 'severe';

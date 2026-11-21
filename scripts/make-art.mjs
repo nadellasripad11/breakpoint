@@ -1,6 +1,6 @@
-// Cuts the capybara + rock scenery out of the three reference mock-ups and "heals"
-// every overlaid UI element (text, buttons, orbit lines, alert slashes) so the art
-// can be used as clean background layers. Run: node scripts/make-art.mjs
+// cuts the capybara + rock scenery out of the three reference mock-ups and "heals"
+// every overlaid ui element (text, buttons, orbit lines, alert slashes) so the art
+// can be used as clean background layers. run: node scripts/make-art.mjs
 import sharp from 'sharp';
 
 const OUT = 'public/art';
@@ -44,7 +44,7 @@ function healRow(im, y, xa, xb) {
   const L = get(im, Math.max(0, xa), y), R = get(im, Math.min(im.w - 1, xb), y);
   for (let x = xa + 1; x < xb; x++) set(im, x, y, mix(L, R, (x - xa) / (xb - xa)));
 }
-/** follow a polyline [[y, xCenter], ...] and heal +-hw px around it row by row */
+/** follow a polyline [[y, xcenter], ...] and heal +-hw px around it row by row */
 function healLine(im, pts, hw, y0, y1) {
   for (let y = y0; y <= y1; y++) {
     let c = pts[0][1];
@@ -58,7 +58,7 @@ function healLine(im, pts, hw, y0, y1) {
   }
 }
 
-/** crop a region out of a raw image, returns RGBA raw buffer with feathered edges */
+/** crop a region out of a raw image, returns rgba raw buffer with feathered edges */
 async function cropFeather(im, { x, y, w, h }, feather = {}) {
   const { top = 0, bottom = 0, left = 0, right = 0 } = feather;
   const rgb = await sharp(im.data, { raw: { width: im.w, height: im.h, channels: 3 } })
@@ -80,7 +80,7 @@ async function cropFeather(im, { x, y, w, h }, feather = {}) {
   }
   return { data: rgba, w, h };
 }
-// 2x Lanczos upscale + light unsharp mask: stays crisp on retina screens instead of
+// 2x lanczos upscale + light unsharp mask: stays crisp on retina screens instead of
 // being bilinear-stretched by the browser
 const crisp = (pipeline, w) =>
   pipeline.resize({ width: w * 2, kernel: 'lanczos3' }).sharpen({ sigma: 0.9, m1: 0.8, m2: 1.4 });
@@ -92,11 +92,11 @@ const toWebp = (img, name, q = 90) =>
 // ---------------------------------------------------------------- hero strip
 {
   const im = await load(1);
-  // CTA buttons + their glow (they overlap the top of the band)
+  // cta buttons + their glow (they overlap the top of the band)
   healV(im, 130, 724, 538, 622, 492, 626);
-  // "Works with" row (text + 3 logos) -> sits over smooth sky
+  // "works with" row (text + 3 logos) -> sits over smooth sky
   healV(im, 138, 890, 622, 684, 619, 688);
-  // alert slashes beside the capybara (re-drawn as animated SVG in the page)
+  // alert slashes beside the capybara (re-drawn as animated svg in the page)
   healV(im, 1459, 1522, 526, 586, 524, 588);
   // thin orbit arc that dips into the band
   healLine(im, [[538, 912], [550, 928], [560, 947], [570, 973.5], [580, 1003]], 9, 538, 590);
@@ -107,7 +107,7 @@ const toWebp = (img, name, q = 90) =>
 // ----------------------------------------------------------------- cta strip
 {
   const im = await load(3);
-  // "Try Breakpoint" button + its glow
+  // "try breakpoint" button + its glow
   healV(im, 540, 1124, 646, 782, 642, 786);
   // alert slashes
   healV(im, 1428, 1482, 650, 704, 647, 707);
@@ -123,7 +123,7 @@ const toWebp = (img, name, q = 90) =>
 // ------------------------------------------------------------ light landscape
 {
   const im = await load(2);
-  // capybara alert slashes (re-drawn in SVG)
+  // capybara alert slashes (re-drawn in svg)
   healV(im, 204, 252, 700, 742, 697, 746);
 
   const W = 1672, H = 251, Y0 = 690;

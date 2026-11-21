@@ -1,4 +1,4 @@
-/** Small deterministic PRNG (mulberry32). Seeded explicitly: no Math.random anywhere in the engine. */
+/** small deterministic prng (mulberry32). seeded explicitly: no math.random anywhere in the engine. */
 export class Rng {
   private s: number;
   constructor(seed: number) {
@@ -32,7 +32,7 @@ export class Rng {
   }
 }
 
-/** Stable 32-bit string hash (FNV-1a) used to derive default seeds from a plan. */
+/** stable 32-bit string hash (fnv-1a) used to derive default seeds from a plan. */
 export function hashString(s: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) {

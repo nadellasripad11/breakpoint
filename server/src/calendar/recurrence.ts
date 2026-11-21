@@ -2,9 +2,9 @@ import type { Interval, Minutes } from '../engine/index.ts';
 import { zonedToMin } from '../engine/index.ts';
 
 /**
- * RRULE subset used by real calendars: FREQ (DAILY/WEEKLY/MONTHLY/YEARLY), INTERVAL, COUNT, UNTIL,
- * BYDAY (with ordinals such as 1MO / -1FR), BYMONTHDAY (negative allowed), BYMONTH, WKST, plus EXDATE handled by the caller.
- * Occurrences keep the same WALL-CLOCK time across DST changes (a 9:00 meeting stays at 9:00).
+ * rrule subset used by real calendars: freq (daily/weekly/monthly/yearly), interval, count, until,
+ * byday (with ordinals such as 1mo / -1fr), bymonthday (negative allowed), bymonth, wkst, plus exdate handled by the caller.
+ * occurrences keep the same wall-clock time across dst changes (a 9:00 meeting stays at 9:00).
  */
 
 export interface RecurrenceRule {
@@ -15,7 +15,7 @@ export interface RecurrenceRule {
   byDay: { n?: number; day: number }[];
   byMonthDay: number[];
   byMonth: number[];
-  /** 0 = Sunday */
+  /** 0 = sunday */
   wkst: number;
 }
 
@@ -67,7 +67,7 @@ const fromDn = (dn: number) => {
 const weekdayOf = (dn: number) => (((dn + 4) % 7) + 7) % 7;
 const daysInMonth = (y: number, mo: number) => new Date(Date.UTC(y, mo, 0)).getUTCDate();
 
-/** All dates in one month that match BYDAY / BYMONTHDAY (or the default day). */
+/** all dates in one month that match byday / bymonthday (or the default day). */
 function monthDates(y: number, mo: number, rule: RecurrenceRule, defaultDay: number): number[] {
   const dim = daysInMonth(y, mo);
   const out = new Set<number>();
@@ -108,7 +108,7 @@ export interface ExpandOptions {
 
 export const MAX_OCCURRENCES = 1000;
 
-/** Start minutes of every occurrence overlapping `window`. Bounded: never loops unboundedly. */
+/** start minutes of every occurrence overlapping `window`. bounded: never loops unboundedly. */
 export function expandRecurrence(o: ExpandOptions): Minutes[] {
   const { start, rule, timezone: tz } = o;
   const cap = Math.min(o.maxOccurrences ?? MAX_OCCURRENCES, MAX_OCCURRENCES);

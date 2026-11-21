@@ -43,9 +43,9 @@ export const preferencesSchema = z
       )
       .max(10)
       .optional(),
-    /** onboarding "What matters most?": { school: 5, fitness: 4, ... } */
+    /** onboarding "what matters most?": { school: 5, fitness: 4, ... } */
     categoryPriority: z.record(z.string().trim().min(1).max(60), priority).refine((o) => Object.keys(o).length <= 30, 'At most 30 categories').optional(),
-    /** onboarding "How flexible is your schedule?": fixed | balanced | flexible */
+    /** onboarding "how flexible is your schedule?": fixed | balanced | flexible */
     mobility: z.enum(['fixed', 'balanced', 'flexible']).optional(),
     criticalPriority: priority.optional(),
   })
@@ -111,7 +111,7 @@ export const schedulePatchSchema = z.object({ name: z.string().trim().min(1).max
 
 /* ───────────── engine requests ───────────── */
 
-/** Either a local calendar day (in the schedule's timezone) or an explicit instant range. */
+/** either a local calendar day (in the schedule's timezone) or an explicit instant range. */
 export const windowSchema = z.union([
   z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
   z.object({ from: isoDateTime, to: isoDateTime }),
@@ -159,7 +159,7 @@ export const adoptBody = z
   })
   .strict();
 
-/** The stateless (guest demo) endpoints take the schedule inline. */
+/** the stateless (guest demo) endpoints take the schedule inline. */
 export const statelessWrap = <T extends z.ZodRawShape>(shape: z.ZodObject<T>) => shape.extend({ schedule: inlineScheduleSchema });
 
 /* ───────────── imports + connections ───────────── */
@@ -174,7 +174,7 @@ export const icsImportBody = z
   })
   .strict();
 
-/** A calendar link (Google "Secret address in iCal format", iCloud public calendar). Fetched once by the server, never stored. */
+/** a calendar link (google "secret address in ical format", icloud public calendar). fetched once by the server, never stored. */
 export const icsLinkBody = z
   .object({
     url: z.string().min(12).max(2000),

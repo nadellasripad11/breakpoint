@@ -32,7 +32,7 @@ const ENGINE_ROUTES: { path: string; kind: EngineKind; schema: ZodType; heavy: b
 
 type Body = { window: { date?: string; from?: string; to?: string }; save?: boolean } & EngineRequest;
 
-/** Engine endpoints bound to a saved schedule. Running one NEVER modifies the schedule; `save: true` only stores a history record. */
+/** engine endpoints bound to a saved schedule. running one never modifies the schedule; `save: true` only stores a history record. */
 export function engineRoutes(): Hono<AppEnv> {
   const r = new Hono<AppEnv>();
 
@@ -63,8 +63,8 @@ export function engineRoutes(): Hono<AppEnv> {
   });
 
   /**
-   * "Adopt": turn a Parallel Future (or a Fortify proposal) into a NEW schedule. The original schedule and every external
-   * calendar are left exactly as they were. Deferred tasks need the user's explicit confirmation and are kept (unscheduled), never deleted.
+   * "adopt": turn a parallel future (or a fortify proposal) into a new schedule. the original schedule and every external
+   * calendar are left exactly as they were. deferred tasks need the user's explicit confirmation and are kept (unscheduled), never deleted.
    */
   r.post('/schedules/:id/adopt', rateLimit('engine-heavy', 20, 60_000, 'user'), async (c) => {
     const deps = c.get('deps');
@@ -165,10 +165,10 @@ function inlinePrefs(p: PreferencesInput | undefined) {
   return buildPreferences(p, tz);
 }
 
-/** Public demo data: the landing-page scenario, ready to POST to /api/engine/*. */
+/** public demo data: the landing-page scenario, ready to post to /api/engine/*. */
 export function demoRoutes(): Hono<AppEnv> {
   const r = new Hono<AppEnv>();
-  /** What this server can do right now: lets the UI show the right connector states instead of guessing. */
+  /** what this server can do right now: lets the ui show the right connector states instead of guessing. */
   r.get('/capabilities', rateLimit('demo', 120, 60_000), (c) => {
     const deps = c.get('deps');
     return c.json({ ok: true, guest: true, ics: true, calendarLink: true, google: deps.config.google !== null, notionLogin: deps.config.notion !== null, notion: true, accounts: deps.config.google !== null });

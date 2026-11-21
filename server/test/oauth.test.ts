@@ -10,7 +10,7 @@ import type { Fetcher } from '../src/auth/google.ts';
 
 type Call = { method: string; url: string; body: string; auth: string | null };
 
-/** A pretend internet: records every request and answers from a handler. */
+/** a pretend internet: records every request and answers from a handler. */
 function fake(handler: (c: Call) => Response | Promise<Response> | undefined) {
   const calls: Call[] = [];
   const f: Fetcher = async (input, init) => {
@@ -44,7 +44,7 @@ function idToken(key: KeyObject, o: { nonce?: string; email?: string; verified?:
 
 const q = (url: string) => new URL(url).searchParams;
 
-/* ───────────── Google sign-in ───────────── */
+/* ───────────── google sign-in ───────────── */
 
 test('Google sign-in: PKCE + state + nonce, verified ID token, session cookie; replay, bad nonce, bad signature and unverified email are refused', async () => {
   const { privateKey, jwk } = await googleKeys();
@@ -84,7 +84,7 @@ test('Google sign-in: PKCE + state + nonce, verified ID token, session cookie; r
   const me = await call('GET', '/api/me', { cookie });
   assert.equal(me.json.user.email, 'sam@example.com');
   assert.equal(me.json.user.isGuest, false);
-  // the token request carried the PKCE verifier, and we kept nothing but the identity
+  // the token request carried the pkce verifier, and we kept nothing but the identity
   const tokenReq = new URLSearchParams(net.calls.find((c) => c.url.endsWith('/token'))!.body);
   assert.ok(tokenReq.get('code_verifier')!.length >= 43);
   assert.equal(t.store.db.prepare('SELECT COUNT(*) AS c FROM connections').get()!.c, 0);
@@ -156,7 +156,7 @@ test('Google sign-in reports clearly when it is not configured', async () => {
   assert.equal(r.json.error.code, 'google_not_configured');
 });
 
-/* ───────────── Google Calendar connection: explicit consent, read-only ───────────── */
+/* ───────────── google calendar connection: explicit consent, read-only ───────────── */
 
 async function connectGoogle(t: TestApp, userToken: string, net: ReturnType<typeof fake>, grant: { scope: string; refresh?: boolean } = { scope: READONLY }) {
   const call = client(t);
@@ -193,7 +193,7 @@ test('connecting Google: needs explicit acknowledgement of the read-only scope; 
   assert.equal(p.get('code_challenge_method'), 'S256');
   assert.equal(s.start.json.access, 'read-only');
 
-  // Google granted MORE than we asked for: nothing is stored and the grant is revoked
+  // google granted more than we asked for: nothing is stored and the grant is revoked
   grant = { scope: `${READONLY} https://www.googleapis.com/auth/calendar`, refresh: true };
   const broad = await s.finish();
   assert.match(broad.headers.get('location')!, /connect_error=scope_too_broad/);
@@ -218,7 +218,7 @@ test('connecting Google: needs explicit acknowledgement of the read-only scope; 
   assert.deepEqual(conn.scopes, [READONLY]);
   assert.equal(conn.accountLabel, 'Sam Student');
   assert.ok(!('accessTokenEnc' in conn) && !JSON.stringify(list.json).includes('TOKEN')); // tokens never leave the server
-  // tokens are encrypted at rest (AES-256-GCM), and decrypt with the server key only
+  // tokens are encrypted at rest (aes-256-gcm), and decrypt with the server key only
   const row = t.store.db.prepare('SELECT access_token_enc, refresh_token_enc FROM connections').get() as { access_token_enc: string; refresh_token_enc: string };
   assert.match(row.access_token_enc, /^v1\./);
   assert.ok(!row.access_token_enc.includes('ACCESS-TOKEN-XYZ') && !row.refresh_token_enc.includes('REFRESH-TOKEN-XYZ'));
@@ -270,7 +270,7 @@ test('importing from Google Calendar: needs per-import confirmation, performs on
   assert.ok(items.every((i) => i.source === 'google'));
   assert.deepEqual((await call('POST', `/api/schedules/${sched}/import/google`, { token: u.token, body: { ...body, confirm: true } })).json.imported, { created: 0, updated: 3 });
 
-  // READ-ONLY, proven: every request to the Calendar API was a GET, and only the read-only scope was ever requested
+  // read-only, proven: every request to the calendar api was a get, and only the read-only scope was ever requested
   const calendarCalls = net.calls.filter((c) => c.url.startsWith('https://www.googleapis.com/calendar/'));
   assert.ok(calendarCalls.length >= 3);
   assert.ok(calendarCalls.every((c) => c.method === 'GET'), 'Breakpoint must never write to Google Calendar');
@@ -284,7 +284,7 @@ test('importing from Google Calendar: needs per-import confirmation, performs on
   const otherSched = (await call('POST', '/api/schedules', { token: other.token, body: { name: 'x', timezone: 'UTC' } })).json.schedule.id;
   assert.equal((await call('POST', `/api/schedules/${otherSched}/import/google`, { token: other.token, body: { ...body, confirm: true } })).status, 404);
 
-  // disconnecting revokes at Google and deletes the stored tokens
+  // disconnecting revokes at google and deletes the stored tokens
   const del = await call('DELETE', `/api/connections/${conn.id}`, { token: u.token });
   assert.equal(del.json.revokedAtProvider, true);
   assert.ok(net.calls.some((c) => c.url.startsWith('https://oauth2.googleapis.com/revoke') && c.body.includes('REFRESH-TOKEN-XYZ')));
@@ -332,7 +332,7 @@ test('Notion works for a guest with no login: encrypted token, read-only import,
   const res = await call('POST', `/api/schedules/${g.json.demoScheduleId}/import/notion`, { token, body: { connectionId: conn.json.connection.id, databaseId: DB, mapping: {}, confirm: true } });
   assert.equal(res.status, 200, res.text);
   assert.deepEqual(res.json.imported, { created: 1, updated: 0 });
-  // Google still needs a real sign-in
+  // google still needs a real sign-in
   assert.equal((await call('POST', '/api/connections/google/start', { token, body: { acknowledge: true, scopes: ['https://www.googleapis.com/auth/calendar.readonly'] } })).json.error.code, 'guest_not_allowed');
   // when the guest sandbox expires, the encrypted token goes with it
   const future = new Date(Date.now() + 48 * 3_600_000).toISOString();
@@ -340,7 +340,7 @@ test('Notion works for a guest with no login: encrypted token, read-only import,
   assert.equal(t.store.db.prepare('SELECT COUNT(*) AS c FROM connections').get()!.c, 0);
 });
 
-/* ───────────── Notion ───────────── */
+/* ───────────── notion ───────────── */
 
 test('Notion: explicit acknowledgement, encrypted token, read-only calls only, tasks with deadlines imported', async () => {
   const DB = '0123456789abcdef0123456789abcdef';
@@ -381,7 +381,7 @@ test('Notion: explicit acknowledgement, encrypted token, read-only calls only, t
   const res = await call('POST', `/api/schedules/${sched}/import/notion`, { token: u.token, body: { ...body, confirm: true } });
   assert.equal(res.status, 200, res.text);
   assert.deepEqual(res.json.imported, { created: 2, updated: 0 });
-  assert.equal(res.json.skipped, 1); // the Done task
+  assert.equal(res.json.skipped, 1); // the done task
   const items = (await call('GET', `/api/schedules/${sched}/items`, { token: u.token })).json.items as { title: string; kind: string; start: string | null; durationMin: number; deadline: string | null; priority: number | null; category: string | null }[];
   const essay = items.find((i) => i.title === 'Essay draft')!;
   assert.equal(essay.kind, 'task');
@@ -392,7 +392,7 @@ test('Notion: explicit acknowledgement, encrypted token, read-only calls only, t
   assert.match(essay.deadline!, /^2026-11-25T23:59:00-06:00$/); // a date-only due date means "by the end of that day"
   assert.equal(items.find((i) => i.title === 'Timed task')!.deadline, '2026-11-24T15:00:00-06:00');
 
-  // READ-ONLY, proven: the only non-GET calls are Notion's /search and database /query (both reads)
+  // read-only, proven: the only non-get calls are notion's /search and database /query (both reads)
   for (const call2 of net.calls) {
     if (call2.method !== 'GET') assert.match(call2.url, /\/v1\/(search|databases\/[0-9a-f]+\/query)$/, `unexpected write-capable call: ${call2.method} ${call2.url}`);
   }
@@ -405,7 +405,7 @@ test('secret encryption is authenticated: tampering and wrong keys are detected'
   const key = Buffer.alloc(32, 1);
   const blob = encryptSecret('top-secret', key);
   assert.equal(decryptSecret(blob, key), 'top-secret');
-  assert.notEqual(encryptSecret('top-secret', key), blob); // random IV
+  assert.notEqual(encryptSecret('top-secret', key), blob); // random iv
   const parts = blob.split('.');
   const tampered = [parts[0], parts[1], parts[2], Buffer.from('xxxxxxxxxx').toString('base64url')].join('.');
   assert.throws(() => decryptSecret(tampered, key));
@@ -429,7 +429,7 @@ test('configuration is validated and production refuses unsafe settings', () => 
   assert.equal(loadConfig(base).cookie.secure, true);
 });
 
-/* ───────────── "Log in with Notion" ───────────── */
+/* ───────────── "log in with notion" ───────────── */
 
 test('Log in with Notion: consent -> workspace token, stored encrypted; denial, replay, bad state and missing setup are all handled; works for a guest', async () => {
   const DB = '0123456789abcdef0123456789abcdef';
@@ -459,11 +459,11 @@ test('Log in with Notion: consent -> workspace token, stored encrypted; denial, 
   assert.equal(u.searchParams.get('redirect_uri'), 'http://api.test/api/connections/notion/callback');
   const state = u.searchParams.get('state')!;
 
-  // the user pressed Cancel at Notion
+  // the user pressed cancel at notion
   assert.equal((await call('GET', `/api/connections/notion/callback?error=access_denied&state=${state}`)).headers.get('location'), 'http://localhost:5173/?ob=notion&connect_error=access_denied');
   // a made-up state is refused
   assert.match((await call('GET', `/api/connections/notion/callback?code=notion-code-123456&state=${'x'.repeat(43)}`)).headers.get('location')!, /connect_error=invalid_state/);
-  // a Google connect state cannot be replayed into the Notion callback
+  // a google connect state cannot be replayed into the notion callback
   const gs = await call('POST', '/api/connections/google/start', { token: (await makeUser(t)).token, body: { acknowledge: true, scopes: ['https://www.googleapis.com/auth/calendar.readonly'] } });
   const gstate = new URL(gs.json.url as string).searchParams.get('state')!;
   assert.match((await call('GET', `/api/connections/notion/callback?code=notion-code-123456&state=${gstate}`)).headers.get('location')!, /connect_error=invalid_state/);
@@ -490,7 +490,7 @@ test('Log in with Notion: consent -> workspace token, stored encrypted; denial, 
   const dbs = await call('GET', `/api/connections/${conns[0] && (await call('GET', '/api/connections', { token })).json.connections[0].id}/notion/databases`, { token });
   assert.equal(dbs.json.databases[0].title, 'Homework');
 
-  // Notion refusing the code is reported without storing anything
+  // notion refusing the code is reported without storing anything
   const state3 = new URL((await call('POST', '/api/connections/notion/start', { token, body: { acknowledge: true } })).json.url as string).searchParams.get('state')!;
   assert.match((await call('GET', `/api/connections/notion/callback?code=wrong-code-wrong&state=${state3}`)).headers.get('location')!, /ob=notion&connect_error=connect_failed/);
   assert.equal((await call('GET', '/api/connections', { token })).json.connections.length, 1);

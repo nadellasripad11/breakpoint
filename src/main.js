@@ -29,7 +29,7 @@ const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
 const rem = () => parseFloat(getComputedStyle(root).fontSize); // 1rem = 100 design px
 const SVGNS = 'http://www.w3.org/2000/svg';
 
-/* orbit arc "A" — traced from the reference, smoothed with Catmull-Rom */
+/* orbit arc "a" — traced from the reference, smoothed with catmull-rom */
 const ARC_A = [[1010,120],[983,130],[962,140],[944,150],[923,160],[898,180],[876,200],[862,220],[851,240],[840,260],[831,280],[823,300],[818,320],[814,350],[813,370],[815,390],[821,420],[828,440],[837,460],[850,480],[865,500],[885,520],[912,540],[947,560],[973,570]];
 function smooth(pts) {
   let d = `M${pts[0][0]} ${pts[0][1]}`;
@@ -81,7 +81,7 @@ function say(msg) {
 
 const onboarding = initOnboarding({ getLenis: () => lenis, say, onDone: () => rescue.open('rescue', { mine: true }) });
 const rescue = initRescue({ getLenis: () => lenis, say, onSetup: () => onboarding.open() });
-onboarding.resumeFromRedirect(); // back from Google sign-in / consent? reopen the connector sheet where the user left off
+onboarding.resumeFromRedirect(); // back from google sign-in / consent? reopen the connector sheet where the user left off
 
 /* ───────────────────────── nav ───────────────────────── */
 const nav = $('#nav');
@@ -251,7 +251,7 @@ function ambientHero() {
   $$('.card__in').forEach((el, i) =>
     gsap.to(el, { y: -rem() * 0.07, duration: 3 + i * 0.6, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: i * 0.5 }));
 
-  // the ripple: Practice slips, the neighbours feel it
+  // the ripple: practice slips, the neighbours feel it
   const rings = $$('.ripple');
   const rp = gsap.timeline({ repeat: -1, repeatDelay: 1.4, paused: true });
   rings.forEach((r, i) =>
@@ -338,7 +338,7 @@ function lightSection() {
   loopSlashes($('.land--light .slashes'), '.light');
 }
 
-/* ——— closing CTA ——— */
+/* ——— closing cta ——— */
 function ctaSection() {
   const at = { trigger: '.cta', start: 'top 62%' };
   const light = SplitText.create('.cta .display__light', { type: 'words' });

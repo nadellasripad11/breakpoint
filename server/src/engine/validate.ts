@@ -6,15 +6,15 @@ import { fitsFree, overlaps } from './intervals.ts';
 import { fmtClock, fmtDuration } from './time.ts';
 
 /**
- * Independent checker for any generated plan. The generators are supposed to make these impossible;
- * this verifies it anyway and the API refuses to return a plan that fails.
+ * independent checker for any generated plan. the generators are supposed to make these impossible;
+ * this verifies it anyway and the api refuses to return a plan that fails.
  *
- *  1. Every flexible item is either placed or explicitly deferred: exactly once. Nothing disappears.
- *  2. Non-deferrable items are always placed.
- *  3. Placed items respect their release time, hard deadline and the free time (availability minus locked blocks).
- *  4. Placed items never overlap each other.
- *  5. (Fixed mobility) the original order is preserved.
- * Locked items are not part of the placement at all, so they cannot move.
+ *  1. every flexible item is either placed or explicitly deferred: exactly once. nothing disappears.
+ *  2. non-deferrable items are always placed.
+ *  3. placed items respect their release time, hard deadline and the free time (availability minus locked blocks).
+ *  4. placed items never overlap each other.
+ *  5. (fixed mobility) the original order is preserved.
+ * locked items are not part of the placement at all, so they cannot move.
  */
 export function validatePlacements(world: World, placed: ReadonlyMap<string, number>, deferred: readonly string[]): string[] {
   const v: string[] = [];
@@ -66,7 +66,7 @@ export interface BaselineIssue {
   message: string;
 }
 
-/** Problems that already exist in the user's own plan before any disruption. Reported, never "fixed" silently. */
+/** problems that already exist in the user's own plan before any disruption. reported, never "fixed" silently. */
 export function baselineIssues(plan: Plan): BaselineIssue[] {
   const tz = plan.settings.timezone;
   const issues: BaselineIssue[] = [];

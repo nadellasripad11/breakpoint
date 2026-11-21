@@ -2,9 +2,9 @@ import { localParts, minToZonedIso, zonedToMin } from './engine/index.ts';
 import type { PreferencesInput } from './http/schemas.ts';
 
 /**
- * The scenario from the landing page: "Tomorrow, 4 PM - 9 PM".
- * Study 1h, Practice 1h30, Project 1h (hard deadline 8 PM), Rest 30m (protected break).
- * A 45-minute overrun on Practice pushes Project past its deadline; the breaking point is 30 minutes.
+ * the scenario from the landing page: "tomorrow, 4 pm - 9 pm".
+ * study 1h, practice 1h30, project 1h (hard deadline 8 pm), rest 30m (protected break).
+ * a 45-minute overrun on practice pushes project past its deadline; the breaking point is 30 minutes.
  */
 export interface DemoItem {
   id: string;

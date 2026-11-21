@@ -1,16 +1,16 @@
-# Breakpoint API reference
+# breakpoint api reference
 
-Base URL: `http://localhost:8787` locally. All bodies are JSON. All times are ISO-8601 **with a UTC offset**
+base url: `http://localhost:8787` locally. all bodies are json. all times are iso-8601 **with a utc offset**
 (`2026-11-20T17:00:00-06:00`); responses use the schedule's timezone. `minutes` / `durationMin` are plain integers.
 
-## Conventions
+## conventions
 
-**Authentication.** Either the `bp_session` cookie (HttpOnly; set by sign-in/guest) or `Authorization: Bearer <token>`.
-Cookie-authenticated writes must come from an allowed origin or send `X-Breakpoint-Client: 1`.
+**authentication.** either the `bp_session` cookie (httponly; set by sign-in/guest) or `Authorization: Bearer <token>`.
+cookie-authenticated writes must come from an allowed origin or send `X-Breakpoint-Client: 1`.
 
-**Errors.** Always `{ "error": { "code", "message", "details?", "requestId" } }`.
+**errors.** always `{ "error": { "code", "message", "details?", "requestId" } }`.
 
-| Status | `code` examples |
+| status | `code` examples |
 |---|---|
 | 400 | `validation_error` (`details: [{path, message}]`), `invalid_json`, `csrf`-free input problems |
 | 401 | `unauthenticated` |
@@ -22,9 +22,9 @@ Cookie-authenticated writes must come from an allowed origin or send `X-Breakpoi
 | 429 | `rate_limited` (with `Retry-After`) |
 | 500 | `internal_error`; `internal_invariant` = the scheduler refused to return an invalid plan |
 
-**Window.** Engine endpoints take `window`: `{ "date": "2026-11-20" }` (that local day in the schedule's timezone) or `{ "from": ISO, "to": ISO }` (max 31 days).
+**window.** engine endpoints take `window`: `{ "date": "2026-11-20" }` (that local day in the schedule's timezone) or `{ "from": ISO, "to": ISO }` (max 31 days).
 
-**Disruptions** (`minutes` is always the size):
+**disruptions** (`minutes` is always the size):
 
 ```json
 { "type": "overrun",   "targetId": "<item id>", "minutes": 45 }     // takes longer
@@ -33,7 +33,7 @@ Cookie-authenticated writes must come from an allowed origin or send `X-Breakpoi
 { "type": "lost_time", "minutes": 30, "start": ISO? }               // default: start of the plan
 ```
 
-**Item shape** (create/return):
+**item shape** (create/return):
 
 ```json
 { "id": "…", "kind": "event | task | break", "title": "Calculus", "start": ISO|null, "durationMin": 90, "allDay": false,
@@ -42,9 +42,9 @@ Cookie-authenticated writes must come from an allowed origin or send `X-Breakpoi
   "recurrence": { "rrule": "FREQ=WEEKLY;BYDAY=MO,WE", "exdates": [ISO] } | null, "source": "manual|ics|google|notion|demo", "externalId": null }
 ```
 `null` means "use the default": events are locked, tasks flexible; priority comes from the category preference else 3;
-tasks below `criticalPriority` (default 4) are deferrable; breaks are never deferrable. Tasks may omit `start` (the baseline places them).
+tasks below `criticalPriority` (default 4) are deferrable; breaks are never deferrable. tasks may omit `start` (the baseline places them).
 
-**Preferences.**
+**preferences.**
 
 ```json
 { "workingHours": { "start": "08:00", "end": "22:00", "days": [0,1,2,3,4,5,6] },
@@ -53,41 +53,41 @@ tasks below `criticalPriority` (default 4) are deferrable; breaks are never defe
   "mobility": "fixed | balanced | flexible", "criticalPriority": 4 }
 ```
 
-## Auth
+## auth
 
 | | |
 |---|---|
-| `POST /api/auth/guest?tz=` | Sandbox session with the demo schedule seeded. Returns `{ user, token, expiresAt, demoScheduleId }` and sets the cookie. Reuses an existing session. 10/hour per IP. Data is deleted after 24h of inactivity. |
-| `GET /api/auth/google/start?redirect=/path` | `{ url }` to send the browser to. A signed-in *guest* keeps their schedules. `501 google_not_configured` if not set up. |
-| `GET /api/auth/google/callback` | Google redirects here; sets the session cookie and redirects to `APP_ORIGIN + redirect#bp_code=<code>`, or `?auth_error=<code>`. |
-| `POST /api/auth/exchange` | `{ code }`: trades the single-use `#bp_code` from the sign-in redirect for `{ user, token, expiresAt }` (valid 2 minutes, one use). For frontends on a different site. |
-| `POST /api/auth/logout` | Ends the session (204). |
+| `POST /api/auth/guest?tz=` | sandbox session with the demo schedule seeded. returns `{ user, token, expiresAt, demoScheduleId }` and sets the cookie. reuses an existing session. 10/hour per ip. data is deleted after 24h of inactivity. |
+| `GET /api/auth/google/start?redirect=/path` | `{ url }` to send the browser to. a signed-in *guest* keeps their schedules. `501 google_not_configured` if not set up. |
+| `GET /api/auth/google/callback` | google redirects here; sets the session cookie and redirects to `APP_ORIGIN + redirect#bp_code=<code>`, or `?auth_error=<code>`. |
+| `POST /api/auth/exchange` | `{ code }`: trades the single-use `#bp_code` from the sign-in redirect for `{ user, token, expiresAt }` (valid 2 minutes, one use). for frontends on a different site. |
+| `POST /api/auth/logout` | ends the session (204). |
 | `GET /api/me` | `{ user: { id, email, name, picture, isGuest }, sessionExpiresAt }` |
-| `DELETE /api/me` | Body `{ "confirm": "delete my account" }`. Revokes Google access, deletes **everything** (204). |
+| `DELETE /api/me` | body `{ "confirm": "delete my account" }`. revokes google access, deletes **everything** (204). |
 
-## Schedules and items (auth required)
+## schedules and items (auth required)
 
 | | |
 |---|---|
-| `GET /api/schedules` / `POST /api/schedules` | List / create `{ name, timezone, preferences? }`. Guests: 3 schedules max; users: 50. |
-| `GET` / `PATCH` / `DELETE /api/schedules/:id` | Read / rename (`name`, `timezone`, `preferences`) / delete. |
-| `PUT /api/schedules/:id/preferences` | Replace the preferences (missing fields get defaults). |
-| `GET /api/schedules/:id/items` | Stored items. |
-| `POST /api/schedules/:id/items` | One item or an array (max 200). Events need `start`; breaks need `start` or `release`+`deadline`. |
-| `PATCH` / `DELETE /api/schedules/:id/items/:itemId` | Edit / remove. |
+| `GET /api/schedules` / `POST /api/schedules` | list / create `{ name, timezone, preferences? }`. guests: 3 schedules max; users: 50. |
+| `GET` / `PATCH` / `DELETE /api/schedules/:id` | read / rename (`name`, `timezone`, `preferences`) / delete. |
+| `PUT /api/schedules/:id/preferences` | replace the preferences (missing fields get defaults). |
+| `GET /api/schedules/:id/items` | stored items. |
+| `POST /api/schedules/:id/items` | one item or an array (max 200). events need `start`; breaks need `start` or `release`+`deadline`. |
+| `PATCH` / `DELETE /api/schedules/:id/items/:itemId` | edit / remove. |
 
-## The engine on a saved schedule
+## the engine on a saved schedule
 
-Every endpoint below takes `window` and is **non-destructive**: it reads the schedule, computes, and returns. Add `"save": true` to store a history
-record (`GET /api/schedules/:id/runs`, `GET /api/runs/:runId`). Heavy ones are limited to 20/min per user.
+every endpoint below takes `window` and is **non-destructive**: it reads the schedule, computes, and returns. add `"save": true` to store a history
+record (`GET /api/schedules/:id/runs`, `GET /api/runs/:runId`). heavy ones are limited to 20/min per user.
 
 **`POST /api/schedules/:id/plan`** `{ window }` returns the baseline plan after placing unscheduled tasks.
 `{ items[], issues[], unscheduled[], warnings[], settings, diagnosis? }`. `issues` are problems *already in your plan* (overlaps, deadline violations); they are reported, never silently fixed.
-Items that could not be placed appear with `start: null` and in `unscheduled[]` with an explanation.
+items that could not be placed appear with `start: null` and in `unscheduled[]` with an explanation.
 
-**`POST /api/schedules/:id/rescue`** (Rescue My Day) `{ window, disruptions[1..20] }` returns the original, disrupted and repaired schedules side by side, the exact conflicts, the smallest set of changes, re-verified guarantees, a replay and Pip's computed explanation. Also stateless at `POST /api/engine/rescue`. Full description, including what "smallest" means and how it is tested: [RESCUE.md](RESCUE.md).
+**`POST /api/schedules/:id/rescue`** (rescue my day) `{ window, disruptions[1..20] }` returns the original, disrupted and repaired schedules side by side, the exact conflicts, the smallest set of changes, re-verified guarantees, a replay and pip's computed explanation. also stateless at `POST /api/engine/rescue`. full description, including what "smallest" means and how it is tested: [rescue.md](RESCUE.md).
 
-**`POST /api/schedules/:id/simulate`** (Butterfly Effect) `{ window, disruptions[1..20] }`
+**`POST /api/schedules/:id/simulate`** (butterfly effect) `{ window, disruptions[1..20] }`
 
 ```json
 { "disruptions": ["\"Practice\" takes 45m longer than planned"],
@@ -111,7 +111,7 @@ Items that could not be placed appear with `start: null` and in `unscheduled[]` 
 ```
 `status`: `breaks` | `withstands_limit` | `already_broken` (recover mode: no feasible schedule even without a disruption).
 
-**`POST /api/schedules/:id/futures`** (Parallel Futures) `{ window, disruptions? }`
+**`POST /api/schedules/:id/futures`** (parallel futures) `{ window, disruptions? }`
 
 ```json
 { "result": { "recommended": "minimize_changes", "recommendedReason": "…", "doNothing": { "survives": false },
@@ -121,14 +121,14 @@ Items that could not be placed appear with `start: null` and in `unscheduled[]` 
       "metrics": { "placedCount", "keptCount", "movedCount", "deferredCount", "totalDisplacementMinutes", "criticalKept": {kept,total} },
       "explanation": ["…"], "optimal": true, "diagnosis": { "summary", "reasons", "conflictSet", "suggestions" } }] } }
 ```
-When no feasible schedule exists every future has `feasible: false`, no `items`, and a `diagnosis`:
+when no feasible schedule exists every future has `feasible: false`, no `items`, and a `diagnosis`:
 `{ summary, reasons[{code,message,itemIds,shortfallMinutes}], conflictSet[ids], suggestions[{action: defer_or_remove|extend_deadline|shorten|loosen_mobility, message, minutes?}] }`.
 
 **`POST /api/schedules/:id/chaos`** `{ window, scenarios?(1..2000, default 200), seed?, severity?: "mild|realistic|severe", examples? }`
-Same seed, same report. `{ result: { seed, survivalRate, resilienceScore, fragileItems[], byType, worstScenarios[], summary } }`.
+same seed, same report. `{ result: { seed, survivalRate, resilienceScore, fragileItems[], byType, worstScenarios[], summary } }`.
 
 **`POST /api/schedules/:id/fortify`** `{ window, maxChanges?(1..8), maxShiftMinutes?(5..180), scenarios?, seed?, severity? }`
-`{ result: { before, after, adjustments[{type: move|swap|shift_block, title, fromStart, toStart, reason, gain}], proposedStarts[], explanation[] } }`. **A proposal only.**
+`{ result: { before, after, adjustments[{type: move|swap|shift_block, title, fromStart, toStart, reason, gain}], proposedStarts[], explanation[] } }`. **a proposal only.**
 
 **`POST /api/schedules/:id/adopt`**: turn a proposal into a **new** schedule (the original and all external calendars are untouched).
 
@@ -137,52 +137,52 @@ Same seed, same report. `{ result: { seed, survivalRate, resilienceScore, fragil
   "acceptDeferrals": ["<ids of every task the plan defers>"],
   "source": { "kind": "future", "strategy": "protect_priorities", "disruptions": [...] }  // or { "kind": "fortify", "maxChanges": 3 } }
 ```
-`409 deferral_not_confirmed` (with the tasks listed) if a deferral is not confirmed; `409 no_feasible_plan` with the diagnosis. Deferred tasks are **kept** in the new schedule without a start time.
+`409 deferral_not_confirmed` (with the tasks listed) if a deferral is not confirmed; `409 no_feasible_plan` with the diagnosis. deferred tasks are **kept** in the new schedule without a start time.
 
-## Imports (read-only; auth required)
+## imports (read-only; auth required)
 
 | | |
 |---|---|
-| `POST /api/schedules/:id/import/ics` | `{ ics: "<file text>", defaultTimezone?, allDayBlocks?, defaultTaskMinutes?, dryRun? }` (max 2 MB). The browser sends the text; the server never fetches a URL. |
+| `POST /api/schedules/:id/import/ics` | `{ ics: "<file text>", defaultTimezone?, allDayBlocks?, defaultTaskMinutes?, dryRun? }` (max 2 mb). the browser sends the text; the server never fetches a url. |
 | `POST /api/schedules/:id/import/google` | `{ connectionId, calendarId, from, to, confirm: true, dryRun? }` |
 | `POST /api/schedules/:id/import/notion` | `{ connectionId, databaseId, mapping?: { title, date, duration, priority, category, status, doneValues, defaultMinutes }, confirm: true, dryRun? }` |
 
-Response: `{ imported: { created, updated }, missing: [{id,title}], skipped, warnings[], note }`. Re-importing is idempotent (matched by the source's id);
-it refreshes title/time/duration but **never overwrites** what you set (locked, priority, category, deferrable, critical). Items that vanished from the source are listed in
-`missing` and **kept**. `dryRun: true` returns `{ wouldImport, preview[] }` and writes nothing. All-day and "free" events import as non-blocking by default.
+response: `{ imported: { created, updated }, missing: [{id,title}], skipped, warnings[], note }`. re-importing is idempotent (matched by the source's id);
+it refreshes title/time/duration but **never overwrites** what you set (locked, priority, category, deferrable, critical). items that vanished from the source are listed in
+`missing` and **kept**. `dryRun: true` returns `{ wouldImport, preview[] }` and writes nothing. all-day and "free" events import as non-blocking by default.
 
-**`POST /api/schedules/:id/import/link`** `{ url, provider?: "google"|"apple", dryRun?, allDayBlocks?, defaultTaskMinutes? }` imports a calendar from its link (Google "Secret address in iCal format", iCloud public calendar; `webcal://` is accepted). Same response as the .ics import (`dryRun` returns a preview). No sign-in needed. The server fetches the link once from an allow-listed host (calendar.google.com, *.icloud.com) and never stores or echoes it; errors `link_invalid`, `link_not_allowed`, `link_not_found`, `link_forbidden`, `link_unreachable`, `not_ics`, `too_large` all carry plain-English messages. `GET /api/capabilities` now includes `calendarLink: true`.
+**`POST /api/schedules/:id/import/link`** `{ url, provider?: "google"|"apple", dryRun?, allDayBlocks?, defaultTaskMinutes? }` imports a calendar from its link (google "secret address in ical format", icloud public calendar; `webcal://` is accepted). same response as the .ics import (`dryRun` returns a preview). no sign-in needed. the server fetches the link once from an allow-listed host (calendar.google.com, *.icloud.com) and never stores or echoes it; errors `link_invalid`, `link_not_allowed`, `link_not_found`, `link_forbidden`, `link_unreachable`, `not_ics`, `too_large` all carry plain-english messages. `GET /api/capabilities` now includes `calendarLink: true`.
 
-**`POST /api/connections/notion/start`** `{ acknowledge: true, redirect? }` returns `{ url }`: send the browser to it to "Log in with Notion". Notion calls back to `GET /api/connections/notion/callback`, which stores the workspace token encrypted and redirects to the site with `?connected=notion` (or `?ob=notion&connect_error=<code>`). Works for guests. Needs `NOTION_CLIENT_ID` and `NOTION_CLIENT_SECRET`; `GET /api/capabilities` reports `notionLogin`.
+**`POST /api/connections/notion/start`** `{ acknowledge: true, redirect? }` returns `{ url }`: send the browser to it to "log in with notion". notion calls back to `GET /api/connections/notion/callback`, which stores the workspace token encrypted and redirects to the site with `?connected=notion` (or `?ob=notion&connect_error=<code>`). works for guests. needs `NOTION_CLIENT_ID` and `NOTION_CLIENT_SECRET`; `GET /api/capabilities` reports `notionLogin`.
 
-## Connections (real accounts only; guests get `403 guest_not_allowed`)
+## connections (real accounts only; guests get `403 guest_not_allowed`)
 
 | | |
 |---|---|
 | `GET /api/connections` | `[{ id, provider, accountLabel, scopes, consentAt, access: "read-only" }]` (never tokens) |
-| `POST /api/connections/google/start` | `{ acknowledge: true, scopes: ["https://www.googleapis.com/auth/calendar.readonly"], redirect? }` returns `{ url }`. Nothing is requested from Google before this. |
-| `GET /api/connections/google/callback` | Redirects to the app with `?connected=google` or `?connect_error=<code>` (a grant broader than read-only is refused and revoked). |
-| `POST /api/connections/notion` | `{ acknowledge: true, token: "<internal integration token>" }` (create the integration with *Read content* only). |
-| `GET /api/connections/:id/google/calendars` / `.../notion/databases` | Pick what to import. |
-| `DELETE /api/connections/:id` | Revokes at Google, deletes stored tokens. |
+| `POST /api/connections/google/start` | `{ acknowledge: true, scopes: ["https://www.googleapis.com/auth/calendar.readonly"], redirect? }` returns `{ url }`. nothing is requested from google before this. |
+| `GET /api/connections/google/callback` | redirects to the app with `?connected=google` or `?connect_error=<code>` (a grant broader than read-only is refused and revoked). |
+| `POST /api/connections/notion` | `{ acknowledge: true, token: "<internal integration token>" }` (create the integration with *read content* only). |
+| `GET /api/connections/:id/google/calendars` / `.../notion/databases` | pick what to import. |
+| `DELETE /api/connections/:id` | revokes at google, deletes stored tokens. |
 
-## Capabilities (public)
+## capabilities (public)
 
-`GET /api/capabilities` → `{ ok, guest, ics, google, notion, accounts }`. `google` / `accounts` are `false` until `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (Notion needs an account, so it needs `accounts` too). The site calls this before opening a connector and shows a plain explanation instead of a failed redirect.
+`GET /api/capabilities` -> `{ ok, guest, ics, google, notion, accounts }`. `google` / `accounts` are `false` until `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (notion needs an account, so it needs `accounts` too). the site calls this before opening a connector and shows a plain explanation instead of a failed redirect.
 
-## Guest demo (no login, nothing stored)
+## guest demo (no login, nothing stored)
 
 `GET /api/demo/schedule?tz=America/Chicago&date=YYYY-MM-DD` returns the landing-page scenario plus ready-made request bodies in `try.*`.
 `POST /api/engine/{plan,simulate,chaos,breaking-point,futures,fortify}` takes the same body as the saved-schedule version plus an inline schedule
-`{ "schedule": { "preferences": {...}, "items": [{ "id": "study", ...item fields }] }, "window": {...}, ... }` (max 300 items, 512 KB, 60/min per IP).
+`{ "schedule": { "preferences": {...}, "items": [{ "id": "study", ...item fields }] }, "window": {...}, ... }` (max 300 items, 512 kb, 60/min per ip).
 
 ```powershell
 $demo = Invoke-RestMethod http://localhost:8787/api/demo/schedule
 Invoke-RestMethod -Method Post -ContentType application/json -Uri http://localhost:8787/api/engine/breaking-point -Body ($demo.try.breakingPoint | ConvertTo-Json -Depth 20)
 ```
 
-## Database
+## database
 
 `migrations/001_init.sql`: `users`, `sessions` (hashed tokens), `oauth_states` (single-use), `connections` (encrypted tokens + consent time),
 `schedules`, `schedule_items` (unique per `schedule_id, source, external_id` so imports are idempotent), `imports` (audit), `runs` (history), `audit_log`.
-Deleting a user cascades to everything they own.
+deleting a user cascades to everything they own.

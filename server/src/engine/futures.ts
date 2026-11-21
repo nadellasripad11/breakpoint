@@ -45,7 +45,7 @@ export interface Future {
   description: string;
   feasible: boolean;
   items: FutureItem[];
-  /** Tasks that do not fit and were deferred. They are listed explicitly and need the user's confirmation. */
+  /** tasks that do not fit and were deferred. they are listed explicitly and need the user's confirmation. */
   deferred: DeferredItem[];
   requiresConfirmation: boolean;
   metrics: {
@@ -65,7 +65,7 @@ export interface Future {
 
 export interface FuturesResult {
   disruptions: string[];
-  /** What happens if you do nothing: the Butterfly Effect summary for the same disruptions. */
+  /** what happens if you do nothing: the butterfly effect summary for the same disruptions. */
   doNothing: CascadeResult['summary'] | null;
   futures: Future[];
   recommended: StrategyId | null;
@@ -80,7 +80,7 @@ function ivOf(f: Floater): Interval {
   return { start: f.origStart, end: f.origStart + f.duration };
 }
 
-/** Under fixed mobility anchors also fix the relative order of everything around them. */
+/** under fixed mobility anchors also fix the relative order of everything around them. */
 function constrainRest(floaters: readonly Floater[], anchors: readonly Floater[], ordered: boolean): Floater[] {
   const ids = new Set(anchors.map((a) => a.id));
   return floaters
@@ -162,11 +162,11 @@ function planStrategy(world: World, plan: Plan, disruptions: readonly Disruption
     return { r, rest, freeA };
   };
 
-  /* choose anchors: tasks that keep their ORIGINAL slot */
+  /* choose anchors: tasks that keep their original slot */
   let anchors: Floater[] = [];
   if (strategy === 'protect_priorities') {
-    // Highest priority first: keep a task at its original time if that does not cost any placement at its own
-    // priority tier or above. Lower-priority (deferrable) work may be deferred, explicitly, to make this possible.
+    // highest priority first: keep a task at its original time if that does not cost any placement at its own
+    // priority tier or above. lower-priority (deferrable) work may be deferred, explicitly, to make this possible.
     const tierCounts = (ids: Iterable<string>): number[] => {
       const c = [0, 0, 0, 0, 0, 0];
       for (const id of ids) c[world.floaters.find((f) => f.id === id)!.priority]!++;

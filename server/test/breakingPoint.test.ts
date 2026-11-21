@@ -80,7 +80,7 @@ test('re-planning tolerates more than doing nothing (it can only help)', () => {
   const doNothing = cascadeBreakingPoint(plan, probe).tolerableMinutes!;
   const replan = recoverBreakingPoint(plan, probe).tolerableMinutes!;
   assert.ok(replan >= doNothing);
-  assert.ok(replan > doNothing); // here by a lot: Study can be deferred, Project moved forward
+  assert.ok(replan > doNothing); // here by a lot: study can be deferred, project moved forward
 });
 
 test('already broken: a plan with no feasible schedule says so, with a diagnosis', () => {

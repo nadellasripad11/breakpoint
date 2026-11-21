@@ -8,7 +8,7 @@ import { randomPlan } from './random.ts';
 const STRATEGIES: StrategyId[] = ['protect_priorities', 'maximize_completion', 'minimize_changes'];
 const get = (f: ReturnType<typeof parallelFutures>, s: StrategyId) => f.futures.find((x) => x.strategy === s)!;
 
-/** Every guarantee the product makes, checked independently of the code that produced the plan. */
+/** every guarantee the product makes, checked independently of the code that produced the plan. */
 function checkFuture(plan: Plan, disruptions: Disruption[], f: Future, label: string): void {
   if (!f.feasible) {
     assert.ok(f.diagnosis, `${label}: infeasible results must explain themselves`);
@@ -86,7 +86,7 @@ test('landing page: Practice +45m gives three genuinely different, valid futures
   assert.ok(minimal.metrics.totalDisplacementMinutes <= keepAll.metrics.totalDisplacementMinutes);
 
   assert.equal(r.recommended, 'minimize_changes');
-  assert.equal(r.doNothing!.survives, false); // doing nothing would miss the Project deadline; the futures do not
+  assert.equal(r.doNothing!.survives, false); // doing nothing would miss the project deadline; the futures do not
 });
 
 test('no disruption: every future is a no-op (nothing moves, nothing deferred)', () => {

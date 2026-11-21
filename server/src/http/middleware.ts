@@ -16,7 +16,7 @@ export const requestId = (): MiddlewareHandler<AppEnv> => async (c, next) => {
 
 export function clientIp(c: Context<AppEnv>, trustProxy: boolean): string {
   if (trustProxy) {
-    // behind Cloudflare (Workers or a proxied host) this header is set by Cloudflare itself and cannot be forged by the client
+    // behind cloudflare (workers or a proxied host) this header is set by cloudflare itself and cannot be forged by the client
     const cf = c.req.header('cf-connecting-ip');
     if (cf) return cf.trim().slice(0, 64);
     const xff = c.req.header('x-forwarded-for');
@@ -30,7 +30,7 @@ export function clientIp(c: Context<AppEnv>, trustProxy: boolean): string {
 }
 
 /* ───────────── rate limiting (in-memory, fixed window) ─────────────
-   Good for a single instance. For several instances or Workers, back this with KV / a Durable Object. */
+   good for a single instance. for several instances or workers, back this with kv / a durable object. */
 interface Counter {
   count: number;
   resetAt: number;
@@ -91,7 +91,7 @@ export function clearSessionCookie(c: Context<AppEnv>): void {
   deleteCookie(c, cookieName(deps), { path: '/', secure: deps.config.cookie.secure, ...(deps.config.cookie.domain ? { domain: deps.config.cookie.domain } : {}) });
 }
 
-/** Resolves the caller (cookie or Bearer token). Never fails: use requireUser to enforce. */
+/** resolves the caller (cookie or bearer token). never fails: use requireuser to enforce. */
 export const authenticate = (): MiddlewareHandler<AppEnv> => async (c, next) => {
   const deps = c.get('deps');
   const auth = c.req.header('authorization');
@@ -122,7 +122,7 @@ export const requireUser = (): MiddlewareHandler<AppEnv> => async (c, next) => {
   await next();
 };
 
-/** Real (non-guest) accounts only: used for connecting external services. */
+/** real (non-guest) accounts only: used for connecting external services. */
 export const requireAccount = (): MiddlewareHandler<AppEnv> => async (c, next) => {
   const u = c.get('user');
   if (!u) throw unauthorized();
@@ -131,9 +131,9 @@ export const requireAccount = (): MiddlewareHandler<AppEnv> => async (c, next) =
 };
 
 /**
- * CSRF defence for cookie sessions. Browsers always attach Origin to cross-site POST/PUT/PATCH/DELETE, so a request
- * from an origin we do not allow is refused; requests without Origin must carry our custom header (which forces a CORS preflight).
- * Bearer-token requests carry no ambient credentials and are exempt.
+ * csrf defence for cookie sessions. browsers always attach origin to cross-site post/put/patch/delete, so a request
+ * from an origin we do not allow is refused; requests without origin must carry our custom header (which forces a cors preflight).
+ * bearer-token requests carry no ambient credentials and are exempt.
  */
 export const csrfGuard = (): MiddlewareHandler<AppEnv> => async (c, next) => {
   const m = c.req.method;

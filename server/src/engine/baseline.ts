@@ -12,14 +12,14 @@ export interface BaselineResult {
   plan: Plan;
   /** ids that received a start time */
   placed: string[];
-  /** flexible items that could not be placed. They stay in the plan (without a start) and are reported, never dropped. */
+  /** flexible items that could not be placed. they stay in the plan (without a start) and are reported, never dropped. */
   unscheduled: { id: string; title: string; message: string }[];
   diagnosis?: Diagnosis;
 }
 
 /**
- * Gives every unscheduled flexible item (a Notion task with only a due date, a protected break, ...) a concrete slot.
- * Items that already have a start keep it. Placement is earliest-possible, honours release times, hard deadlines,
+ * gives every unscheduled flexible item (a notion task with only a due date, a protected break, ...) a concrete slot.
+ * items that already have a start keep it. placement is earliest-possible, honours release times, hard deadlines,
  * availability and locked commitments, and is deterministic.
  */
 export function buildBaseline(plan: Plan): BaselineResult {

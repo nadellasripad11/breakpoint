@@ -1,4 +1,4 @@
-// Builds the onboarding art from the generated Pip render (art/pip/*.png, git-ignored: 6MB each)
+// builds the onboarding art from the generated pip render (art/pip/*.png, git-ignored: 6mb each)
 //   pip-cutout.webp  – background-removed capybara for the welcome screen
 //   pip-photo.webp   – head-and-shoulders crop used inside the polaroid
 //   ob-rocks.webp    – mossy rock strip (mirrored from the landing page scenery)

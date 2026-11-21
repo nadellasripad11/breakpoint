@@ -167,7 +167,7 @@ test('diagnosis names the cause, the minimal conflicting set and concrete fixes'
     settings({ from: at(15), to: at(21), hours: ['15:00', '21:00'] }),
   );
   const d = diagnoseWorld(buildWorld(plan, []), plan, []);
-  assert.deepEqual(d.conflictSet, ['a']); // Gym is innocent and is not blamed
+  assert.deepEqual(d.conflictSet, ['a']); // gym is innocent and is not blamed
   assert.equal(d.reasons[0]!.code, 'impossible_window');
   assert.ok(d.suggestions.some((s) => s.action === 'extend_deadline' && s.itemId === 'a' && s.minutes === 60));
   assert.ok(d.suggestions.some((s) => s.action === 'shorten' && s.itemId === 'a' && s.minutes === 60));

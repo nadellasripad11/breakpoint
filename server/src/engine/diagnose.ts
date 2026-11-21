@@ -21,12 +21,12 @@ export interface Suggestion {
   minutes?: number;
 }
 
-/** Explains WHY no feasible schedule exists. Nothing here changes the user's schedule. */
+/** explains why no feasible schedule exists. nothing here changes the user's schedule. */
 export interface Diagnosis {
   feasible: false;
   summary: string;
   reasons: Reason[];
-  /** A minimal set of tasks that cannot all fit together (remove any one of them and the rest fit). */
+  /** a minimal set of tasks that cannot all fit together (remove any one of them and the rest fit). */
   conflictSet: string[];
   suggestions: Suggestion[];
 }
@@ -74,7 +74,7 @@ export function diagnoseWorld(world: World, plan?: Plan, disruptions: readonly D
     }
   }
 
-  // 2 · Hall-style check: more work than free time inside some window?
+  // 2 · hall-style check: more work than free time inside some window?
   const points = [...new Set(required.flatMap((t) => [t.release, t.deadline]))].sort((a, b) => a - b);
   let worst: { a: number; b: number; demand: number; supply: number; ids: string[] } | null = null;
   for (let i = 0; i < points.length; i++) {

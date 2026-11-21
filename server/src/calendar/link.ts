@@ -2,13 +2,13 @@ import { ImportError } from './ics.ts';
 import type { Fetcher } from '../auth/google.ts';
 
 /**
- * Read-only import from a calendar's private/public link (Google "Secret address in iCal format", iCloud "Public Calendar" link).
- * This needs no OAuth app and no Google verification: the user hands us a link that already grants read access.
+ * read-only import from a calendar's private/public link (google "secret address in ical format", icloud "public calendar" link).
+ * this needs no oauth app and no google verification: the user hands us a link that already grants read access.
  *
- * It is the one place the server fetches a URL the user typed, so it is deliberately narrow:
- *  - only https, only the calendar hosts of the provider (calendar.google.com, *.icloud.com), no IP addresses, no ports, no credentials in the URL;
+ * it is the one place the server fetches a url the user typed, so it is deliberately narrow:
+ *  - only https, only the calendar hosts of the provider (calendar.google.com, *.icloud.com), no ip addresses, no ports, no credentials in the url;
  *  - every redirect is re-checked against the same allow-list, at most 3 hops;
- *  - a timeout, a hard size cap, GET only, no cookies or authorization sent;
+ *  - a timeout, a hard size cap, get only, no cookies or authorization sent;
  *  - the link is used once and never stored, logged or echoed back (it is a secret: anyone holding it can read that calendar).
  */
 
@@ -22,7 +22,7 @@ const NAME: Record<LinkProvider, string> = { google: 'Google Calendar', apple: '
 
 export const MAX_LINK_BYTES = 6 * 1024 * 1024;
 
-/** Turns what the user pasted (webcal://…, http://…, https://…) into an https URL on an allowed calendar host, or throws a clear error. */
+/** turns what the user pasted (webcal://…, http://…, https://…) into an https url on an allowed calendar host, or throws a clear error. */
 export function normalizeCalendarLink(raw: string, provider?: LinkProvider): URL {
   let s = String(raw ?? '').trim().replace(/^[<"'\s]+|[>"'\s]+$/g, '');
   if (s.length < 12 || s.length > 2000) throw new ImportError('link_invalid', 'That doesn’t look like a calendar link.');
@@ -93,7 +93,7 @@ export interface FetchOptions {
   maxRedirects?: number;
 }
 
-/** GET the calendar text. Redirects are followed by hand so that each hop is checked against the allow-list. */
+/** get the calendar text. redirects are followed by hand so that each hop is checked against the allow-list. */
 export async function fetchCalendarLink(f: Fetcher, start: URL, opts: FetchOptions = {}): Promise<string> {
   const maxRedirects = opts.maxRedirects ?? 3;
   let url = start;
@@ -134,8 +134,8 @@ export async function fetchCalendarLink(f: Fetcher, start: URL, opts: FetchOptio
 }
 
 /**
- * A calendar feed holds every event ever. Drop single events that ended before `cutoffYmd` (yyyymmdd) before parsing, so a big
- * old calendar fits the importer's limits. Recurring series are always kept; anything that can't be read is kept for the parser to judge.
+ * a calendar feed holds every event ever. drop single events that ended before `cutoffymd` (yyyymmdd) before parsing, so a big
+ * old calendar fits the importer's limits. recurring series are always kept; anything that can't be read is kept for the parser to judge.
  */
 export function trimOldEvents(ics: string, cutoffYmd: string): { text: string; dropped: number } {
   const out: string[] = [];

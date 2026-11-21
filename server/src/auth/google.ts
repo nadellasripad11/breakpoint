@@ -84,7 +84,7 @@ export function refreshAccessToken(f: Fetcher, c: GoogleClient, refreshToken: st
   return tokenCall(f, new URLSearchParams({ client_id: c.clientId, client_secret: c.clientSecret, refresh_token: refreshToken, grant_type: 'refresh_token' }));
 }
 
-/** Best effort: failure to revoke must not block the user from disconnecting. */
+/** best effort: failure to revoke must not block the user from disconnecting. */
 export async function revokeToken(f: Fetcher, token: string): Promise<boolean> {
   try {
     const res = await f(REVOKE_URL, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token }) });
@@ -115,7 +115,7 @@ export interface GoogleIdentity {
   picture: string | null;
 }
 
-/** Verifies signature (Google's published keys), issuer, audience, expiry and the nonce we generated. */
+/** verifies signature (google's published keys), issuer, audience, expiry and the nonce we generated. */
 export async function verifyIdToken(f: Fetcher, idToken: string, o: { clientId: string; nonce: string | null; now?: number }): Promise<GoogleIdentity> {
   const jwks = createLocalJWKSet(await getJwks(f, o.now ?? Date.now()));
   let payload;
@@ -130,7 +130,7 @@ export async function verifyIdToken(f: Fetcher, idToken: string, o: { clientId: 
   return { sub: payload.sub, email: payload.email.toLowerCase(), emailVerified: true, name: typeof payload.name === 'string' ? payload.name : null, picture: typeof payload.picture === 'string' ? payload.picture : null };
 }
 
-/** The consent screen must grant EXACTLY read-only calendar access: reject anything broader. */
+/** the consent screen must grant exactly read-only calendar access: reject anything broader. */
 export function assertReadOnlyCalendarScopes(granted: string[]): void {
   if (!granted.includes(GOOGLE_READONLY_SCOPE)) throw new OAuthError('scope_missing', 'Read-only calendar access was not granted.');
   const extra = granted.filter((s) => s !== GOOGLE_READONLY_SCOPE && !LOGIN_SCOPES.includes(s) && s !== 'https://www.googleapis.com/auth/userinfo.email' && s !== 'https://www.googleapis.com/auth/userinfo.profile');

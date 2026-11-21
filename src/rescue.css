@@ -1,6 +1,6 @@
 /* ───────────────────────────────────────────────────────────
-   Rescue My Day + "Can you save this day?"
-   Plain px sizes (not the landing page's rem units): this is a working screen.
+   rescue my day + "can you save this day?"
+   plain px sizes (not the landing page's rem units): this is a working screen.
    ─────────────────────────────────────────────────────────── */
 
 .rs {
@@ -235,7 +235,7 @@
 .say__box:hover { border-color: #fff; }
 .say__name { position: absolute; left: 24px; top: -14px; padding: 3px 13px 4px; border-radius: 8px; background: var(--rs-green); color: #0e1c0a; font-size: 13px; font-weight: 800; letter-spacing: 0.05em; }
 .say__text { margin: 0; min-height: 2.9em; font-size: 20px; line-height: 1.46; font-weight: 600; letter-spacing: 0.005em; color: var(--cream); }
-.say__next { position: absolute; right: 24px; bottom: 11px; font-style: normal; font-size: 17px; line-height: 1; color: var(--cream); opacity: 0; }
+.say__next { position: absolute; right: 24px; bottom: 13px; width: 12px; height: 9px; background: var(--cream); clip-path: polygon(0 0, 100% 0, 50% 100%); opacity: 0; }
 .say__box.is-done .say__next { opacity: 1; animation: say-blink 0.9s steps(1, end) infinite; }
 @keyframes say-blink { 0%, 55% { opacity: 1; transform: translateY(0); } 56%, 100% { opacity: 0.15; transform: translateY(2px); } }
 
@@ -263,7 +263,7 @@
 .pick span { font-size: 13px; color: var(--rs-muted); font-variant-numeric: tabular-nums; }
 .pick.is-on { border-color: rgba(155, 217, 138, 0.75); background: rgba(155, 217, 138, 0.07); }
 .pick.is-on span { color: #c9eebb; }
-.pick--best b::after { content: ' ●'; font-size: 9px; vertical-align: 2px; color: var(--rs-green); }
+.pick--best b::after { content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 7px; border-radius: 50%; vertical-align: 2px; background: var(--rs-green); }
 .pick:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* the day */

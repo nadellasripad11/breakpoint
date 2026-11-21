@@ -48,7 +48,7 @@ export function errorResponse(c: Context, e: unknown): Response {
   if (e instanceof LimitError) return body(409, e.code, e.message);
   if (e instanceof SyntaxError) return body(400, 'invalid_json', 'The request body is not valid JSON.');
   if (e instanceof EngineInvariantError) {
-    // A bug, not a user error. Never return a plan that failed validation; log details server-side only.
+    // a bug, not a user error. never return a plan that failed validation; log details server-side only.
     console.error(`[${requestId}] ENGINE INVARIANT VIOLATED`, e.violations);
     return body(500, 'internal_invariant', 'The scheduler produced an invalid plan and it was discarded. Nothing was changed. Please report this.');
   }

@@ -10,7 +10,7 @@ test('zoned <-> epoch round trip', () => {
 });
 
 test('DST: wall-clock arithmetic across spring-forward and fall-back', () => {
-  // US spring forward: 2026-03-08, 02:00 -> 03:00 in Chicago. 02:30 does not exist.
+  // us spring forward: 2026-03-08, 02:00 -> 03:00 in chicago. 02:30 does not exist.
   const before = zonedToMin(2026, 3, 8, 1, 30, 'America/Chicago');
   const after = zonedToMin(2026, 3, 8, 3, 30, 'America/Chicago');
   assert.equal(after - before, 60); // only one real hour passes
@@ -18,7 +18,7 @@ test('DST: wall-clock arithmetic across spring-forward and fall-back', () => {
   assert.equal(tzOffsetMin(after, 'America/Chicago'), -300);
   const gap = zonedToMin(2026, 3, 8, 2, 30, 'America/Chicago');
   assert.ok(gap >= before + 30 && gap <= after); // nonexistent time resolves forward, never backward
-  // fall back: 2026-11-01, 02:00 -> 01:00. A day is 25 hours long.
+  // fall back: 2026-11-01, 02:00 -> 01:00. a day is 25 hours long.
   const dayStart = zonedToMin(2026, 11, 1, 0, 0, 'America/Chicago');
   const nextDay = zonedToMin(2026, 11, 2, 0, 0, 'America/Chicago');
   assert.equal(nextDay - dayStart, 25 * 60);
@@ -38,9 +38,9 @@ test('formatting helpers', () => {
 
 test('availability follows working hours per local day, including DST days', () => {
   const prefs = normalizePreferences({ timezone: 'America/Chicago', workingHours: { start: '08:00', end: '22:00', days: [1, 2, 3, 4, 5] } });
-  const horizon = { start: zonedToMin(2026, 11, 20, 0, 0, 'America/Chicago'), end: zonedToMin(2026, 11, 23, 0, 0, 'America/Chicago') }; // Fri, Sat, Sun
+  const horizon = { start: zonedToMin(2026, 11, 20, 0, 0, 'America/Chicago'), end: zonedToMin(2026, 11, 23, 0, 0, 'America/Chicago') }; // fri, sat, sun
   const av = buildAvailability(horizon, prefs);
-  assert.equal(av.length, 1); // only Friday works
+  assert.equal(av.length, 1); // only friday works
   assert.equal(av[0]!.end - av[0]!.start, 14 * 60);
   assert.throws(() => normalizePreferences({ timezone: 'Mars/Olympus' }));
   assert.throws(() => normalizePreferences({ workingHours: { start: '10:00', end: '09:00' } }));

@@ -11,17 +11,17 @@ import { explainRescue, pipWords } from './explain.ts';
 import type { PipLine } from './explain.ts';
 
 /**
- * Rescue My Day.
+ * rescue my day.
  *
- * When a schedule breaks, compute the smallest set of changes that makes it valid again, and show three things side by side:
+ * when a schedule breaks, compute the smallest set of changes that makes it valid again, and show three things side by side:
  * the original day, the day after the disruption (what happens if you carry on), and the repaired day.
  *
- * "Smallest" has one precise meaning, applied in this order:
+ * "smallest" has one precise meaning, applied in this order:
  *   1. defer nothing if a valid schedule exists that keeps every task (otherwise defer the least important work, explicitly);
  *   2. touch the fewest items (an item "keeps" its slot only if it starts at exactly its original time);
  *   3. move the touched items the fewest total minutes (exact: least total distance over every order and every minute).
- * Locked commitments never move, hard deadlines are never missed, protected breaks stay inside their windows.
- * If no schedule satisfies those rules the result says so, explains why with numbers, and changes nothing.
+ * locked commitments never move, hard deadlines are never missed, protected breaks stay inside their windows.
+ * if no schedule satisfies those rules the result says so, explains why with numbers, and changes nothing.
  */
 
 export type RescueStatus = 'absorbed' | 'repaired' | 'repaired_with_deferrals' | 'impossible';
@@ -58,14 +58,14 @@ export interface ChainStep {
   itemId: string;
   title: string;
   minutes: number;
-  /** e.g. "starts 45 minutes late", "gets pushed back 20 minutes by Project" */
+  /** e.g. "starts 45 minutes late", "gets pushed back 20 minutes by project" */
   text: string;
 }
 
 export interface ExplainedConflict extends Conflict {
   itemTitle: string;
   otherTitle: string | null;
-  /** how much room the item had in the ORIGINAL plan before its deadline (null when it has no deadline) */
+  /** how much room the item had in the original plan before its deadline (null when it has no deadline) */
   slackBefore: number | null;
   /** how far past its limit it lands (same as `minutes` for deadline / window conflicts) */
   lateBy: number | null;
@@ -102,7 +102,7 @@ export interface ReplayFrame {
   focus: string[];
 }
 
-/** Everything about one way of repairing the day: the repaired lane, what moves, the rules re-checked, Pip's words and the replay. */
+/** everything about one way of repairing the day: the repaired lane, what moves, the rules re-checked, pip's words and the replay. */
 export interface RescueView {
   status: RescueStatus;
   headline: string;
@@ -112,13 +112,13 @@ export interface RescueView {
   metrics: { moved: number; kept: number; totalMinutes: number; maxMinutes: number; deferred: number; conflictsBefore: number };
   guarantees: Guarantee[];
   pip: PipLine[];
-  /** Pip in three short lines or fewer (what happened, what breaks, the fix). Every number in them is computed. */
+  /** pip in three short lines or fewer (what happened, what breaks, the fix). every number in them is computed. */
   brief: string[];
   replay: ReplayFrame[];
   optimal: boolean;
 }
 
-/** One of the three ways forward. `view` is null when that strategy has no valid schedule (`note` says why). */
+/** one of the three ways forward. `view` is null when that strategy has no valid schedule (`note` says why). */
 export interface RescueOption {
   strategy: StrategyId;
   title: string;
@@ -444,8 +444,8 @@ export function rescueDay(plan: Plan, disruptions: readonly Disruption[]): Rescu
 }
 
 /**
- * Pip, short: at most three lines (what happened, what breaks, the fix) for a speech bubble. Same rule as everything else
- * Pip says: every number is read from the result, nothing is invented.
+ * pip, short: at most three lines (what happened, what breaks, the fix) for a speech bubble. same rule as everything else
+ * pip says: every number is read from the result, nothing is invented.
  */
 function briefFor(a: {
   plan: Plan; disruptions: readonly Disruption[]; conflicts: ExplainedConflict[]; changes: Change[]; deferred: Future['deferred'];
@@ -492,9 +492,9 @@ function briefFor(a: {
 }
 
 /**
- * "Test it again": the same day with one way forward adopted, as a new plan. Every item sits where that repair put it (an
+ * "test it again": the same day with one way forward adopted, as a new plan. every item sits where that repair put it (an
  * overrun keeps its new length, an unexpected commitment becomes a locked event) and deferred tasks are set aside (kept, but no longer taking time).
- * Pure: the original plan is untouched. Null when that strategy has no valid schedule.
+ * pure: the original plan is untouched. null when that strategy has no valid schedule.
  */
 export function adoptRepair(plan: Plan, disruptions: readonly Disruption[], strategy: StrategyId = 'minimize_changes'): Plan | null {
   const f = parallelFutures(plan, disruptions).futures.find((x) => x.strategy === strategy);

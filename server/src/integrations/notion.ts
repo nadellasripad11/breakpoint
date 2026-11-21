@@ -4,8 +4,8 @@ import { isoToMin, minToZonedIso, zonedToMin } from '../engine/index.ts';
 import type { Fetcher } from '../auth/google.ts';
 
 /**
- * Notion READ-ONLY connector. Uses an internal integration token the user pastes after granting the integration
- * "Read content" only. The only POST requests made are /search and /databases/{id}/query, which are reads.
+ * notion read-only connector. uses an internal integration token the user pastes after granting the integration
+ * "read content" only. the only post requests made are /search and /databases/{id}/query, which are reads.
  */
 const API = 'https://api.notion.com/v1';
 const VERSION = '2022-06-28';
@@ -24,7 +24,7 @@ async function call(f: Fetcher, token: string, path: string, init: { method: 'GE
   return (await res.json()) as Record<string, unknown>;
 }
 
-/* ───────────── "Log in with Notion" (OAuth for a Notion public integration) ───────────── */
+/* ───────────── "log in with notion" (oauth for a notion public integration) ───────────── */
 
 export interface NotionOAuthClient {
   clientId: string;
@@ -42,7 +42,7 @@ export function buildNotionAuthUrl(c: NotionOAuthClient, state: string): string 
   return u.toString();
 }
 
-/** Trades the one-time code for the workspace token. The only non-GET call besides /search and /query, and it is how the user's consent becomes a token. */
+/** trades the one-time code for the workspace token. the only non-get call besides /search and /query, and it is how the user's consent becomes a token. */
 export async function exchangeNotionCode(f: Fetcher, c: NotionOAuthClient, code: string): Promise<{ accessToken: string; workspaceName: string }> {
   const res = await f('https://api.notion.com/v1/oauth/token', {
     method: 'POST',
@@ -82,7 +82,7 @@ export interface NotionMapping {
   date?: string;
   /** a number property: estimated minutes */
   duration?: string;
-  /** a select/number property: High/Medium/Low or 1-5 */
+  /** a select/number property: high/medium/low or 1-5 */
   priority?: string;
   category?: string;
   /** a status/select/checkbox property that marks a task done (those are skipped) */

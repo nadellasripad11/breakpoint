@@ -10,8 +10,8 @@ function mk(i: number, d: number, release: number, deadline: number, deferrable:
 }
 
 /**
- * Independent oracle: enumerate EVERY start-time assignment on a coarse grid (no ordering heuristic, no DP).
- * Returns the maximum number of tasks that can be placed while all non-deferrable ones are, or -1 if infeasible.
+ * independent oracle: enumerate every start-time assignment on a coarse grid (no ordering heuristic, no dp).
+ * returns the maximum number of tasks that can be placed while all non-deferrable ones are, or -1 if infeasible.
  */
 function bruteForce(free: Interval[], floaters: Floater[]): number {
   const n = floaters.length;

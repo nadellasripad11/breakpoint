@@ -1,7 +1,7 @@
 /**
- * End-to-end smoke test against a RUNNING server (what a frontend would do).
+ * end-to-end smoke test against a running server (what a frontend would do).
  *   npm start            (terminal 1)
- *   npm run smoke        (terminal 2)       BASE_URL=http://localhost:8787 by default
+ *   npm run smoke        (terminal 2)       base_url=http://localhost:8787 by default
  */
 const BASE = process.env.BASE_URL ?? 'http://localhost:8787';
 let failures = 0;

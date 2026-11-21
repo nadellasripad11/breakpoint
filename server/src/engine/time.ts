@@ -3,7 +3,7 @@ import type { Interval, Minutes } from './types.ts';
 const MS_PER_MIN = 60_000;
 export const DAY = 1440;
 
-/** Parse an ISO-8601 instant (must carry an offset or Z) into epoch minutes. */
+/** parse an iso-8601 instant (must carry an offset or z) into epoch minutes. */
 export function isoToMin(iso: string): Minutes {
   const ms = Date.parse(iso);
   if (Number.isNaN(ms)) throw new RangeError(`Invalid date-time: ${iso}`);
@@ -14,7 +14,7 @@ export function minToDate(min: Minutes): Date {
   return new Date(min * MS_PER_MIN);
 }
 
-/** ISO string in UTC, e.g. 2026-11-20T23:00:00.000Z */
+/** iso string in utc, e.g. 2026-11-20t23:00:00.000z */
 export function minToUtcIso(min: Minutes): string {
   return minToDate(min).toISOString();
 }
@@ -55,7 +55,7 @@ export interface LocalParts {
   hour: number;
   minute: number;
   second: number;
-  /** 0 = Sunday … 6 = Saturday */
+  /** 0 = sunday … 6 = saturday */
   weekday: number;
 }
 
@@ -75,7 +75,7 @@ export function localParts(min: Minutes, tz: string): LocalParts {
   };
 }
 
-/** Offset of `tz` from UTC at the given instant, in minutes (positive = ahead of UTC). */
+/** offset of `tz` from utc at the given instant, in minutes (positive = ahead of utc). */
 export function tzOffsetMin(min: Minutes, tz: string): number {
   const p = localParts(min, tz);
   const asUtc = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) / MS_PER_MIN;
@@ -83,9 +83,9 @@ export function tzOffsetMin(min: Minutes, tz: string): number {
 }
 
 /**
- * Convert a wall-clock time in `tz` to epoch minutes.
- * Overlaps (clocks fall back) resolve to the earlier instant. Gaps (clocks spring forward, the time does not exist)
- * resolve like Temporal's "compatible" mode: shifted forward by the length of the gap (2:30 becomes 3:30).
+ * convert a wall-clock time in `tz` to epoch minutes.
+ * overlaps (clocks fall back) resolve to the earlier instant. gaps (clocks spring forward, the time does not exist)
+ * resolve like temporal's "compatible" mode: shifted forward by the length of the gap (2:30 becomes 3:30).
  */
 export function zonedToMin(y: number, mo: number, d: number, h: number, mi: number, tz: string): Minutes {
   const naive = Date.UTC(y, mo - 1, d, h, mi, 0) / MS_PER_MIN;
@@ -100,7 +100,7 @@ export function zonedToMin(y: number, mo: number, d: number, h: number, mi: numb
   return valid.length ? valid[0]! : naive - offBefore;
 }
 
-/** ISO string with the tz offset, e.g. 2026-11-20T17:00:00-06:00 */
+/** iso string with the tz offset, e.g. 2026-11-20t17:00:00-06:00 */
 export function minToZonedIso(min: Minutes, tz: string): string {
   const p = localParts(min, tz);
   const off = tzOffsetMin(min, tz);
@@ -110,7 +110,7 @@ export function minToZonedIso(min: Minutes, tz: string): string {
   return `${pad(p.year, 4)}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}:${pad(p.second)}${sign}${pad(Math.floor(a / 60))}:${pad(a % 60)}`;
 }
 
-/** "5:00 PM" in the user's timezone (used in explanations). */
+/** "5:00 pm" in the user's timezone (used in explanations). */
 export function fmtClock(min: Minutes, tz: string): string {
   const p = localParts(min, tz);
   const h12 = p.hour % 12 === 0 ? 12 : p.hour % 12;
@@ -135,7 +135,7 @@ export function parseHHMM(s: string): number {
   return h * 60 + mi;
 }
 
-/** Iterate the local calendar days that intersect [start, end) in `tz`. */
+/** iterate the local calendar days that intersect [start, end) in `tz`. */
 export function* localDays(horizon: Interval, tz: string): Generator<{ y: number; mo: number; d: number; weekday: number; startMin: Minutes }> {
   const first = localParts(horizon.start, tz);
   let cur = Date.UTC(first.year, first.month - 1, first.day);

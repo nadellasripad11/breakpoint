@@ -15,8 +15,8 @@ import { fetchDatabase } from '../../integrations/notion.ts';
 import type { Schedule } from '../../store/types.ts';
 
 /**
- * Imports are READ-ONLY copies into the user's own Breakpoint schedule. Nothing is ever written back to the source.
- * Re-importing is idempotent. Items that disappeared from the source are reported as `missing` and KEPT.
+ * imports are read-only copies into the user's own breakpoint schedule. nothing is ever written back to the source.
+ * re-importing is idempotent. items that disappeared from the source are reported as `missing` and kept.
  */
 async function commit(c: Context<AppEnv>, s: Schedule, source: 'ics' | 'google' | 'notion', items: ImportedItem[], extra: { connectionId: string | null; consentAt: string; skipped: number; warnings: string[]; dryRun: boolean; truncated?: boolean }) {
   const deps = c.get('deps');
@@ -53,7 +53,7 @@ export function importRoutes(): Hono<AppEnv> {
   const r = new Hono<AppEnv>();
   const big = bodyLimit({ maxSize: 2.5 * 1024 * 1024, onError: (c) => c.json({ error: { code: 'too_large', message: 'Calendar files are limited to 2 MB.' } }, 413) });
 
-  /** .ics: the file is sent by the user's own browser. (The only URL the server ever fetches is a calendar link, below.) */
+  /** .ics: the file is sent by the user's own browser. (the only url the server ever fetches is a calendar link, below.) */
   r.post('/:id/import/ics', big, rateLimit('import', 20, 3_600_000, 'user'), async (c) => {
     const s = await loadSchedule(c, c.req.param('id'));
     const body = icsImportBody.parse(await c.req.json());
@@ -62,8 +62,8 @@ export function importRoutes(): Hono<AppEnv> {
   });
 
   /**
-   * A calendar link (Google "Secret address in iCal format", iCloud public calendar): no OAuth app and no verification needed.
-   * The server fetches it ONCE from an allow-listed calendar host (see calendar/link.ts) and never stores, logs or echoes it.
+   * a calendar link (google "secret address in ical format", icloud public calendar): no oauth app and no verification needed.
+   * the server fetches it once from an allow-listed calendar host (see calendar/link.ts) and never stores, logs or echoes it.
    */
   r.post('/:id/import/link', bodyLimit({ maxSize: 8 * 1024, onError: (c) => c.json({ error: { code: 'too_large', message: 'That link is too long.' } }, 413) }), rateLimit('import', 20, 3_600_000, 'user'), async (c) => {
     const deps = c.get('deps');

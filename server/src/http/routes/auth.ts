@@ -12,13 +12,13 @@ import type { User } from '../../store/types.ts';
 
 export const userDto = (u: User) => ({ id: u.id, email: u.email, name: u.name, picture: u.picture, isGuest: u.isGuest, createdAt: u.createdAt });
 
-/** Only same-site relative paths: no open redirects. */
+/** only same-site relative paths: no open redirects. */
 const safePath = z.string().max(200).regex(/^\/(?!\/)[A-Za-z0-9_\-./?=&%#]*$/).default('/');
 
 export function authRoutes(): Hono<AppEnv> {
   const r = new Hono<AppEnv>();
 
-  /* Guest demo: no login, no personal data. Sandbox account that expires and is purged automatically. */
+  /* guest demo: no login, no personal data. sandbox account that expires and is purged automatically. */
   r.post('/guest', rateLimit('guest', 10, 3_600_000), async (c) => {
     const deps = c.get('deps');
     const existing = c.get('user');
@@ -30,7 +30,7 @@ export function authRoutes(): Hono<AppEnv> {
     return c.json({ user: userDto(user), token, expiresAt, demoScheduleId, note: 'Guest data is deleted after 24 hours of inactivity. Sign in with Google to keep your schedules.' }, 201);
   });
 
-  /* Google sign-in (OpenID Connect, authorization-code flow with PKCE, state and nonce). */
+  /* google sign-in (openid connect, authorization-code flow with pkce, state and nonce). */
   r.get('/google/start', rateLimit('auth', 20, 60_000), async (c) => {
     const deps = c.get('deps');
     const g = deps.config.google;
@@ -86,13 +86,13 @@ export function authRoutes(): Hono<AppEnv> {
     }
     await startSession(c, user, deps.config.sessionTtlDays * 86_400_000);
     await deps.store.audit(user.id, 'login.google', {}, deps.newId(), deps.now().toISOString());
-    // cross-site frontends cannot read our cookie: hand them a single-use code in the URL fragment (fragments are never sent to a server)
+    // cross-site frontends cannot read our cookie: hand them a single-use code in the url fragment (fragments are never sent to a server)
     const handoff = randomToken(32);
     await deps.store.saveLoginCode(sha256Hex(handoff), user.id, new Date(deps.now().getTime() + 120_000).toISOString());
     return c.redirect(`${deps.config.appUrl}${st.redirectPath.split('#')[0]}#bp_code=${handoff}`, 302);
   });
 
-  /** Trades the single-use code from the sign-in redirect for a session token (token mode / cross-site frontends). */
+  /** trades the single-use code from the sign-in redirect for a session token (token mode / cross-site frontends). */
   r.post('/exchange', rateLimit('auth', 20, 60_000), async (c) => {
     const deps = c.get('deps');
     const { code } = z.object({ code: z.string().min(20).max(200) }).strict().parse(await c.req.json());
@@ -121,7 +121,7 @@ export function meRoutes(): Hono<AppEnv> {
     return c.json({ user: userDto(u), sessionExpiresAt: c.get('session')!.expiresAt });
   });
 
-  /** GDPR-style erase: revokes Google access, deletes the account and, by cascade, every schedule, item, connection and run. */
+  /** gdpr-style erase: revokes google access, deletes the account and, by cascade, every schedule, item, connection and run. */
   r.delete('/', async (c) => {
     const deps = c.get('deps');
     const u = c.get('user');

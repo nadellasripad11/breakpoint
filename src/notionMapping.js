@@ -1,7 +1,7 @@
 /**
- * Which Notion columns Breakpoint reads, guessed from the database's own column names.
- * The sheet shows the guess to the user before importing, and lets them pick the deadline column when there are several.
- * `db.properties` is the API's [{ name, type }] list.
+ * which notion columns breakpoint reads, guessed from the database's own column names.
+ * the sheet shows the guess to the user before importing, and lets them pick the deadline column when there are several.
+ * `db.properties` is the api's [{ name, type }] list.
  */
 export function deriveMapping(db) {
   const p = db.properties || [];

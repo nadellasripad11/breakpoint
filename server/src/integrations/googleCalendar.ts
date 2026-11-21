@@ -4,8 +4,8 @@ import { isoToMin, minToZonedIso } from '../engine/index.ts';
 import type { Fetcher } from '../auth/google.ts';
 
 /**
- * Google Calendar READ-ONLY connector. Only GET requests are ever made, with the calendar.readonly scope.
- * Breakpoint never creates, edits or deletes anything in Google Calendar.
+ * google calendar read-only connector. only get requests are ever made, with the calendar.readonly scope.
+ * breakpoint never creates, edits or deletes anything in google calendar.
  */
 const API = 'https://www.googleapis.com/calendar/v3';
 const MAX_EVENTS = 2000;
@@ -40,7 +40,7 @@ interface GEvent {
   end?: { date?: string; dateTime?: string; timeZone?: string };
 }
 
-/** Maps Google events to ImportedItems. Recurring events arrive already expanded (singleEvents=true). */
+/** maps google events to importeditems. recurring events arrive already expanded (singleevents=true). */
 export function mapGoogleEvents(events: GEvent[], defaultTz: string, opts: { allDayBlocks?: boolean } = {}): { items: ImportedItem[]; skipped: number } {
   const items: ImportedItem[] = [];
   let skipped = 0;

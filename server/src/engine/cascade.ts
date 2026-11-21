@@ -5,13 +5,13 @@ import { applyDisruptions, lockedInterval } from './world.ts';
 import type { WorkItem } from './world.ts';
 
 /**
- * Butterfly Effect: what happens if you apply the disruptions and then simply carry on?
+ * butterfly effect: what happens if you apply the disruptions and then simply carry on?
  *
- * Rules (deterministic):
- *  - Locked commitments never move. If two locked commitments end up overlapping, that is a conflict.
- *  - Flexible work yields to locked commitments: it is paused while a locked block runs and resumed after.
- *  - Flexible items keep their original order and start when you are free (never earlier than planned).
- *  - Nothing is dropped. Anything that no longer fits is reported as a conflict.
+ * rules (deterministic):
+ *  - locked commitments never move. if two locked commitments end up overlapping, that is a conflict.
+ *  - flexible work yields to locked commitments: it is paused while a locked block runs and resumed after.
+ *  - flexible items keep their original order and start when you are free (never earlier than planned).
+ *  - nothing is dropped. anything that no longer fits is reported as a conflict.
  */
 export function simulateCascade(plan: Plan, disruptions: readonly Disruption[]): CascadeResult {
   const { settings } = plan;
@@ -247,7 +247,7 @@ function rank(s: Severity): number {
   return s === 'critical' ? 3 : s === 'major' ? 2 : 1;
 }
 
-/** Stable identity of a conflict so "new" conflicts can be told apart from pre-existing ones. */
+/** stable identity of a conflict so "new" conflicts can be told apart from pre-existing ones. */
 export function conflictKey(c: Conflict): string {
   return `${c.code}:${c.itemId}:${c.otherId ?? ''}`;
 }

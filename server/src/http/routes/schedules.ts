@@ -44,7 +44,7 @@ export function scheduleRoutes(): Hono<AppEnv> {
     return c.json({ schedule: scheduleDto((await deps.store.getSchedule(s.userId, s.id))!) });
   });
 
-  /** Replaces the preferences (priorities, flexibility, working hours, protected breaks). */
+  /** replaces the preferences (priorities, flexibility, working hours, protected breaks). */
   r.put('/:id/preferences', async (c) => {
     const deps = c.get('deps');
     const s = await loadSchedule(c, c.req.param('id'));

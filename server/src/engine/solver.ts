@@ -3,30 +3,30 @@ import type { Floater } from './world.ts';
 import { fitsFree, mergeIntervals, placeEarliest, subtractIntervals } from './intervals.ts';
 
 /**
- * Exact placement of flexible tasks into the free gaps between locked commitments.
+ * exact placement of flexible tasks into the free gaps between locked commitments.
  *
- * Tasks are non-preemptive (they run in one piece) and have a release time and a HARD deadline.
- * For up to `exactLimit` tasks the solver is an exact subset DP (earliest-completion per subset):
+ * tasks are non-preemptive (they run in one piece) and have a release time and a hard deadline.
+ * for up to `exactlimit` tasks the solver is an exact subset dp (earliest-completion per subset):
  * it finds a placement iff one exists, and among all placeable subsets that contain every
  * non-deferrable task it picks the one with the highest additive key.
- * Above the limit it falls back to a deterministic greedy pass and says so (`optimal: false`).
+ * above the limit it falls back to a deterministic greedy pass and says so (`optimal: false`).
  */
 
 export interface SolveOptions {
-  /** Keep the original relative order (Mobility "fixed"). */
+  /** keep the original relative order (mobility "fixed"). */
   ordered?: boolean;
-  /** Additive weight of placing a task; the solver maximises the sum over the placed set. */
+  /** additive weight of placing a task; the solver maximises the sum over the placed set. */
   weight?: (f: Floater) => number;
   exactLimit?: number;
 }
 
 export interface SolveResult {
   feasible: boolean;
-  /** id -> start minute (left-justified; run `relaxPlacements` to pull tasks toward their original slot). */
+  /** id -> start minute (left-justified; run `relaxplacements` to pull tasks toward their original slot). */
   placed: Map<string, number>;
-  /** Deferrable tasks that could not be placed. Never silently dropped: callers must surface these. */
+  /** deferrable tasks that could not be placed. never silently dropped: callers must surface these. */
   deferred: string[];
-  /** Non-deferrable tasks that could not be placed (only when `feasible` is false). */
+  /** non-deferrable tasks that could not be placed (only when `feasible` is false). */
   failed: string[];
   key: number;
   optimal: boolean;
@@ -37,10 +37,10 @@ export interface SolveResult {
 
 export const DEFAULT_EXACT_LIMIT = 18;
 
-/** Count-first weight: more tasks placed beats everything, then priority, then minutes. */
+/** count-first weight: more tasks placed beats everything, then priority, then minutes. */
 export const weightByCount = (f: Floater): number => 1e9 + f.priority * 1e5 + f.duration;
 
-/** Priority-lexicographic weight: one priority-5 task beats any number of priority-4 tasks. */
+/** priority-lexicographic weight: one priority-5 task beats any number of priority-4 tasks. */
 export function weightByPriority(n: number): (f: Floater) => number {
   const base = n + 2;
   return (f) => Math.pow(base, f.priority - 1) * 1e3 + f.duration * 1e-3;
@@ -137,7 +137,7 @@ export function solveFloaters(freeIn: readonly Interval[], floaters: readonly Fl
   return { feasible: true, placed, deferred, failed: [], key: key[bestMask]!, optimal: true, method: 'dp', ops };
 }
 
-/** Deterministic fallback for very large days. Never claims optimality. */
+/** deterministic fallback for very large days. never claims optimality. */
 function solveGreedy(free: Interval[], floaters: readonly Floater[], opts: SolveOptions, weight: (f: Floater) => number): SolveResult {
   const placed = new Map<string, number>();
   const deferred: string[] = [];
@@ -175,9 +175,9 @@ export interface Placed {
 }
 
 /**
- * Left-justified DP output moves tasks more than necessary. This pass slides each task to the feasible
+ * left-justified dp output moves tasks more than necessary. this pass slides each task to the feasible
  * position closest to its original start, one at a time, given every other task as an obstacle.
- * Every move keeps the plan valid, so the result is never worse than its input.
+ * every move keeps the plan valid, so the result is never worse than its input.
  */
 export function relaxPlacements(free: readonly Interval[], placed: readonly Placed[], opts: { ordered?: boolean; rounds?: number } = {}): Placed[] {
   const cur = placed.map((p) => ({ ...p }));
@@ -216,9 +216,9 @@ export function relaxPlacements(free: readonly Interval[], placed: readonly Plac
 }
 
 /**
- * Tries every ordering of the placed tasks (left-justified), slides each result toward the original slots,
- * and keeps the plan with the least total movement. Exhaustive for up to `maxTasks` tasks, then it falls back
- * to the plain slide pass. Deterministic: permutations are visited in lexicographic order.
+ * tries every ordering of the placed tasks (left-justified), slides each result toward the original slots,
+ * and keeps the plan with the least total movement. exhaustive for up to `maxtasks` tasks, then it falls back
+ * to the plain slide pass. deterministic: permutations are visited in lexicographic order.
  */
 export function improveByOrder(free: readonly Interval[], tasks: readonly Placed[], opts: { ordered?: boolean; maxTasks?: number } = {}): Placed[] {
   const cost = (p: readonly Placed[]) => p.reduce((s, t) => s + Math.abs(t.start - t.origStart), 0);
@@ -273,9 +273,9 @@ export interface DispTask {
 
 export interface DispResult {
   placed: Map<string, number>;
-  /** sum over tasks of |start - origStart|, minutes */
+  /** sum over tasks of |start - origstart|, minutes */
   cost: number;
-  /** true when proven minimal (integer-minute exact DP); false when the task count or time span forced the heuristic */
+  /** true when proven minimal (integer-minute exact dp); false when the task count or time span forced the heuristic */
   exact: boolean;
   ops: number;
 }
@@ -284,13 +284,13 @@ export const DISP_MAX_TASKS = 9;
 export const DISP_MAX_SPAN = 2000;
 
 /**
- * Places ALL the given tasks (non-preemptive, inside the free gaps, between each task's release and deadline, never
- * overlapping each other) so that the total distance from their original starts is the SMALLEST possible, over every
- * order and every integer-minute start. Returns null when they cannot all be placed.
+ * places all the given tasks (non-preemptive, inside the free gaps, between each task's release and deadline, never
+ * overlapping each other) so that the total distance from their original starts is the smallest possible, over every
+ * order and every integer-minute start. returns null when they cannot all be placed.
  *
- * Exact dynamic programme over (set of tasks placed, minute the last one ends): f[set][end] = least movement so far.
- * With `ordered` the tasks keep their original order (fixed mobility). Beyond DISP_MAX_TASKS tasks (or a span longer
- * than DISP_MAX_SPAN minutes) it falls back to the exhaustive-order slide heuristic and says so (`exact: false`).
+ * exact dynamic programme over (set of tasks placed, minute the last one ends): f[set][end] = least movement so far.
+ * with `ordered` the tasks keep their original order (fixed mobility). beyond disp_max_tasks tasks (or a span longer
+ * than disp_max_span minutes) it falls back to the exhaustive-order slide heuristic and says so (`exact: false`).
  */
 export function minDisplacementPlacement(freeIn: readonly Interval[], tasksIn: readonly DispTask[], opts: { ordered?: boolean } = {}): DispResult | null {
   const free = mergeIntervals(freeIn);
@@ -387,7 +387,7 @@ function popBits(m: number): number {
   return c;
 }
 
-/** Can `t` keep its original slot given the currently free time? */
+/** can `t` keep its original slot given the currently free time? */
 export function anchorFits(free: readonly Interval[], t: Floater): boolean {
   return t.origStart >= t.release && t.origStart + t.duration <= t.deadline && fitsFree(free, t.origStart, t.duration);
 }

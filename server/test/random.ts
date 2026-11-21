@@ -2,7 +2,7 @@ import type { Plan, PlanItem } from '../src/engine/index.ts';
 import { Rng, buildBaseline } from '../src/engine/index.ts';
 import { at, mkPlan, settings } from './helpers.ts';
 
-/** Seeded random but valid plan: a few locked events plus flexible tasks placed by the baseline builder. */
+/** seeded random but valid plan: a few locked events plus flexible tasks placed by the baseline builder. */
 export function randomPlan(seed: number, opts: { mobility?: 'fixed' | 'balanced' | 'flexible'; maxTasks?: number } = {}): Plan | null {
   const rng = new Rng(seed);
   const items: (Partial<PlanItem> & { id: string; duration: number })[] = [];

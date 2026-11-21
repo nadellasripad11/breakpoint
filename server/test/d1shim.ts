@@ -7,8 +7,8 @@ import type { D1Like, D1Statement } from '../src/store/d1.ts';
 import type { Row } from '../src/store/rows.ts';
 
 /**
- * A stand-in for Cloudflare D1 built on node:sqlite, with the same shape of API (prepare/bind/all/first/run/batch).
- * It lets the whole API test suite run against D1Store without a Workers runtime: `TEST_STORE=d1 npm test`.
+ * a stand-in for cloudflare d1 built on node:sqlite, with the same shape of api (prepare/bind/all/first/run/batch).
+ * it lets the whole api test suite run against d1store without a workers runtime: `test_store=d1 npm test`.
  */
 export function d1Shim(raw: DatabaseSync): D1Like {
   const make = (sql: string, params: unknown[] = []): D1Statement => ({
@@ -19,7 +19,7 @@ export function d1Shim(raw: DatabaseSync): D1Like {
   });
   return {
     prepare: (sql: string) => make(sql),
-    // like D1: the statements of a batch run in order inside one transaction
+    // like d1: the statements of a batch run in order inside one transaction
     batch: async (statements: D1Statement[]) => {
       raw.exec('BEGIN');
       try {

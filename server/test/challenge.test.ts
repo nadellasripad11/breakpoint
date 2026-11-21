@@ -4,7 +4,7 @@ import type { Attempt, Disruption } from '../src/engine/index.ts';
 import { Rng, buildWorld, checkAttempt, freeTime, judgeAttempt, makeChallenge, rescueDay, simulateCascade, solveFloaters, validatePlacements, baselineIssues, bufferFor } from '../src/engine/index.ts';
 import { client, makeApp } from './apiHelpers.ts';
 
-/** Breakpoint's own answer, turned into the shape a visitor submits. */
+/** breakpoint's own answer, turned into the shape a visitor submits. */
 function engineAttempt(c: ReturnType<typeof makeChallenge>, disruptions: Disruption[] = c.suggested): Attempt {
   const r = rescueDay(c.plan, disruptions);
   assert.ok(r.lanes.repaired, 'the day can be saved');
@@ -213,7 +213,7 @@ test('judge: visitors can add their own disruptions, including ones nobody can s
   assert.ok(rep.rescue.diagnosis);
   assert.ok(rep.pip.some((l) => /No valid schedule exists/.test(l.text)));
 
-  // a custom, survivable disruption is judged against Breakpoint's answer for THAT disruption
+  // a custom, survivable disruption is judged against breakpoint's answer for that disruption
   const mine: Disruption[] = [{ type: 'overrun', targetId: 'problems', minutes: 25 }, { type: 'unexpected', start: c.plan.settings.horizon.start + 15 * 60, duration: 30, title: 'Call', priority: 5 }];
   const r2 = rescueDay(c.plan, mine);
   if (r2.lanes.repaired) {
@@ -222,7 +222,7 @@ test('judge: visitors can add their own disruptions, including ones nobody can s
   }
 });
 
-/* ═══════════════════ the API ═══════════════════ */
+/* ═══════════════════ the api ═══════════════════ */
 
 test('API: POST /api/engine/rescue works with no account, returns ISO times, and refuses nothing it should accept', async () => {
   const t = await makeApp();

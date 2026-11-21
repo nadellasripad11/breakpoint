@@ -1,6 +1,6 @@
 import type { Interval } from './types.ts';
 
-/** Sort + merge overlapping/adjacent intervals; drops empty ones. Does not mutate the input. */
+/** sort + merge overlapping/adjacent intervals; drops empty ones. does not mutate the input. */
 export function mergeIntervals(list: readonly Interval[]): Interval[] {
   const sorted = list.filter((i) => i.end > i.start).map((i) => ({ start: i.start, end: i.end })).sort((a, b) => a.start - b.start || a.end - b.end);
   const out: Interval[] = [];
@@ -56,7 +56,7 @@ export function totalLength(list: readonly Interval[]): number {
   return t;
 }
 
-/** Free minutes inside [from, to) given merged free intervals. */
+/** free minutes inside [from, to) given merged free intervals. */
 export function freeWithin(free: readonly Interval[], from: number, to: number): number {
   let t = 0;
   for (const iv of free) {
@@ -76,8 +76,8 @@ export function contains(outer: Interval, inner: Interval): boolean {
 }
 
 /**
- * Earliest start s >= max(from, release) such that [s, s+d) fits inside one free interval and ends by `deadline`.
- * Returns Infinity when impossible. `free` must be merged + sorted.
+ * earliest start s >= max(from, release) such that [s, s+d) fits inside one free interval and ends by `deadline`.
+ * returns infinity when impossible. `free` must be merged + sorted.
  */
 export function placeEarliest(free: readonly Interval[], from: number, release: number, deadline: number, d: number): number {
   const lo = Math.max(from, release);
@@ -90,7 +90,7 @@ export function placeEarliest(free: readonly Interval[], from: number, release: 
   return Infinity;
 }
 
-/** True when [s, s+d) lies entirely inside one free interval. */
+/** true when [s, s+d) lies entirely inside one free interval. */
 export function fitsFree(free: readonly Interval[], s: number, d: number): boolean {
   for (const iv of free) {
     if (iv.start > s) return false;

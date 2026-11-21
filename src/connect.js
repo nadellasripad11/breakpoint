@@ -4,22 +4,22 @@ import { deriveMapping } from './notionMapping.js';
 import { api, apiEnabled, ensureSchedule, ensureSession, peekSession, completeSignIn, currentUser, savePreferences, friendlyError, returnError } from './api.js';
 
 /**
- * The connector sheet: a small modal over the onboarding "Connect" step.
+ * the connector sheet: a small modal over the onboarding "connect" step.
  *   .ics file     -> pick a file, preview what would be imported, import
- *   Google        -> sign in (guests) -> explicit read-only consent -> pick a calendar -> preview -> import
- *   Notion        -> sign in (guests) -> paste a read-only integration token -> pick a database -> preview -> import
- * Everything that comes from outside (calendar names, event titles, errors) is inserted with textContent only.
- * Nothing is ever written back to Google, Notion or the file: the API only reads, and says so.
+ *   google        -> sign in (guests) -> explicit read-only consent -> pick a calendar -> preview -> import
+ *   notion        -> sign in (guests) -> paste a read-only integration token -> pick a database -> preview -> import
+ * everything that comes from outside (calendar names, event titles, errors) is inserted with textcontent only.
+ * nothing is ever written back to google, notion or the file: the api only reads, and says so.
  */
 
-// the URL as it was when the page loaded, before anything cleans it (a redirect back from Google carries the result here)
+// the url as it was when the page loaded, before anything cleans it (a redirect back from google carries the result here)
 const LANDED = { search: location.search, hash: location.hash };
 
 const $ = (s, r = document) => r.querySelector(s);
 const SVG = 'http://www.w3.org/2000/svg';
 const PREVIEW_MSG = 'Connectors switch on once the Breakpoint server is connected to this site.';
 
-/** Tiny DOM builder. Strings become text nodes, never HTML. */
+/** tiny dom builder. strings become text nodes, never html. */
 const h = (tag, props = {}, ...kids) => {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(props)) {
@@ -70,7 +70,7 @@ function cleanLandedUrl() {
   try { history.replaceState(null, '', location.pathname + (s ? `?${s}` : '')); } catch { /* ignore */ }
 }
 
-/** Did we just come back from Google? (?ob=… from sign-in/consent, or ?auth_error / ?connect_error from a refusal) */
+/** did we just come back from google? (?ob=… from sign-in/consent, or ?auth_error / ?connect_error from a refusal) */
 export function readReturn() {
   const q = new URLSearchParams(LANDED.search);
   const ob = q.get('ob');
@@ -96,7 +96,7 @@ export function initConnect({ ob, say, reduce, persist }) {
   let msgEl = null;
   let shown = false;
 
-  window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); }); // back button from Google
+  window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); }); // back button from google
 
   /* ───────── sheet shell ───────── */
   function showSheet() {
@@ -160,8 +160,8 @@ export function initConnect({ ob, say, reduce, persist }) {
   };
 
   /**
-   * view = { ico, title: [string | ['em', string]], sub, body: Node[], actions: Node[], foot, note: {text, tone}, focus }
-   * Returns nothing; use setMsg() for errors afterwards.
+   * view = { ico, title: [string | ['em', string]], sub, body: node[], actions: node[], foot, note: {text, tone}, focus }
+   * returns nothing; use setmsg() for errors afterwards.
    */
   function render(view) {
     token++;
@@ -191,7 +191,7 @@ export function initConnect({ ob, say, reduce, persist }) {
     h('button', { class: 'btn btn--cream ob__btn sh__primary', type: 'button', onclick: (e) => onClick(e.currentTarget) }, h('span', {}, label), arrow && icon('i-arrow'));
   const ghost = (label, onClick) => h('button', { class: 'sh__ghost', type: 'button', onclick: (e) => onClick(e.currentTarget) }, label);
 
-  /** Disables a button while an async step runs, shows a spinner, and puts any error in the sheet. */
+  /** disables a button while an async step runs, shows a spinner, and puts any error in the sheet. */
   async function run(btn, busyLabel, fn) {
     if (btn.disabled) return;
     const t = token;
@@ -320,8 +320,8 @@ export function initConnect({ ob, say, reduce, persist }) {
     });
   }
 
-  /* ───────── calendar links: Google "Secret address in iCal format", iCloud "Public Calendar" ───────── */
-  // No OAuth app and no Google verification: the link already grants read access, and the server reads it once and never keeps it.
+  /* ───────── calendar links: google "secret address in ical format", icloud "public calendar" ───────── */
+  // no oauth app and no google verification: the link already grants read access, and the server reads it once and never keeps it.
   const b = (t) => h('b', {}, t);
   const ext = (t, href) => h('a', { href, target: '_blank', rel: 'noopener noreferrer' }, t);
   const LINKS = {
@@ -359,7 +359,7 @@ export function initConnect({ ob, say, reduce, persist }) {
       if (url.length < 12 || !/^(https?|webcals?):\/\//i.test(url)) throw { message: 'Paste the whole link, starting with https:// or webcal://.' };
       const id = await ensureSchedule();
       const dry = await api.importLink(id, url, { provider, dryRun: true });
-      // the link lives only in this closure, so Back and Import can reuse it; it is never written anywhere
+      // the link lives only in this closure, so back and import can reuse it; it is never written anywhere
       viewPreview({ label: cfg.label, dry, noun: 'event', back: () => viewCalendarLink(provider), commit: () => api.importLink(id, url, { provider }) });
     });
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('.sh__primary', bodyEl)?.click(); } });
@@ -376,7 +376,7 @@ export function initConnect({ ob, say, reduce, persist }) {
     });
   }
 
-  /* ───────── sign-in gate (only Google sign-in needs an account) ───────── */
+  /* ───────── sign-in gate (only google sign-in needs an account) ───────── */
   function viewSignIn(source, note) {
     const g = source === 'google';
     const go = (btn) => run(btn, 'Opening Google…', async () => {
@@ -418,7 +418,7 @@ export function initConnect({ ob, say, reduce, persist }) {
     });
   }
 
-  /* ───────── Google ───────── */
+  /* ───────── google ───────── */
   async function gateGoogle(note) {
     if (!caps.google) return viewUnavailable('google');
     loading(['Checking ', ['em', 'Google']]);
@@ -501,8 +501,8 @@ export function initConnect({ ob, say, reduce, persist }) {
     });
   }
 
-  /* ───────── Notion ───────── */
-  /** Notion needs no sign-in. With "Log in with Notion" set up it is two clicks; otherwise a pasted token still works. */
+  /* ───────── notion ───────── */
+  /** notion needs no sign-in. with "log in with notion" set up it is two clicks; otherwise a pasted token still works. */
   async function gateNotion(note) {
     loading(['Checking ', ['em', 'Notion']]);
     const t = token;
@@ -552,9 +552,9 @@ export function initConnect({ ob, say, reduce, persist }) {
       sub: null,
       body: [
         h('ol', { class: 'sh__steps' },
-          h('li', {}, 'Open ', h('a', { href: 'https://www.notion.so/profile/integrations', target: '_blank', rel: 'noopener noreferrer' }, 'Notion → Integrations'), ' and create an internal integration.'),
+          h('li', {}, 'Open ', h('a', { href: 'https://www.notion.so/profile/integrations', target: '_blank', rel: 'noopener noreferrer' }, 'Notion -> Integrations'), ' and create an internal integration.'),
           h('li', {}, 'Under Capabilities, tick ', h('b', {}, 'Read content'), ' only.'),
-          h('li', {}, 'On your task database, open ••• → Connections and add the integration.'),
+          h('li', {}, 'On your task database, open ••• -> Connections and add the integration.'),
           h('li', {}, 'Paste the token here.'),
         ),
         input,
@@ -587,7 +587,7 @@ export function initConnect({ ob, say, reduce, persist }) {
       return render({
         ico: icon('i-notion'),
         title: ['Nothing is ', ['em', 'shared'], ' yet'],
-        sub: 'Your integration can’t see any databases. In Notion, open your task database, choose ••• → Connections, and add the integration. Then check again.',
+        sub: 'Your integration can’t see any databases. In Notion, open your task database, choose ••• -> Connections, and add the integration. Then check again.',
         actions: [ghost('Disconnect', disconnect), primary('Check again', (btn) => run(btn, 'Checking…', async () => viewNotionPick(conn, note)), { arrow: false })],
         note,
       });
@@ -639,8 +639,8 @@ export function initConnect({ ob, say, reduce, persist }) {
   }
 
   /* ───────── entry points ───────── */
-  // Google: sign in with Google when the server has it (fewest steps), otherwise the private link (nothing to approve).
-  // Apple has no sign-in for calendars, so it is always the link.
+  // google: sign in with google when the server has it (fewest steps), otherwise the private link (nothing to approve).
+  // apple has no sign-in for calendars, so it is always the link.
   const FLOWS = {
     ics: viewIcs,
     google: (note) => (caps && caps.google ? gateGoogle(note) : caps && caps.calendarLink ? viewCalendarLink('google', note) : gateGoogle(note)),
@@ -659,7 +659,7 @@ export function initConnect({ ob, say, reduce, persist }) {
     }
   }
 
-  /** Continue on the Connect step. Resolves { advance } once the user is done (or has cancelled). */
+  /** continue on the connect step. resolves { advance } once the user is done (or has cancelled). */
   async function start(source) {
     if (!apiEnabled) { say(PREVIEW_MSG); return { advance: true, preview: true }; }
     if (!(await checkServer())) { say('Couldn’t reach the Breakpoint server, so nothing was imported. You can connect later.'); return { advance: true, offline: true }; }
@@ -677,7 +677,7 @@ export function initConnect({ ob, say, reduce, persist }) {
     return p;
   }
 
-  /** Back from Google (sign-in or consent, or a refusal): reopen the sheet where the user left off. */
+  /** back from google (sign-in or consent, or a refusal): reopen the sheet where the user left off. */
   async function resume(ret) {
     if (!apiEnabled) return { advance: false };
     let note = null;
@@ -699,7 +699,7 @@ export function initConnect({ ob, say, reduce, persist }) {
     return p;
   }
 
-  /** Customize -> Continue: store the choices on the schedule. Never blocks the flow for long. */
+  /** customize -> continue: store the choices on the schedule. never blocks the flow for long. */
   async function savePrefs(choices) {
     if (!apiEnabled || !online) return { saved: false };
     if (!currentUser()) return { saved: false };

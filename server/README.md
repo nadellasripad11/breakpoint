@@ -1,21 +1,21 @@
-# Breakpoint backend
+# breakpoint backend
 
-A deterministic scheduling engine and REST API that stress-tests a schedule *before* life does.
+a deterministic scheduling engine and rest api that stress-tests a schedule *before* life does.
 
-- **Chaos Engine**: seeded, reproducible disruption scenarios (delays, overruns, unexpected commitments, lost time).
-- **Butterfly Effect**: how one disruption ripples through everything after it (shifts, conflicts, missed deadlines).
-- **Breaking Point**: the exact number of minutes a schedule tolerates before a *critical* failure, both "if you do nothing" and "if you re-plan".
-- **Parallel Futures**: three recovery plans: *Protect priorities*, *Preserve the most tasks*, *Minimize changes*.
-- **Fortify My Day**: small preventive moves, each *proven* by re-simulation.
-- **Preferences**: fixed commitments, priorities, flexible tasks, deadlines, recurring events, protected breaks, mobility.
-- **Auth**: Google sign-in (OIDC + PKCE), saved schedules, and a no-login guest demo.
-- **Imports (read-only)**: `.ics`, Google Calendar, Notion, each behind explicit consent.
+- **chaos engine**: seeded, reproducible disruption scenarios (delays, overruns, unexpected commitments, lost time).
+- **butterfly effect**: how one disruption ripples through everything after it (shifts, conflicts, missed deadlines).
+- **breaking point**: the exact number of minutes a schedule tolerates before a *critical* failure, both "if you do nothing" and "if you re-plan".
+- **parallel futures**: three recovery plans: *protect priorities*, *preserve the most tasks*, *minimize changes*.
+- **fortify my day**: small preventive moves, each *proven* by re-simulation.
+- **preferences**: fixed commitments, priorities, flexible tasks, deadlines, recurring events, protected breaks, mobility.
+- **auth**: google sign-in (oidc + pkce), saved schedules, and a no-login guest demo.
+- **imports (read-only)**: `.ics`, google calendar, notion, each behind explicit consent.
 
-**No AI is involved in any scheduling calculation.** The engine is plain, deterministic TypeScript: same input, same output, every time.
+**no ai is involved in any scheduling calculation.** the engine is plain, deterministic typescript: same input, same output, every time.
 
-## Run it locally (about 2 minutes)
+## run it locally (about 2 minutes)
 
-Requires **Node 24+** (it runs TypeScript and SQLite natively: no build step, no native add-ons).
+requires **node 24+** (it runs typescript and sqlite natively: no build step, no native add-ons).
 
 ```powershell
 cd server
@@ -24,23 +24,23 @@ npm test            # 123 tests, ~1 minute (typecheck separately: npm run typech
 npm start           # http://localhost:8787
 ```
 
-In a second terminal, drive the real server end to end (guest session, simulations, adopt, delete):
+in a second terminal, drive the real server end to end (guest session, simulations, adopt, delete):
 
 ```powershell
 npm run smoke       # 15 checks against http://localhost:8787
 npm run sim         # API + pretend Google + pretend Notion: try every connector with no credentials (docs/SETUP-CONNECTORS.md)
 ```
 
-Or try it by hand: the landing-page scenario is served ready to use.
+or try it by hand: the landing-page scenario is served ready to use.
 
 ```powershell
 curl http://localhost:8787/api/demo/schedule
 ```
 
-Optional configuration (Google sign-in, production settings): copy `.env.example` to `.env`, then `node --env-file=.env src/index.ts`.
-The guest demo and `.ics` import need no configuration at all.
+optional configuration (google sign-in, production settings): copy `.env.example` to `.env`, then `node --env-file=.env src/index.ts`.
+the guest demo and `.ics` import need no configuration at all.
 
-## Project structure
+## project structure
 
 ```
 server/
@@ -74,69 +74,69 @@ server/
   scripts/sim.ts             local simulator: the real API against a pretend Google + Notion
 ```
 
-## How the engine reasons
+## how the engine reasons
 
-Time is integer minutes; plans are plain data. An item is an **event** (calendar commitment, *locked* by default), a **task** (flexible,
-optional release time and **hard deadline**) or a **break** (protected, never deferrable). Locked items are never moved, resized or removed.
+time is integer minutes; plans are plain data. an item is an **event** (calendar commitment, *locked* by default), a **task** (flexible,
+optional release time and **hard deadline**) or a **break** (protected, never deferrable). locked items are never moved, resized or removed.
 
-**Butterfly Effect (do nothing).** Disruptions are applied to *copies* of the plan. Locked commitments stay put; if two of them collide that
-is a conflict. Flexible work keeps its order, starts when you are free, pauses around locked blocks and resumes after. Nothing is ever dropped: whatever no
+**butterfly effect (do nothing).** disruptions are applied to *copies* of the plan. locked commitments stay put; if two of them collide that
+is a conflict. flexible work keeps its order, starts when you are free, pauses around locked blocks and resumes after. nothing is ever dropped: whatever no
 longer fits becomes a conflict with a severity: **critical** (hard deadline missed, a critical commitment double-booked, a non-deferrable task no
 longer fits), **major**, or **minor** (outside your hours).
 
-**Breaking Point.** The largest disruption that causes no *new* critical conflict (problems already in your plan are reported separately).
+**breaking point.** the largest disruption that causes no *new* critical conflict (problems already in your plan are reported separately).
 `cascade` mode scans minute by minute (exact). `recover` mode asks the solver whether *any* feasible re-plan exists and binary-searches
-(exact; the search is monotone for overruns, lost time and unexpected commitments and scans linearly for delays). The tests check both against brute force.
+(exact; the search is monotone for overruns, lost time and unexpected commitments and scans linearly for delays). the tests check both against brute force.
 
-**The solver.** Flexible tasks run in one piece inside the free gaps between locked commitments and available hours, between their release time and hard deadline.
-Up to 18 tasks per window it is an exact subset DP: it finds a placement *iff one exists* and picks the best subset by an explicit objective.
-Beyond that it falls back to a deterministic greedy pass and says so (`optimal: false`). `solver.test.ts` checks it against an independent grid brute-force oracle.
+**the solver.** flexible tasks run in one piece inside the free gaps between locked commitments and available hours, between their release time and hard deadline.
+up to 18 tasks per window it is an exact subset dp: it finds a placement *iff one exists* and picks the best subset by an explicit objective.
+beyond that it falls back to a deterministic greedy pass and says so (`optimal: false`). `solver.test.ts` checks it against an independent grid brute-force oracle.
 
-**Parallel Futures.**
-*Protect priorities*: the highest-priority tasks keep their exact original times; lower-priority work absorbs the change (and may be **deferred**, explicitly).
-*Preserve the most tasks*: maximizes how many tasks are placed. *Minimize changes*: keeps the most tasks unmoved, then minimizes total movement
-(exhaustive over orderings for up to 6 moving tasks). Every plan is re-checked by `validate.ts` before it is returned; a plan that fails is discarded with a 500, never shown.
+**parallel futures.**
+*protect priorities*: the highest-priority tasks keep their exact original times; lower-priority work absorbs the change (and may be **deferred**, explicitly).
+*preserve the most tasks*: maximizes how many tasks are placed. *minimize changes*: keeps the most tasks unmoved, then minimizes total movement
+(exhaustive over orderings for up to 6 moving tasks). every plan is re-checked by `validate.ts` before it is returned; a plan that fails is discarded with a 500, never shown.
 
-**Fortify My Day.** Tries small moves (earlier/later by minutes, swaps, shifting back-to-back runs), within `maxShiftMinutes`, and keeps a move only if the seeded chaos
-survival rate and day-start tolerance get better and nothing gets worse. It is a proposal only.
+**fortify my day.** tries small moves (earlier/later by minutes, swaps, shifting back-to-back runs), within `maxShiftMinutes`, and keeps a move only if the seeded chaos
+survival rate and day-start tolerance get better and nothing gets worse. it is a proposal only.
 
-**Mobility** (onboarding "How flexible is your schedule?"): `fixed` keeps the original order and never moves a task earlier; `balanced` allows reordering within 3 hours of where a task sits now;
+**mobility** (onboarding "how flexible is your schedule?"): `fixed` keeps the original order and never moves a task earlier; `balanced` allows reordering within 3 hours of where a task sits now;
 `flexible` allows any rearrangement inside the window.
 
-## The guarantees, and the tests that prove them
+## the guarantees, and the tests that prove them
 
-| Guarantee | Where it is enforced | Test |
+| guarantee | where it is enforced | test |
 |---|---|---|
-| Never silently delete tasks | every item is placed *or* listed in `deferred`/`unscheduled` with a reason; the validator checks "placed xor deferred" | `futures.test.ts` property test (300 random schedules x 3 strategies), `api.test.ts` |
-| Never move locked commitments | locked items are not part of the solver's input | `futures.test.ts`, `cascade.test.ts`, `fortify` property test |
-| Never violate deadlines | hard deadlines are constraints, not preferences | property tests, `validate.ts` |
-| Clear explanations when infeasible | `diagnose.ts`: reasons, minimal conflicting set, concrete fixes | `engine-misc.test.ts`, `futures.test.ts`, `api.test.ts` |
-| Deterministic | no clock, no `Math.random`; seeded PRNG | `chaos`, `cascade`, API determinism tests |
-| Non-destructive simulations | engine works on copies; endpoints never write items | `cascade.test.ts`, `api.test.ts` (rows identical before and after) |
-| Deferrals need consent, and are kept | `adopt` needs `confirm` + `acceptDeferrals`; deferred tasks remain as unscheduled items | `api.test.ts` |
-| Imports are read-only | only GET (and Notion's read-only search/query); `calendar.readonly` scope enforced | `oauth.test.ts` records every outbound request |
-| Explicit permission | consent endpoints require `acknowledge: true` + the exact scope; per-import `confirm: true` | `oauth.test.ts` |
+| never silently delete tasks | every item is placed *or* listed in `deferred`/`unscheduled` with a reason; the validator checks "placed xor deferred" | `futures.test.ts` property test (300 random schedules x 3 strategies), `api.test.ts` |
+| never move locked commitments | locked items are not part of the solver's input | `futures.test.ts`, `cascade.test.ts`, `fortify` property test |
+| never violate deadlines | hard deadlines are constraints, not preferences | property tests, `validate.ts` |
+| clear explanations when infeasible | `diagnose.ts`: reasons, minimal conflicting set, concrete fixes | `engine-misc.test.ts`, `futures.test.ts`, `api.test.ts` |
+| deterministic | no clock, no `Math.random`; seeded prng | `chaos`, `cascade`, api determinism tests |
+| non-destructive simulations | engine works on copies; endpoints never write items | `cascade.test.ts`, `api.test.ts` (rows identical before and after) |
+| deferrals need consent, and are kept | `adopt` needs `confirm` + `acceptDeferrals`; deferred tasks remain as unscheduled items | `api.test.ts` |
+| imports are read-only | only get (and notion's read-only search/query); `calendar.readonly` scope enforced | `oauth.test.ts` records every outbound request |
+| explicit permission | consent endpoints require `acknowledge: true` + the exact scope; per-import `confirm: true` | `oauth.test.ts` |
 
-## Security summary
+## security summary
 
-- **Sessions**: random 256-bit tokens; only the SHA-256 hash is stored; HttpOnly + Secure (prod) + SameSite cookies, or Bearer tokens; sliding expiry; guests expire in 24h.
-- **Google sign-in**: authorization-code flow with PKCE, single-use `state`, `nonce`, ID-token signature/issuer/audience/expiry verification, verified email required, no open redirects.
-- **Connections**: read-only scopes only (a broader grant is refused *and revoked*); tokens AES-256-GCM encrypted at rest; never returned by the API; revoked at the provider on disconnect.
-- **Authorization**: every query is scoped to the signed-in owner; other people's objects return 404.
-- **CSRF**: cookie sessions require an allowed `Origin` or the `X-Breakpoint-Client` header. **CORS**: explicit allow-list.
-- **Input**: strict zod schemas (unknown fields rejected), size limits (1 MB JSON, 2 MB `.ics`), bounded parsers and recurrence expansion, no server-side URL fetching from user input (no SSRF).
-- **Abuse**: per-IP and per-user rate limits, caps on schedules, items, scenarios and window length.
-- **Privacy**: Google events are requested with a `fields` mask (no descriptions, attendees or locations); `DELETE /api/me` erases everything.
+- **sessions**: random 256-bit tokens; only the sha-256 hash is stored; httponly + secure (prod) + samesite cookies, or bearer tokens; sliding expiry; guests expire in 24h.
+- **google sign-in**: authorization-code flow with pkce, single-use `state`, `nonce`, id-token signature/issuer/audience/expiry verification, verified email required, no open redirects.
+- **connections**: read-only scopes only (a broader grant is refused *and revoked*); tokens aes-256-gcm encrypted at rest; never returned by the api; revoked at the provider on disconnect.
+- **authorization**: every query is scoped to the signed-in owner; other people's objects return 404.
+- **csrf**: cookie sessions require an allowed `Origin` or the `X-Breakpoint-Client` header. **cors**: explicit allow-list.
+- **input**: strict zod schemas (unknown fields rejected), size limits (1 mb json, 2 mb `.ics`), bounded parsers and recurrence expansion, no server-side url fetching from user input (no ssrf).
+- **abuse**: per-ip and per-user rate limits, caps on schedules, items, scenarios and window length.
+- **privacy**: google events are requested with a `fields` mask (no descriptions, attendees or locations); `DELETE /api/me` erases everything.
 
-## Deploying
+## deploying
 
-The API is a small Node service with a SQLite file: run it anywhere Node 24 runs with a persistent disk (Fly.io, Render, Railway, a VPS). Set `NODE_ENV=production`,
-`TOKEN_ENC_KEY`, `APP_ORIGINS` (your site, https) and `API_URL`; back up `DATABASE_PATH`. The in-memory rate limiter is per-process (use a shared store if you run several instances).
-The frontend on Cloudflare Pages talks to it over HTTPS (see `docs/FRONTEND.md`). `store/types.ts` is an async interface and `migrations/` is plain SQL, so a Cloudflare D1 implementation is a drop-in later.
+the api is a small node service with a sqlite file: run it anywhere node 24 runs with a persistent disk (fly.io, render, railway, a vps). set `NODE_ENV=production`,
+`TOKEN_ENC_KEY`, `APP_ORIGINS` (your site, https) and `API_URL`; back up `DATABASE_PATH`. the in-memory rate limiter is per-process (use a shared store if you run several instances).
+the frontend on cloudflare pages talks to it over https (see `docs/FRONTEND.md`). `store/types.ts` is an async interface and `migrations/` is plain sql, so a cloudflare d1 implementation is a drop-in later.
 
-## Known limits (MVP)
+## known limits (mvp)
 
-- Chaos, breaking-point, futures and fortify are CPU-bound and run on the request thread (fortify takes about a second on a busy day); they are rate limited and capped (2000 scenarios, 31-day windows, 300 inline items).
-- Exact optimization covers up to 18 flexible tasks per window; larger days use a valid but not provably optimal greedy plan and say so.
-- Tasks are not splittable and have no dependencies (task A before task B); both are natural next steps.
-- Google/Notion calls could not be exercised against the live services here (no credentials); they are tested against faithful simulations, including real RS256 ID-token signing.
+- chaos, breaking-point, futures and fortify are cpu-bound and run on the request thread (fortify takes about a second on a busy day); they are rate limited and capped (2000 scenarios, 31-day windows, 300 inline items).
+- exact optimization covers up to 18 flexible tasks per window; larger days use a valid but not provably optimal greedy plan and say so.
+- tasks are not splittable and have no dependencies (task a before task b); both are natural next steps.
+- google/notion calls could not be exercised against the live services here (no credentials); they are tested against faithful simulations, including real rs256 id-token signing.

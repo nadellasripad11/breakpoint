@@ -8,17 +8,17 @@ import type { Diagnosis } from './diagnose.ts';
 import { fmtClock, fmtDuration } from './time.ts';
 
 /**
- * Breaking Point: how many minutes of disruption can the schedule take before a CRITICAL failure?
+ * breaking point: how many minutes of disruption can the schedule take before a critical failure?
  *
- * Critical failure =
+ * critical failure =
  *   - a hard deadline is missed (non-deferrable task), or a critical protected break is lost
  *   - two locked commitments overlap and at least one is critical
  *   - a non-deferrable task no longer fits in the planning window
- * Conflicts that already exist in the plan before the disruption are reported separately and never count as "new".
+ * conflicts that already exist in the plan before the disruption are reported separately and never count as "new".
  *
- * Two modes:
- *   cascade : you do nothing and carry on (Butterfly Effect). Exact, found by scanning minute by minute.
- *   recover : a feasible re-plan still exists (Parallel Futures can place everything). Exact, via the solver.
+ * two modes:
+ *   cascade : you do nothing and carry on (butterfly effect). exact, found by scanning minute by minute.
+ *   recover : a feasible re-plan still exists (parallel futures can place everything). exact, via the solver.
  */
 
 export type ProbeType = 'delay' | 'overrun' | 'lost_time' | 'unexpected';
@@ -37,7 +37,7 @@ export interface BreakingPointResult {
   mode: BreakingMode;
   probe: Probe;
   /**
-   * breaks             : a failure occurs at `breakingMinutes`; `tolerableMinutes` is one less
+   * breaks             : a failure occurs at `breakingminutes`; `tolerableminutes` is one less
    * withstands_limit   : no failure up to the search limit
    * already_broken     : (recover mode) the undisturbed plan itself has no feasible schedule
    */
@@ -67,7 +67,7 @@ export function probeToDisruption(plan: Plan, probe: Probe, minutes: number): Di
   }
 }
 
-/** "If \"Practice\" runs over", "If you lose time at the start of the day", ... */
+/** "if \"practice\" runs over", "if you lose time at the start of the day", ... */
 function describeProbe(plan: Plan, probe: Probe): string {
   const tz = plan.settings.timezone;
   const name = (id?: string) => `"${plan.items.find((i) => i.id === id)?.title ?? id ?? 'this item'}"`;
@@ -148,7 +148,7 @@ export function recoverBreakingPoint(plan: Plan, probe: Probe, limit = DEFAULT_L
     };
   }
   // overrun / lost_time / unexpected only ever remove free time as the minutes grow, so feasibility is monotone and
-  // binary search is exact. A delay moves a block or a start time (freeing time on one side, using it on the other),
+  // binary search is exact. a delay moves a block or a start time (freeing time on one side, using it on the other),
   // so delays are scanned minute by minute instead.
   const monotone = probe.type !== 'delay';
   let breaking: number | null = null;
@@ -230,7 +230,7 @@ export interface WeakLinkProfile {
   links: WeakLink[];
 }
 
-/** Probe every blocking item with an overrun and a delay and rank them by how little slack they have. */
+/** probe every blocking item with an overrun and a delay and rank them by how little slack they have. */
 export function weakLinkProfile(plan: Plan, limit = 240): WeakLinkProfile {
   const links: WeakLink[] = [];
   for (const it of plan.items) {
@@ -251,7 +251,7 @@ export function weakLinkProfile(plan: Plan, limit = 240): WeakLinkProfile {
   return { weakest, minTolerance: weakest ? tol(weakest) : null, links };
 }
 
-/** Convenience for the "day starts late" probe. */
+/** convenience for the "day starts late" probe. */
 export function dayStartTolerance(plan: Plan, limit = DEFAULT_LIMIT): BreakingPointResult {
   return cascadeBreakingPoint(plan, { type: 'lost_time' }, limit);
 }

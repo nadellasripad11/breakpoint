@@ -18,7 +18,7 @@ function ics(events: string[]): string {
 const ev = (uid: string, day: string, h: number, title: string, extra = '') =>
   `BEGIN:VEVENT\r\nUID:${uid}@t\r\nDTSTAMP:20260101T000000Z\r\nDTSTART:${day}T${String(h).padStart(2, '0')}0000Z\r\nDTEND:${day}T${String(h + 1).padStart(2, '0')}0000Z\r\nSUMMARY:${title}\r\n${extra}END:VEVENT\r\n`;
 
-/** A pretend internet that records every request. */
+/** a pretend internet that records every request. */
 function fake(answer: (url: string) => Response | undefined) {
   const calls: { url: string; init?: RequestInit }[] = [];
   const f: Fetcher = async (input, init) => {
@@ -173,7 +173,7 @@ test('trimOldEvents: drops finished single events, keeps recurring series, recen
   assert.match(out, /BEGIN:VCALENDAR/);
 });
 
-/* ───────────── through the API ───────────── */
+/* ───────────── through the api ───────────── */
 
 async function guest(t: Awaited<ReturnType<typeof makeApp>>) {
   const call = client(t);

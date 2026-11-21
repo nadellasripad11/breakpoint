@@ -1,7 +1,7 @@
-// One command to give the hosted API a pair of credentials:
+// one command to give the hosted api a pair of credentials:
 //   npm run secrets:notion        or        npm run secrets:google
-// It asks you to paste each value (hidden) and stores it as a Cloudflare Worker secret. Nothing is written to disk or git.
-// Add --check to see which of the two are already set, without changing anything:  npm run secrets:notion -- --check
+// it asks you to paste each value (hidden) and stores it as a cloudflare worker secret. nothing is written to disk or git.
+// add --check to see which of the two are already set, without changing anything:  npm run secrets:notion -- --check
 import { spawnSync } from 'node:child_process';
 
 const WRANGLER = ['--yes', 'wrangler@4.50.0'];

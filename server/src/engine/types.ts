@@ -1,9 +1,9 @@
 /**
- * Core engine types. Everything in the engine is plain data + pure functions:
- * no I/O, no clock, no randomness except an explicitly seeded PRNG. The same input
+ * core engine types. everything in the engine is plain data + pure functions:
+ * no i/o, no clock, no randomness except an explicitly seeded prng. the same input
  * always produces the same output.
  *
- * Time is integer MINUTES since the Unix epoch (UTC). Timezones only matter at the edges
+ * time is integer minutes since the unix epoch (utc). timezones only matter at the edges
  * (parsing, availability windows, formatting) and are handled in `time.ts`.
  */
 
@@ -17,27 +17,27 @@ export interface Interval {
 /** event = calendar commitment, task = flexible work, break = protected break */
 export type ItemKind = 'event' | 'task' | 'break';
 export type Priority = 1 | 2 | 3 | 4 | 5;
-/** How much the plan may be rearranged: fixed = keep order, never earlier; balanced = reorder within +/-4h; flexible = anything */
+/** how much the plan may be rearranged: fixed = keep order, never earlier; balanced = reorder within +/-4h; flexible = anything */
 export type Mobility = 'fixed' | 'balanced' | 'flexible';
 
 export interface PlanItem {
   id: string;
   title: string;
   kind: ItemKind;
-  /** Planned start. Undefined = an unscheduled task (the baseline builder will place it). */
+  /** planned start. undefined = an unscheduled task (the baseline builder will place it). */
   start?: Minutes;
   duration: number;
-  /** Locked items are NEVER moved, resized or removed by the engine. */
+  /** locked items are never moved, resized or removed by the engine. */
   locked: boolean;
   priority: Priority;
   category?: string;
-  /** Earliest allowed start (flexible items). */
+  /** earliest allowed start (flexible items). */
   release?: Minutes;
-  /** HARD deadline: the item must END at or before this. */
+  /** hard deadline: the item must end at or before this. */
   deadline?: Minutes;
-  /** May be explicitly deferred (and reported) when there is no room. Never silently. */
+  /** may be explicitly deferred (and reported) when there is no room. never silently. */
   deferrable: boolean;
-  /** Missing / overlapping it is a critical failure. */
+  /** missing / overlapping it is a critical failure. */
   critical: boolean;
   /** false = informational (e.g. all-day banner), occupies no time. */
   blocking: boolean;
@@ -46,12 +46,12 @@ export interface PlanItem {
 
 export interface PlanSettings {
   horizon: Interval;
-  /** Merged, sorted windows in which FLEXIBLE items may be placed (e.g. waking hours). */
+  /** merged, sorted windows in which flexible items may be placed (e.g. waking hours). */
   availability: Interval[];
   mobility: Mobility;
-  /** Priority at or above which an item is critical / non-deferrable by default. */
+  /** priority at or above which an item is critical / non-deferrable by default. */
   criticalPriority: Priority;
-  /** IANA timezone, only used to format messages. */
+  /** iana timezone, only used to format messages. */
   timezone: string;
 }
 
@@ -63,13 +63,13 @@ export interface Plan {
 /* ───────────── disruptions ───────────── */
 
 export type Disruption =
-  /** The target starts `minutes` later (a late arrival, a late-running predecessor). */
+  /** the target starts `minutes` later (a late arrival, a late-running predecessor). */
   | { type: 'delay'; targetId: string; minutes: number }
-  /** The target takes `minutes` longer than planned. */
+  /** the target takes `minutes` longer than planned. */
   | { type: 'overrun'; targetId: string; minutes: number }
-  /** A new, locked commitment appears out of nowhere. */
+  /** a new, locked commitment appears out of nowhere. */
   | { type: 'unexpected'; start: Minutes; duration: number; title?: string; priority?: Priority }
-  /** `minutes` of time disappear (traffic, a sick morning). Defaults to the start of the plan. */
+  /** `minutes` of time disappear (traffic, a sick morning). defaults to the start of the plan. */
   | { type: 'lost_time'; minutes: number; start?: Minutes };
 
 /* ───────────── conflicts + cascade output ───────────── */
@@ -100,7 +100,7 @@ export interface ItemOutcome {
   injected: boolean;
   original: Interval | null;
   simulated: Interval;
-  /** Pieces of work when a flexible task is interrupted by a locked commitment and resumed afterwards. */
+  /** pieces of work when a flexible task is interrupted by a locked commitment and resumed afterwards. */
   fragments: Interval[];
   shiftMinutes: number;
   extendedMinutes: number;
@@ -137,7 +137,7 @@ export interface CascadeResult {
 
 /* ───────────── errors ───────────── */
 
-/** Raised when an engine invariant is violated (a bug, never user error). */
+/** raised when an engine invariant is violated (a bug, never user error). */
 export class EngineInvariantError extends Error {
   readonly violations: string[];
   constructor(violations: string[]) {
@@ -147,7 +147,7 @@ export class EngineInvariantError extends Error {
   }
 }
 
-/** Raised for malformed plans (user error). */
+/** raised for malformed plans (user error). */
 export class PlanError extends Error {
   readonly code: string;
   constructor(code: string, message: string) {

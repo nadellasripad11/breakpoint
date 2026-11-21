@@ -24,7 +24,7 @@ function notionClient(deps: Deps) {
   return { clientId: n.clientId, clientSecret: n.clientSecret, redirectUri: `${deps.config.apiUrl}/api/connections/notion/callback` };
 }
 
-/** Decrypts (and refreshes if needed) the Google access token for a stored connection. */
+/** decrypts (and refreshes if needed) the google access token for a stored connection. */
 export async function googleAccessToken(deps: Deps, conn: Connection): Promise<string> {
   const now = deps.now().getTime();
   if (conn.accessTokenEnc && conn.tokenExpiresAt && new Date(conn.tokenExpiresAt).getTime() - now > 60_000) return decryptSecret(conn.accessTokenEnc, deps.config.tokenEncKey);
@@ -45,7 +45,7 @@ export function notionToken(deps: Deps, conn: Connection): string {
 }
 
 async function revokeConnection(deps: Deps, conn: Connection): Promise<boolean> {
-  if (conn.provider !== 'google') return true; // Notion tokens are revoked by removing the integration in Notion
+  if (conn.provider !== 'google') return true; // notion tokens are revoked by removing the integration in notion
   const tok = conn.refreshTokenEnc ?? conn.accessTokenEnc;
   if (!tok) return true;
   try {
@@ -64,8 +64,8 @@ export function connectionRoutes(): Hono<AppEnv> {
   });
 
   /**
-   * Step 1: the user explicitly agrees (acknowledge + the exact read-only scope they were shown).
-   * Nothing is requested from Google without it, and only calendar.readonly is ever requested.
+   * step 1: the user explicitly agrees (acknowledge + the exact read-only scope they were shown).
+   * nothing is requested from google without it, and only calendar.readonly is ever requested.
    */
   r.post('/google/start', requireAccount(), rateLimit('connect', 10, 60_000, 'user'), async (c) => {
     const deps = c.get('deps');
@@ -80,7 +80,7 @@ export function connectionRoutes(): Hono<AppEnv> {
     return c.json({ url: buildAuthUrl(client, { state, challenge: sha256Base64Url(verifier), scopes: [GOOGLE_READONLY_SCOPE], offline: true }), scopes: [GOOGLE_READONLY_SCOPE], access: 'read-only' });
   });
 
-  /** Step 2: Google redirects the browser here. The single-use state ties it to the user who consented. */
+  /** step 2: google redirects the browser here. the single-use state ties it to the user who consented. */
   r.get('/google/callback', rateLimit('auth', 30, 60_000), async (c) => {
     const deps = c.get('deps');
     const fail = (code: string) => c.redirect(`${deps.config.appUrl}/?connect_error=${encodeURIComponent(code)}`, 302);
@@ -102,7 +102,7 @@ export function connectionRoutes(): Hono<AppEnv> {
       assertReadOnlyCalendarScopes(tokens.scopes);
       if (!tokens.refreshToken) throw new OAuthError('no_refresh_token', 'Google did not allow ongoing read access.');
     } catch (e) {
-      // refuse and clean up: if Google granted more than we asked for, nothing is stored and the grant is revoked
+      // refuse and clean up: if google granted more than we asked for, nothing is stored and the grant is revoked
       const anyToken = (tokens as { accessToken?: string } | undefined)?.accessToken;
       if (anyToken) await revokeToken(deps.fetch, anyToken);
       return fail(e instanceof OAuthError ? e.code : 'connect_failed');
@@ -136,9 +136,9 @@ export function connectionRoutes(): Hono<AppEnv> {
   });
 
   /**
-   * Notion: the user creates a read-only internal integration and pastes its token, after explicitly acknowledging.
-   * Works for guests too: the token is stored encrypted and is deleted with the guest sandbox (24h) or on disconnect.
-   * (Google stays account-only: it needs a real sign-in to keep a refresh token safe.)
+   * notion: the user creates a read-only internal integration and pastes its token, after explicitly acknowledging.
+   * works for guests too: the token is stored encrypted and is deleted with the guest sandbox (24h) or on disconnect.
+   * (google stays account-only: it needs a real sign-in to keep a refresh token safe.)
    */
   r.post('/notion', rateLimit('connect', 10, 60_000, 'user'), async (c) => {
     const deps = c.get('deps');
@@ -165,8 +165,8 @@ export function connectionRoutes(): Hono<AppEnv> {
   });
 
   /**
-   * "Log in with Notion": the user agrees, Notion asks which pages to share, and we receive a workspace token. No pasting.
-   * Like the token flow it works for guests (the token is stored encrypted and goes with the sandbox) and only ever reads.
+   * "log in with notion": the user agrees, notion asks which pages to share, and we receive a workspace token. no pasting.
+   * like the token flow it works for guests (the token is stored encrypted and goes with the sandbox) and only ever reads.
    */
   r.post('/notion/start', rateLimit('connect', 10, 60_000, 'user'), async (c) => {
     const deps = c.get('deps');

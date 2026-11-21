@@ -3,7 +3,7 @@ import { demoSchedule, tomorrowIn } from '../../demo.ts';
 import { isValidTimeZone, normalizePreferences } from '../../engine/index.ts';
 import type { StoredItem } from '../../calendar/expand.ts';
 
-/** Creates the landing-page demo as a real saved schedule (used for guests). Returns the schedule id. */
+/** creates the landing-page demo as a real saved schedule (used for guests). returns the schedule id. */
 export async function seedDemoSchedule(deps: Deps, userId: string, tzParam: string | undefined): Promise<string> {
   const tz = tzParam && isValidTimeZone(tzParam) ? tzParam : 'America/Chicago';
   const demo = demoSchedule(tz, tomorrowIn(tz, deps.now()));

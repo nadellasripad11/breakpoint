@@ -16,13 +16,13 @@ const days = (starts: number[]) => starts.map((m) => minToZonedIso(m, CT).slice(
 
 test('weekly BYDAY with COUNT, EXDATE, and the same wall-clock time across DST', () => {
   const rule = parseRRule('FREQ=WEEKLY;BYDAY=MO,WE;COUNT=6');
-  const start = { y: 2026, mo: 10, d: 26, h: 9, mi: 0 }; // Mon 26 Oct 2026, CDT
+  const start = { y: 2026, mo: 10, d: 26, h: 9, mi: 0 }; // mon 26 oct 2026, cdt
   const all = expandRecurrence({ start, timezone: CT, durationMin: 60, rule, window: win(2026, 10, 1, 2026, 12, 1) });
   assert.deepEqual(days(all), ['2026-10-26T09:00', '2026-10-28T09:00', '2026-11-02T09:00', '2026-11-04T09:00', '2026-11-09T09:00', '2026-11-11T09:00']);
-  // DST ended on 1 Nov: still 09:00 wall-clock, but 25 hours (not 24) between 4 Nov and 3 Nov-equivalent instants
+  // dst ended on 1 nov: still 09:00 wall-clock, but 25 hours (not 24) between 4 nov and 3 nov-equivalent instants
   assert.equal(all[2]! - all[1]!, 5 * 1440 + 60);
   const ex = expandRecurrence({ start, timezone: CT, durationMin: 60, rule, exdates: [all[1]!], window: win(2026, 10, 1, 2026, 12, 1) });
-  assert.equal(ex.length, 5); // EXDATE removes it
+  assert.equal(ex.length, 5); // exdate removes it
   const inWin = expandRecurrence({ start, timezone: CT, durationMin: 60, rule, window: win(2026, 11, 3, 2026, 11, 10) });
   assert.deepEqual(days(inWin), ['2026-11-04T09:00', '2026-11-09T09:00']);
 });
@@ -124,14 +124,14 @@ test('parses events, folding, escapes, tz, duration, recurrence, overrides, todo
   assert.equal(cal.priority, 5);
   assert.equal(cal.category, 'School');
   assert.equal(cal.recurrence!.rrule, 'FREQ=WEEKLY;BYDAY=FR;COUNT=4');
-  assert.equal(cal.recurrence!.exdates.length, 2); // the EXDATE plus the occurrence that was moved
+  assert.equal(cal.recurrence!.exdates.length, 2); // the exdate plus the occurrence that was moved
   assert.ok(cal.recurrence!.exdates.includes('2026-11-27T09:00:00-06:00'));
   assert.ok(cal.recurrence!.exdates.includes('2026-12-04T09:00:00-06:00'));
   assert.equal(byId['class-1#2026-12-04T09:00:00-06:00']!.title, 'Calculus (moved)');
   const lunch = byId['lunch-1']!;
   assert.equal(lunch.title, 'A very long summary that is foldedacross two lines'.replace('foldedacross', 'folded' + 'across'));
   assert.equal(lunch.durationMin, 45);
-  assert.equal(lunch.blocking, false); // TRANSPARENT = free time
+  assert.equal(lunch.blocking, false); // transparent = free time
   assert.equal(byId.holiday!.allDay, true);
   assert.equal(byId.holiday!.blocking, false);
   assert.equal(byId['cancelled-1'], undefined);

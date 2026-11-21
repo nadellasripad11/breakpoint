@@ -52,7 +52,7 @@ test('locked commitments never move, and flexible work pauses around them then r
   assert.equal(essay.fragments.length, 2);
   assert.deepEqual(essay.fragments[0], { start: at(15, 30), end: at(16, 30) });
   assert.deepEqual(essay.fragments[1], { start: at(17, 30), end: at(18, 0) });
-  assert.equal(byId(r, 'U').simulated.start, at(18, 0)); // pushed behind the resumed Essay
+  assert.equal(byId(r, 'U').simulated.start, at(18, 0)); // pushed behind the resumed essay
   assert.equal(r.conflicts.filter((c) => c.severity === 'critical').length, 0);
 });
 

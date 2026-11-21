@@ -30,7 +30,7 @@ export function createApp(deps: Deps): Hono<AppEnv> {
     }),
   );
 
-  // CORS: only the configured app origins, with credentials (cookie sessions). Everything else gets no CORS headers.
+  // cors: only the configured app origins, with credentials (cookie sessions). everything else gets no cors headers.
   app.use(
     '/api/*',
     cors({

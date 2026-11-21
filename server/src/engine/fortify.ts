@@ -7,12 +7,12 @@ import { fitsFree, intersectIntervals, overlaps } from './intervals.ts';
 import { fmtClock, fmtDuration } from './time.ts';
 
 /**
- * Fortify My Day: small PREVENTIVE adjustments that make the schedule more resilient.
+ * fortify my day: small preventive adjustments that make the schedule more resilient.
  *
- * Candidates are tiny moves of flexible tasks (earlier/later by minutes, or swapping two neighbours).
- * Each candidate is validated (never touches locked items, never violates a deadline, release time, availability or
- * another item) and then PROVEN by re-running the deterministic simulations. Only moves that improve resilience
- * without making anything worse are suggested. This returns a proposal; it never edits the user's schedule.
+ * candidates are tiny moves of flexible tasks (earlier/later by minutes, or swapping two neighbours).
+ * each candidate is validated (never touches locked items, never violates a deadline, release time, availability or
+ * another item) and then proven by re-running the deterministic simulations. only moves that improve resilience
+ * without making anything worse are suggested. this returns a proposal; it never edits the user's schedule.
  */
 
 export interface FortifyOptions {
@@ -49,7 +49,7 @@ export interface FortifyResult {
   before: Snapshot;
   after: Snapshot;
   adjustments: Adjustment[];
-  /** The plan with the adjustments applied: a PROPOSAL. Nothing has been saved. */
+  /** the plan with the adjustments applied: a proposal. nothing has been saved. */
   proposedStarts: { id: string; title: string; start: Minutes; end: Minutes; changed: boolean }[];
   explanation: string[];
 }

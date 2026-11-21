@@ -1,10 +1,10 @@
 import { BreakpointApi, onboardingToPreferences } from '../server/client/breakpoint-client.js';
 
 /**
- * The one place the page talks to the Breakpoint API.
- *  - No VITE_API_URL  -> `api` is null and every helper reports "preview mode" (the site works as before).
- *  - Sessions are lazy: nobody gets a guest sandbox until they actually connect something.
- *  - Tokens live in sessionStorage (tab-scoped), never localStorage; cookies are used too when the browser allows them.
+ * the one place the page talks to the breakpoint api.
+ *  - no vite_api_url  -> `api` is null and every helper reports "preview mode" (the site works as before).
+ *  - sessions are lazy: nobody gets a guest sandbox until they actually connect something.
+ *  - tokens live in sessionstorage (tab-scoped), never localstorage; cookies are used too when the browser allows them.
  */
 const BASE = (import.meta.env.VITE_API_URL || '').trim();
 const TOKEN_KEY = 'bp:token';
@@ -29,7 +29,7 @@ export const timezone = () => { try { return Intl.DateTimeFormat().resolvedOptio
 let user = null;
 let scheduleId = null;
 
-/** Who we are right now: reuses a live session, otherwise starts a guest sandbox (no login, no personal data). */
+/** who we are right now: reuses a live session, otherwise starts a guest sandbox (no login, no personal data). */
 export async function ensureSession() {
   if (user) return user;
   try {
@@ -42,7 +42,7 @@ export async function ensureSession() {
   return user;
 }
 
-/** Like ensureSession, but never creates a guest: returns null when nobody is signed in. */
+/** like ensuresession, but never creates a guest: returns null when nobody is signed in. */
 export async function peekSession() {
   if (user) return user;
   try {
@@ -55,7 +55,7 @@ export async function peekSession() {
   }
 }
 
-/** Call once on page load. Trades a #bp_code from Google sign-in for a session (see docs/FRONTEND.md). */
+/** call once on page load. trades a #bp_code from google sign-in for a session (see docs/frontend.md). */
 export async function completeSignIn() {
   const u = await api.completeSignIn();
   if (u) { user = u; scheduleId = null; }
@@ -64,7 +64,7 @@ export async function completeSignIn() {
 
 export const currentUser = () => user;
 
-/** The visitor's schedule, if they already have one. Never creates anything. */
+/** the visitor's schedule, if they already have one. never creates anything. */
 export async function findSchedule() {
   if (scheduleId) return scheduleId;
   if (!(await peekSession())) return null;
@@ -85,7 +85,7 @@ export async function findSchedule() {
   return scheduleId;
 }
 
-/** The schedule onboarding imports into. Re-running onboarding reuses it (imports are idempotent). */
+/** the schedule onboarding imports into. re-running onboarding reuses it (imports are idempotent). */
 export async function ensureSchedule() {
   const found = await findSchedule().catch((e) => { if (e.status === 401) return null; throw e; });
   if (found) return found;
@@ -100,7 +100,7 @@ export async function savePreferences({ priorities, flexibility }) {
   return api.setPreferences(id, onboardingToPreferences({ priorities, flexibility, timezone: timezone() }));
 }
 
-/** Messages are written for people. Network failures get one clear sentence; API errors already carry one. */
+/** messages are written for people. network failures get one clear sentence; api errors already carry one. */
 export function friendlyError(e) {
   if (!e) return 'Something went wrong. Please try again.';
   if (e.name === 'AbortError' || (e instanceof TypeError && /fetch|network|load failed|failed to/i.test(e.message))) return 'Couldn’t reach the Breakpoint server. Check your connection and try again.';
@@ -110,7 +110,7 @@ export function friendlyError(e) {
   return e.message || 'Something went wrong. Please try again.';
 }
 
-/** Messages for the ?auth_error= / ?connect_error= codes the API redirects back with. */
+/** messages for the ?auth_error= / ?connect_error= codes the api redirects back with. */
 export const RETURN_ERRORS = {
   access_denied: 'You chose not to share, so nothing was connected. You can try again whenever you like.',
   scope_too_broad: 'Google offered more access than Breakpoint asked for, so nothing was saved. Try again and keep only the read-only calendar permission.',

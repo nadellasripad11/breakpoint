@@ -7,17 +7,17 @@ import { connFrom, itemFrom, n, s, schedFrom, userFrom } from './rows.ts';
 import type { Row } from './rows.ts';
 
 /**
- * The same Store as SqliteStore, on Cloudflare D1 (SQLite in the cloud), so the whole API can run on Workers.
+ * the same store as sqlitestore, on cloudflare d1 (sqlite in the cloud), so the whole api can run on workers.
  *
- * What differs from the Node store, and why:
- *  - D1 has no interactive transactions, so multi-step changes use `batch()` (atomic) and single-use tokens use
- *    `DELETE ... RETURNING`, which is atomic and so makes "consume once" even stronger than before.
- *  - D1 limits how many queries one request may run (50 on the free plan). Bulk writes therefore insert and update
- *    from ONE JSON parameter (`json_each`) instead of one statement per row: importing 500 events is 3 queries, not 500.
- *  - Migrations are applied by `wrangler d1 migrations apply`, not at startup.
+ * what differs from the node store, and why:
+ *  - d1 has no interactive transactions, so multi-step changes use `batch()` (atomic) and single-use tokens use
+ *    `delete ... returning`, which is atomic and so makes "consume once" even stronger than before.
+ *  - d1 limits how many queries one request may run (50 on the free plan). bulk writes therefore insert and update
+ *    from one json parameter (`json_each`) instead of one statement per row: importing 500 events is 3 queries, not 500.
+ *  - migrations are applied by `wrangler d1 migrations apply`, not at startup.
  */
 
-/** The small slice of Cloudflare's D1 API this store uses (so we do not need the Workers type packages). */
+/** the small slice of cloudflare's d1 api this store uses (so we do not need the workers type packages). */
 export interface D1Statement {
   bind(...params: unknown[]): D1Statement;
   all(): Promise<{ results: Row[] }>;
@@ -61,7 +61,7 @@ export class D1Store implements Store {
     return Number((await this.stmt(sql, p).run()).meta.changes);
   }
 
-  /** Migrations are applied with `wrangler d1 migrations apply`. */
+  /** migrations are applied with `wrangler d1 migrations apply`. */
   async migrate(): Promise<void> {}
   async close(): Promise<void> {}
 
@@ -123,7 +123,7 @@ export class D1Store implements Store {
     return this.run('DELETE FROM sessions WHERE expires_at < ?', nowIso);
   }
 
-  /* oauth state + login codes: consumed with an atomic DELETE ... RETURNING, so a value can be used exactly once */
+  /* oauth state + login codes: consumed with an atomic delete ... returning, so a value can be used exactly once */
   async saveOAuthState(x: OAuthStateRow) {
     await this.run('INSERT INTO oauth_states (state_hash, purpose, code_verifier, nonce, user_id, redirect_path, expires_at) VALUES (?,?,?,?,?,?,?)', x.stateHash, x.purpose, x.codeVerifier, x.nonce, x.userId, x.redirectPath, x.expiresAt);
   }
@@ -229,7 +229,7 @@ export class D1Store implements Store {
     const common = (i: ImportedItem) => ({ title: i.title, start_at: i.start, duration_min: Math.max(1, Math.round(i.durationMin)), all_day: n(i.allDay), timezone: i.timezone, deadline_at: i.deadline ?? null, release_at: i.release ?? null, blocking: n(i.blocking), rrule: i.recurrence?.rrule ?? null, exdates: JSON.stringify(i.recurrence?.exdates ?? []), updated_at: nowIso });
     const writes: D1Statement[] = [];
     const known = items.filter((i) => existing.has(i.externalId));
-    // refresh what the SOURCE owns; never overwrite what the user decided (locked, priority, category, deferrable, critical)
+    // refresh what the source owns; never overwrite what the user decided (locked, priority, category, deferrable, critical)
     if (known.length) writes.push(this.stmt(BULK_UPDATE, [JSON.stringify(known.map((i) => ({ id: existing.get(i.externalId)!.id, ...common(i) }))), scheduleId]));
     if (fresh.length) {
       writes.push(

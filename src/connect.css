@@ -1,6 +1,6 @@
 /* ───────────────────────────────────────────────────────────
-   Connector sheet: opens over the onboarding "Connect" step.
-   Same design-px units as onboarding.css (`52u`); --u comes from .ob.
+   connector sheet: opens over the onboarding "connect" step.
+   same design-px units as onboarding.css (`52u`); --u comes from .ob.
    ─────────────────────────────────────────────────────────── */
 
 .sheet { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; }
@@ -36,7 +36,7 @@
 .sh__list .is-yes .sh__mark { background: var(--ob-green); color: #0d0c0f; }
 .sh__list .is-no .sh__mark { background: rgba(242, 169, 154, 0.16); color: #f2a99a; }
 
-/* Notion steps + inputs */
+/* notion steps + inputs */
 .sh__steps { margin: 14u 0 12u; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 8u; }
 .sh__steps li { counter-increment: s; position: relative; padding-left: 26u; font-size: 12.4u; line-height: 17u; color: #d3ccbf; }
 .sh__steps li::before { content: counter(s); position: absolute; left: 0; top: -0.5u; width: 18u; height: 18u; border-radius: 50%; display: grid; place-items: center; font-size: 10.5u; font-weight: 700; background: rgba(255, 255, 255, 0.09); color: #f1e9dc; }
@@ -113,7 +113,7 @@
 .prev__more { margin: 9u 0 0; font-size: 11.4u; color: var(--ob-muted); }
 .prev__x { margin: 10u 0 0; padding-left: 16u; font-size: 11.2u; line-height: 16u; color: var(--ob-muted); }
 
-/* "N items imported" line on the Done screen */
+/* "n items imported" line on the done screen */
 .ob__import { left: 426u; top: 240u; display: flex; align-items: center; gap: 6u; margin: 0; font-size: 12.4u; font-weight: 600; color: var(--ob-green); }
 .ob__import .ico { width: 13u; height: 13u; flex: none; }
 

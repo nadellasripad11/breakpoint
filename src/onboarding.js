@@ -15,8 +15,8 @@ const store = {
 };
 
 /**
- * Onboarding overlay: welcome -> connect -> customize -> done.
- * Opens from every "Get started" / "Try Breakpoint" button.
+ * onboarding overlay: welcome -> connect -> customize -> done.
+ * opens from every "get started" / "try breakpoint" button.
  */
 export function initOnboarding({ getLenis, say, onDone }) {
   const ob = $('#onboarding');
@@ -29,9 +29,9 @@ export function initOnboarding({ getLenis, say, onDone }) {
   const state = { source: 'google', priorities: ['school'], flexibility: 1 };
   let idx = 0, busy = false, isOpen = false, returnFocus = null, working = false;
   let idle = [], slashTl = null, introTl = null;
-  let imported = null; // what the connector brought in, for the Done screen
+  let imported = null; // what the connector brought in, for the done screen
 
-  /** Saves the picks so far. Called before anything redirects away (Google), so the page can pick up where it left off. */
+  /** saves the picks so far. called before anything redirects away (google), so the page can pick up where it left off. */
   const persist = () => store.write({ source: state.source, priorities: state.priorities, flexibility: state.flexibility, draft: true });
   const connect = initConnect({ ob, say, reduce, persist });
 
@@ -211,7 +211,7 @@ export function initOnboarding({ getLenis, say, onDone }) {
     $('span', importNote).textContent = text;
   };
 
-  /** What "Continue" does on the Connect and Customize steps: run the connector, or save the preferences. */
+  /** what "continue" does on the connect and customize steps: run the connector, or save the preferences. */
   async function proceed(btn) {
     if (working || busy) return;
     if (idx !== 1 && idx !== 2) return go(idx + 1);
@@ -252,7 +252,7 @@ export function initOnboarding({ getLenis, say, onDone }) {
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
 
-  /** `opts.step` opens straight on a later step (used when Google sends the user back); `opts.onReady` runs once it is showing. */
+  /** `opts.step` opens straight on a later step (used when google sends the user back); `opts.onready` runs once it is showing. */
   function open(origin, opts = {}) {
     if (isOpen) return;
     isOpen = true; busy = true;
@@ -297,7 +297,7 @@ export function initOnboarding({ getLenis, say, onDone }) {
       returnFocus && returnFocus.focus && returnFocus.focus({ preventScroll: true });
       if (reason === 'done') {
         say(`You’re all set${imported && !imported.scratch && imported.total ? ` — ${imported.total} ${imported.total === 1 ? 'item' : 'items'} imported` : ''}.`);
-        if (onDone) onDone({ imported }); // "Go to my plan": straight into Rescue My Day on the schedule they just built
+        if (onDone) onDone({ imported }); // "go to my plan": straight into rescue my day on the schedule they just built
       }
     };
     if (reduce) { finish(); return; }
@@ -305,8 +305,8 @@ export function initOnboarding({ getLenis, say, onDone }) {
   }
 
   /**
-   * After a redirect back from Google (sign-in, consent or a refusal) the URL says so: reopen the overlay on the
-   * Connect step with the connector sheet already showing the next step. Returns true when it did.
+   * after a redirect back from google (sign-in, consent or a refusal) the url says so: reopen the overlay on the
+   * connect step with the connector sheet already showing the next step. returns true when it did.
    */
   function resumeFromRedirect() {
     const ret = readReturn();

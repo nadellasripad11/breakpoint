@@ -5,7 +5,7 @@ import type { TestApp } from './apiHelpers.ts';
 
 const ISO_OFFSET = /\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/;
 
-/** A guest session with the seeded landing-page demo schedule. */
+/** a guest session with the seeded landing-page demo schedule. */
 async function guest(t: TestApp) {
   const call = client(t);
   const res = await call('POST', '/api/auth/guest?tz=America/Chicago');
@@ -99,7 +99,7 @@ test('guest limits: at most 3 schedules, and no Google connection without signin
   assert.equal(g.json.error.code, 'guest_not_allowed');
 });
 
-/* ───────────── the engine through the API ───────────── */
+/* ───────────── the engine through the api ───────────── */
 
 test('saved schedule: plan, simulate (Butterfly Effect), breaking point, futures, chaos, fortify. ISO times, nothing modified', async () => {
   const t = await makeApp();
@@ -264,12 +264,12 @@ test('CSRF: cookie sessions must send an allowed Origin or the custom header; be
   const g = await call('POST', '/api/auth/guest');
   const cookie = cookiePair(g);
   const body = { name: 'x', timezone: 'UTC' };
-  assert.equal((await call('POST', '/api/schedules', { cookie, body })).status, 403); // no Origin, no header
+  assert.equal((await call('POST', '/api/schedules', { cookie, body })).status, 403); // no origin, no header
   assert.equal((await call('POST', '/api/schedules', { cookie, body, headers: { origin: 'https://evil.example' } })).status, 403);
   assert.equal((await call('POST', '/api/schedules', { cookie, body, headers: { origin: 'http://localhost:5173' } })).status, 201);
   assert.equal((await call('POST', '/api/schedules', { cookie, body, headers: { 'x-breakpoint-client': '1' } })).status, 201);
   assert.equal((await call('GET', '/api/schedules', { cookie })).status, 200); // reads need nothing
-  assert.equal((await call('POST', '/api/schedules', { token: g.json.token, body })).status, 409); // bearer: no CSRF check (this one hits the 3-schedule guest cap)
+  assert.equal((await call('POST', '/api/schedules', { token: g.json.token, body })).status, 409); // bearer: no csrf check (this one hits the 3-schedule guest cap)
 });
 
 test('rate limiting returns 429 with Retry-After', async () => {
@@ -348,7 +348,7 @@ test('.ics import: dry run, idempotent re-import, user edits survive, vanished i
   const items = (await call('GET', `/api/schedules/${scheduleId}/items`, { token })).json.items as { id: string; title: string; priority: number | null; source: string }[];
   assert.equal(items.length, before + 2);
   const calc = items.find((i) => i.title === 'Calculus')!;
-  assert.equal(calc.priority, 5); // from the .ics PRIORITY
+  assert.equal(calc.priority, 5); // from the .ics priority
   assert.equal(calc.source, 'ics');
 
   // the user edits it ...

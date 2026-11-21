@@ -1,8 +1,8 @@
 import { isValidTimeZone, minToZonedIso, zonedToMin } from '../engine/index.ts';
 
 /**
- * Read-only .ics (RFC 5545) parser. It only READS text it is given; it never fetches URLs and never writes anywhere.
- * Hardened: size and count limits, bounded loops, no recursion, unknown properties ignored.
+ * read-only .ics (rfc 5545) parser. it only reads text it is given; it never fetches urls and never writes anywhere.
+ * hardened: size and count limits, bounded loops, no recursion, unknown properties ignored.
  */
 
 export class ImportError extends Error {
@@ -18,7 +18,7 @@ export interface ImportedItem {
   externalId: string;
   kind: 'event' | 'task';
   title: string;
-  /** ISO 8601 with offset; null for tasks that only have a due date */
+  /** iso 8601 with offset; null for tasks that only have a due date */
   start: string | null;
   durationMin: number;
   allDay: boolean;
@@ -41,7 +41,7 @@ export interface ParsedCalendar {
 }
 
 export interface IcsOptions {
-  /** used for floating times and unknown TZIDs */
+  /** used for floating times and unknown tzids */
   defaultTimezone?: string;
   defaultTaskMinutes?: number;
   /** all-day events block the day (default false: they are banners) */
@@ -57,7 +57,7 @@ interface Prop {
   value: string;
 }
 
-/** A handful of Windows time zone names Outlook exports. */
+/** a handful of windows time zone names outlook exports. */
 const WINDOWS_TZ: Record<string, string> = {
   'Eastern Standard Time': 'America/New_York',
   'Central Standard Time': 'America/Chicago',
@@ -157,7 +157,7 @@ function parseDuration(v: string): number | null {
   return m[1] === '-' ? -mins : mins;
 }
 
-/** RFC 5545 PRIORITY: 1 (highest) .. 9 (lowest), 0 = undefined. */
+/** rfc 5545 priority: 1 (highest) .. 9 (lowest), 0 = undefined. */
 function mapPriority(v: string | undefined): 1 | 2 | 3 | 4 | 5 | undefined {
   const n = Number(v);
   if (!Number.isInteger(n) || n < 1 || n > 9) return undefined;
@@ -199,7 +199,7 @@ export function parseIcs(text: string, opts: IcsOptions = {}): ParsedCalendar {
       else if (t === 'VEVENT' || t === 'VTODO') {
         if (comps.length >= MAX_COMPONENTS) throw new ImportError('too_many_items', `Calendars are limited to ${MAX_COMPONENTS} events/tasks.`);
         cur = { type: t, props: [] };
-      } else if (t !== 'VCALENDAR') skipDepth = 1; // VTIMEZONE, VALARM, VJOURNAL, ...
+      } else if (t !== 'VCALENDAR') skipDepth = 1; // vtimezone, valarm, vjournal, ...
       continue;
     }
     if (p.name === 'END') {

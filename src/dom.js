@@ -1,4 +1,4 @@
-/** Tiny DOM builder. Strings become text nodes, never HTML, so anything from outside is safe to pass in. */
+/** tiny dom builder. strings become text nodes, never html, so anything from outside is safe to pass in. */
 export const h = (tag, props = {}, ...kids) => {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(props || {})) {
@@ -25,7 +25,7 @@ export const icon = (id, cls = '') => {
   return s;
 };
 
-/** Wraps durations and clock times in <mark> so the numbers in a sentence stand out. Text only, never HTML. */
+/** wraps durations and clock times in <mark> so the numbers in a sentence stand out. text only, never html. */
 export function emphasize(text) {
   const out = [];
   const re = /(\d+ hours?(?: \d+ minutes?)?|\d+ minutes?|\d+h(?: \d+m)?|\d+m|\d{1,2}:\d{2} [AP]M)/g;

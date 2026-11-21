@@ -1,9 +1,9 @@
 import { minToZonedIso } from '../engine/index.ts';
 
-/** Keys whose numeric values are epoch-minutes instants. Everything else (minutes, durations, counts) stays a number. */
+/** keys whose numeric values are epoch-minutes instants. everything else (minutes, durations, counts) stays a number. */
 const TIME_KEYS = new Set(['start', 'end', 'deadline', 'release', 'fromStart', 'toStart', 'firstConflictAt', 'at']);
 
-/** Convert engine output (epoch minutes) to ISO-8601 strings with the schedule's UTC offset. */
+/** convert engine output (epoch minutes) to iso-8601 strings with the schedule's utc offset. */
 export function withIsoTimes(value: unknown, tz: string): unknown {
   if (Array.isArray(value)) return value.map((v) => withIsoTimes(v, tz));
   if (value && typeof value === 'object') {

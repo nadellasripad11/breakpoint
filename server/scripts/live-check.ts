@@ -1,7 +1,7 @@
 /**
- * Checks a deployed API with the two things most likely to hit platform limits: a big .ics import (many rows, few queries)
- * and Notion's real API refusing a fake token. Uses a throwaway guest that is deleted at the end.
- *   BASE_URL=https://your-api.example.com node scripts/live-check.ts
+ * checks a deployed api with the two things most likely to hit platform limits: a big .ics import (many rows, few queries)
+ * and notion's real api refusing a fake token. uses a throwaway guest that is deleted at the end.
+ *   base_url=https://your-api.example.com node scripts/live-check.ts
  */
 const BASE = process.env.BASE_URL ?? 'http://localhost:8787';
 let failures = 0;
@@ -48,7 +48,7 @@ check('items are all there', items.status === 200 && items.json.items.length >= 
 const bad = await api('POST', '/api/connections/notion', token, { acknowledge: true, token: 'secret_this_is_not_a_real_notion_token_xx' });
 check('Notion refuses a fake token with a clear message', bad.status === 422 && /Notion rejected/.test(bad.json?.error?.message ?? ''), `${bad.status} ${bad.json?.error?.message ?? bad.text.slice(0, 100)}`);
 
-// calendar links: the server must refuse foreign hosts without fetching, and must be able to reach Google and iCloud (a made-up secret gets a 404/403 from them)
+// calendar links: the server must refuse foreign hosts without fetching, and must be able to reach google and icloud (a made-up secret gets a 404/403 from them)
 const foreign = await api('POST', `/api/schedules/${sid}/import/link`, token, { url: 'https://example.com/calendar.ics' });
 check('a link on a foreign host is refused', foreign.status === 422 && foreign.json?.error?.code === 'link_not_allowed', `${foreign.status} ${foreign.json?.error?.code}`);
 const gl = await api('POST', `/api/schedules/${sid}/import/link`, token, { url: 'https://calendar.google.com/calendar/ical/nobody%40example.com/private-00000000000000000000000000000000/basic.ics', provider: 'google' });

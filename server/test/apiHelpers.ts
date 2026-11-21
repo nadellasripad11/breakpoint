@@ -21,7 +21,7 @@ export const noNetwork: Fetcher = async (url) => new Response(`no network in tes
 export async function makeApp(opts: { fetch?: Fetcher; env?: Record<string, string> } = {}): Promise<TestApp> {
   resetRateLimits();
   resetJwksCache();
-  // `TEST_STORE=d1 npm test` runs the same suite against the Cloudflare D1 store (through a node:sqlite stand-in for D1)
+  // `test_store=d1 npm test` runs the same suite against the cloudflare d1 store (through a node:sqlite stand-in for d1)
   const store = (process.env.TEST_STORE === 'd1' ? makeD1TestStore() : new SqliteStore(':memory:')) as SqliteStore;
   await store.migrate();
   const config = loadConfig({
@@ -65,7 +65,7 @@ export function client(t: TestApp) {
   };
 }
 
-/** A real (non-guest) signed-in user without going through Google. Returns a bearer token. */
+/** a real (non-guest) signed-in user without going through google. returns a bearer token. */
 export async function makeUser(t: TestApp, email = `u${Math.random().toString(36).slice(2)}@example.com`, isGuest = false): Promise<{ id: string; token: string }> {
   const user = await t.store.createUser({ id: crypto.randomUUID(), email: isGuest ? null : email, name: isGuest ? 'Guest' : 'Test User', picture: null, googleSub: isGuest ? null : `sub-${email}`, isGuest });
   const token = randomToken(32);

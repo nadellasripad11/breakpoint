@@ -4,7 +4,7 @@ import { localDays, parseHHMM, zonedToMin, isValidTimeZone } from './time.ts';
 import { mergeIntervals } from './intervals.ts';
 
 /**
- * User preferences. These come from onboarding ("What matters most?", "How flexible is your schedule?")
+ * user preferences. these come from onboarding ("what matters most?", "how flexible is your schedule?")
  * plus working hours and protected breaks.
  */
 export interface ProtectedBreak {
@@ -14,15 +14,15 @@ export interface ProtectedBreak {
   /** the break must happen between these local times, e.g. lunch between 12:00 and 14:00 */
   windowStart: string;
   windowEnd: string;
-  /** 0 = Sunday … 6 = Saturday. Default: every day. */
+  /** 0 = sunday … 6 = saturday. default: every day. */
   days?: number[];
 }
 
 export interface WorkingHours {
-  /** HH:MM, local time. "24:00" is allowed as an end. */
+  /** hh:mm, local time. "24:00" is allowed as an end. */
   start: string;
   end: string;
-  /** 0 = Sunday … 6 = Saturday. Default: every day. */
+  /** 0 = sunday … 6 = saturday. default: every day. */
   days?: number[];
 }
 
@@ -56,7 +56,7 @@ export function normalizePreferences(p: Partial<Preferences> | undefined): Prefe
   return { ...merged, categoryPriority: cat };
 }
 
-/** Windows (merged, sorted) in which flexible work may be placed. */
+/** windows (merged, sorted) in which flexible work may be placed. */
 export function buildAvailability(horizon: Interval, prefs: Preferences): Interval[] {
   const wh = prefs.workingHours;
   const days = new Set(wh.days ?? [0, 1, 2, 3, 4, 5, 6]);
@@ -73,7 +73,7 @@ export function buildAvailability(horizon: Interval, prefs: Preferences): Interv
   return mergeIntervals(out);
 }
 
-/** One flexible, non-deferrable break item per local day inside the horizon. Unscheduled: the baseline places them. */
+/** one flexible, non-deferrable break item per local day inside the horizon. unscheduled: the baseline places them. */
 export function expandProtectedBreaks(horizon: Interval, prefs: Preferences): PlanItem[] {
   const out: PlanItem[] = [];
   for (const b of prefs.protectedBreaks) {

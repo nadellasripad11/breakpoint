@@ -7,7 +7,7 @@ import { randomPlan } from './random.ts';
 
 /* ═══════════════════ the exact minimum-movement solver vs. brute force ═══════════════════ */
 
-/** Tries every order and every integer start. Independent of the DP: plain recursion. */
+/** tries every order and every integer start. independent of the dp: plain recursion. */
 function bruteMinMovement(free: Interval[], tasks: { id: string; duration: number; release: number; deadline: number; origStart: number }[], ordered: boolean): number | null {
   const sorted = [...tasks].sort((a, b) => a.origStart - b.origStart || a.id.localeCompare(b.id));
   let best: number | null = null;
@@ -109,7 +109,7 @@ test('rescue finds the smallest change: 120 random tiny days against exhaustive 
     const free = freeTime(world);
     const floaters = world.floaters;
 
-    // exhaustive: every ordered selection of start minutes for ALL tasks (no task may be deferred: none is deferrable)
+    // exhaustive: every ordered selection of start minutes for all tasks (no task may be deferred: none is deferrable)
     let best: { moved: number; total: number } | null = null;
     const fits = (st: number, d: number) => free.some((g) => st >= g.start && st + d <= g.end);
     const rec = (idx: number, placed: { s: number; e: number }[], moved: number, total: number) => {
@@ -148,7 +148,7 @@ test('rescue finds the smallest change: 120 random tiny days against exhaustive 
 /* ═══════════════════ impossible schedules ═══════════════════ */
 
 test('impossible: more required work than free time -> no schedule, exact shortfall, nothing changed, Pip says why', () => {
-  // 3 PM to 9 PM; a locked 4-hour block leaves 2 hours free. The essay (2h, due 9) and the report (1h, due 9) need 3 hours.
+  // 3 pm to 9 pm; a locked 4-hour block leaves 2 hours free. the essay (2h, due 9) and the report (1h, due 9) need 3 hours.
   const plan = mkPlan(
     [
       { id: 'class', kind: 'event', title: 'Evening class', duration: 240, start: at(17), locked: true, priority: 4 },
@@ -195,7 +195,7 @@ test('impossible: a task that cannot fit anywhere before its deadline, however t
 /* ═══════════════════ overlapping deadlines ═══════════════════ */
 
 test('overlapping deadlines that cannot all be met: says so with the exact shortfall instead of missing one silently', () => {
-  // three tasks must all finish by 5 PM; together they need 150 minutes but only 120 are free before then
+  // three tasks must all finish by 5 pm; together they need 150 minutes but only 120 are free before then
   const plan = mkPlan(
     [
       { id: 'a', title: 'Lab report', duration: 60, start: at(15), priority: 5, deadline: at(17) },
@@ -230,7 +230,7 @@ test('overlapping deadlines that CAN all be met: the repair satisfies every one 
 });
 
 test('two disruptions on overlapping deadlines: the repair reorders the day so both deadlines are still met', () => {
-  // the task with the EARLIER deadline sits after the one with the later deadline
+  // the task with the earlier deadline sits after the one with the later deadline
   const plan = mkPlan(
     [
       { id: 'p', title: 'Project', duration: 60, start: at(15), priority: 4, deadline: at(18) },
@@ -349,10 +349,10 @@ test('property: 300 random days x random disruptions: whenever a repair exists, 
   assert.ok(checked > 200 && repairedCount > 100, `checked ${checked}, repaired ${repairedCount}`);
 });
 
-/* ═══════════════════ Pip explains why: sentences come from computed numbers ═══════════════════ */
+/* ═══════════════════ pip explains why: sentences come from computed numbers ═══════════════════ */
 
 test('Pip: "ran 45 minutes long but you only had 25 minutes of buffer, so we need another 20" comes from the simulation', () => {
-  // Project 4:00-5:00; a locked dinner at 5:25 means exactly 25 minutes of room
+  // project 4:00-5:00; a locked dinner at 5:25 means exactly 25 minutes of room
   const plan = mkPlan(
     [
       { id: 'project', title: 'Project', duration: 60, start: at(16), priority: 4, deadline: at(21) },
@@ -378,7 +378,7 @@ test('Pip: "ran 45 minutes long but you only had 25 minutes of buffer, so we nee
 });
 
 test('Pip: the exact example, with a deadline wall: 45 minutes long, 25 minutes of buffer, another 20 minutes to find', () => {
-  // Project 4:00-5:00, due 5:25: exactly 25 minutes of buffer
+  // project 4:00-5:00, due 5:25: exactly 25 minutes of buffer
   const plan = mkPlan(
     [
       { id: 'project', title: 'project', duration: 60, start: at(16), priority: 4, deadline: at(17, 25) },
@@ -506,7 +506,7 @@ test('adoptRepair: the repaired day becomes a plan that has no conflicts left, l
   assert.ok(adopted > 150, `adopted ${adopted}`);
 });
 
-/* ═══════════════════ Pip, short ═══════════════════ */
+/* ═══════════════════ pip, short ═══════════════════ */
 
 test('brief: three short lines, every number read from the result (the 45-minute problem set on sample day 4)', () => {
   const ch = makeChallenge(4);

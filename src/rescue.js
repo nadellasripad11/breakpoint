@@ -1,14 +1,14 @@
 import './rescue.css';
 import { h, icon, emphasize } from './dom.js';
 
-/** Element.append, but a missing card (null) adds nothing, instead of the text "null". */
+/** element.append, but a missing card (null) adds nothing, instead of the text "null". */
 const put = (el, ...kids) => el.append(...kids.filter((k) => k != null && k !== false));
 
 /**
- * Rescue My Day + "Can you save this day?"
+ * rescue my day + "can you save this day?"
  *
- * Everything on this screen is computed by the real scheduling engine (server/src/engine), which is bundled into the
- * page, so it works on the static site with no account and no server. Nothing here is hardcoded: the days are generated
+ * everything on this screen is computed by the real scheduling engine (server/src/engine), which is bundled into the
+ * page, so it works on the static site with no account and no server. nothing here is hardcoded: the days are generated
  * from a seed, the disruptions are yours, and every number, conflict and sentence is read from the engine's result.
  */
 
@@ -33,20 +33,20 @@ export function initRescue({ getLenis, say, onSetup }) {
   let opened = 0; // bumps on every open/tab change so late async work can tell it is stale
   let startOnMine = false; // set by open(…, { mine: true }): after onboarding, start on the visitor's own schedule
 
-  /** Clock times are shown in the day's own timezone: UTC for the generated days, the schedule's timezone for yours. */
+  /** clock times are shown in the day's own timezone: utc for the generated days, the schedule's timezone for yours. */
   let TZ = 'UTC';
   const fmt = (m) => E.fmtClock(m, TZ);
   const dur = (m) => E.fmtDuration(m);
 
   /* ═════════════ timeline pieces ═════════════ */
 
-  /** The day's visible span: every block (and every replay frame), 30 minutes either side, on whole hours. */
+  /** the day's visible span: every block (and every replay frame), 30 minutes either side, on whole hours. */
   const rangeFor = (plan, ...lists) => {
     let lo = Infinity;
     let hi = -Infinity;
     for (const b of lists.flat()) { lo = Math.min(lo, b.start); hi = Math.max(hi, b.end); }
     if (!Number.isFinite(lo)) for (const a of plan.settings.availability) { lo = Math.min(lo, a.start); hi = Math.max(hi, a.end); }
-    // whole LOCAL hours (not whole UTC hours: some timezones are offset by 30 or 45 minutes)
+    // whole local hours (not whole utc hours: some timezones are offset by 30 or 45 minutes)
     const minute = (t) => E.localParts(t, TZ).minute;
     const a = lo - 30;
     const b = hi + 30;
@@ -92,7 +92,7 @@ export function initRescue({ getLenis, say, onSetup }) {
   };
 
   /**
-   * One lane of the day. With `from` (the previous lane's blocks) its blocks can glide from where they were to where they
+   * one lane of the day. with `from` (the previous lane's blocks) its blocks can glide from where they were to where they
    * are now: rewind() puts them back, play() lets them glide, finish() puts them in place at once.
    */
   const laneEl = ({ title, sub, tone, blocks, r, plan, from }) => {
@@ -126,14 +126,14 @@ export function initRescue({ getLenis, say, onSetup }) {
   let activeSay = null;
 
   /**
-   * Pip talking. The portrait sits on the left, the words appear in a dialogue box, typed out, one short message at a time.
-   * Click the box (or press Enter) for the next message; left alone, it moves on by itself.
+   * pip talking. the portrait sits on the left, the words appear in a dialogue box, typed out, one short message at a time.
+   * click the box (or press enter) for the next message; left alone, it moves on by itself.
    */
   const pipSay = (messages, { auto = true, start = 0 } = {}) => {
     if (activeSay) activeSay.stop();
     const text = h('p', { class: 'say__text', 'aria-hidden': 'true' });
     const sr = h('span', { class: 'sr-only', role: 'status' });
-    const next = h('i', { class: 'say__next', 'aria-hidden': 'true' }, '▾');
+    const next = h('i', { class: 'say__next', 'aria-hidden': 'true' });
     const box = h('div', { class: 'say__box', tabindex: 0, role: 'button', 'aria-label': 'next message' }, h('span', { class: 'say__name' }, 'pip'), text, sr, next);
     const pip = h('img', { class: 'say__pip', src: '/art/pip-cutout.webp', alt: '', width: 124, height: 137, draggable: 'false' });
     const el = h('div', { class: 'say' }, h('div', { class: 'say__who' }, pip), box);
@@ -180,12 +180,12 @@ export function initRescue({ getLenis, say, onSetup }) {
     return el;
   };
 
-  /** the first sentence of each of Pip's longer lines, three at most: for places that only have the long version */
+  /** the first sentence of each of pip's longer lines, three at most: for places that only have the long version */
   const brief = (lines) => lines.slice(0, 3).map((l) => { const t = l.text.split(/(?<=[.!?])\s/)[0]; return t.length > 120 ? `${t.slice(0, 117)}…` : t; });
 
   const pipCard = (lines) => h("section", { class: "pipc2" }, pipSay(brief(lines)));
 
-  /** A wide timeline inside a narrow screen scrolls sideways on its own, while the text around it stays put. */
+  /** a wide timeline inside a narrow screen scrolls sideways on its own, while the text around it stays put. */
   const scrollX = (...kids) => h('div', { class: 'rtl' }, h('div', { class: 'rtl__in' }, kids));
 
   const seg = (name, options, value, onChange) => {
@@ -198,7 +198,7 @@ export function initRescue({ getLenis, say, onSetup }) {
 
   const TYPE_LABEL = { overrun: 'runs long', delay: 'starts late', unexpected: 'surprise commitment', lost_time: 'lost time' };
 
-  /** The "what goes wrong?" form. Builds real engine disruptions from whatever the visitor chooses. */
+  /** the "what goes wrong?" form. builds real engine disruptions from whatever the visitor chooses. */
   const disruptionForm = (plan, onAdd, atTime) => {
     const tasks = plan.items.filter((i) => i.blocking && !i.locked && i.kind !== 'break');
     // with nothing movable (an import where every event is locked), "runs long" and "starts late" have no task to pick
@@ -247,7 +247,7 @@ export function initRescue({ getLenis, say, onSetup }) {
 
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-  /** Which day of the visitor's schedule to open first: the next day with at least two items, else the busiest. */
+  /** which day of the visitor's schedule to open first: the next day with at least two items, else the busiest. */
   const pickDay = (items, tz) => {
     const fmtDay = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
     const byDay = new Map();
@@ -264,7 +264,7 @@ export function initRescue({ getLenis, say, onSetup }) {
     return days.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
   };
 
-  /** The API's /plan answer (ISO times) -> the engine's own Plan (epoch minutes). */
+  /** the api's /plan answer (iso times) -> the engine's own plan (epoch minutes). */
   const planFromApi = (res) => {
     const mn = (v) => (v ? E.isoToMin(v) : undefined);
     const horizon = { start: mn(res.settings.horizon.start), end: mn(res.settings.horizon.end) };
@@ -284,11 +284,11 @@ export function initRescue({ getLenis, say, onSetup }) {
 
   function renderRescue() {
     const token = ++opened;
-    // mode 'sample' = a generated day; mode 'mine' = the visitor's own imported schedule (needs the API)
+    // mode 'sample' = a generated day; mode 'mine' = the visitor's own imported schedule (needs the api)
     const S = { mode: 'sample', seed: 0, ch: null, disruptions: [], mobility: 'balanced', result: null, timers: [], mine: { status: 'idle', message: '', date: '', info: null, token: 0 }, note: '', option: null, optKey: '', adopted: null, say: null };
     const stop = () => { if (S.say) S.say.stop(); S.timers.forEach(clearTimeout); S.timers = []; };
     const later = (fn, ms) => { S.timers.push(setTimeout(fn, ms)); };
-    // which generated day opens first: day 0, or ?day=N so a particular day can be linked to
+    // which generated day opens first: day 0, or ?day=n so a particular day can be linked to
     const firstDay = () => { const n = Number(new URLSearchParams(location.search).get('day')); return Number.isInteger(n) && n >= 0 && n < 1000 ? n : 0; };
     cleanup = stop;
 
@@ -304,7 +304,7 @@ export function initRescue({ getLenis, say, onSetup }) {
       draw(false);
     };
 
-    /** The visitor's own schedule: read from the API (read-only), turned into an engine plan, then run in the browser. */
+    /** the visitor's own schedule: read from the api (read-only), turned into an engine plan, then run in the browser. */
     const loadMine = async (date) => {
       S.mode = 'mine';
       S.note = '';
@@ -358,7 +358,7 @@ export function initRescue({ getLenis, say, onSetup }) {
 
     const planNow = () => ({ ...src().plan, settings: { ...src().plan.settings, mobility: S.mobility } });
 
-    /** Probe every item with the engine, find the one with the least slack, and break it just past what it can take. */
+    /** probe every item with the engine, find the one with the least slack, and break it just past what it can take. */
     const stressTest = () => {
       const plan = planNow();
       if (!plan.items.some((i) => i.blocking && !i.locked && i.kind !== 'break')) { S.note = 'every item here is locked, so nothing can move. add a surprise commitment to see what it does.'; draw(false); return; }
@@ -411,12 +411,12 @@ export function initRescue({ getLenis, say, onSetup }) {
         result = { ...result, strategy: picked.strategy, status: v.status, headline: v.headline, lanes: { ...result.lanes, repaired: v.lane }, changes: v.changes, deferred: v.deferred, metrics: v.metrics, guarantees: v.guarantees, pip: v.pip, brief: v.brief, replay: v.replay, optimal: v.optimal };
       }
 
-      // what Pip says: short, typed out, one message at a time
+      // what pip says: short, typed out, one message at a time
       const lines = error ? ['that doesn’t work.', error.message]
         : !result ? [`this is ${s.title}.`, s.story.replace(/ Then: .*$/, ''), S.note || 'what could go wrong?']
           : [...(S.adopted ? ['your repaired day, tested again.'] : []), ...result.brief];
       S.note = '';
-      S.say = pipSay(lines, { start: animate === 'repair' && result ? lines.length - 1 : 0 }); // picking a way: Pip goes straight to the fix
+      S.say = pipSay(lines, { start: animate === 'repair' && result ? lines.length - 1 : 0 }); // picking a way: pip goes straight to the fix
 
       // one quiet line for what goes wrong
       const fm = h('div', { class: 'fm' },
@@ -496,7 +496,7 @@ export function initRescue({ getLenis, say, onSetup }) {
 
     if (startOnMine) {
       startOnMine = false;
-      // their own schedule when this site has an API, otherwise the generated sample day
+      // their own schedule when this site has an api, otherwise the generated sample day
       import('./api.js').then((m) => (m.apiEnabled ? loadMine() : loadSeed(firstDay())));
     } else loadSeed(firstDay());
   }
@@ -524,7 +524,7 @@ export function initRescue({ getLenis, say, onSetup }) {
   const changesCard = (res) =>
     h('section', { class: 'rcard' }, h('h3', {}, res.strategy === 'minimize_changes' ? 'The smallest fix' : `Fix: ${res.options.find((o) => o.strategy === res.strategy).title}`),
       h('p', { class: 'muted' }, `${res.changes.length} ${res.changes.length === 1 ? 'item moves' : 'items move'}, ${dur(res.metrics.totalMinutes)} in total.${res.optimal ? (res.strategy === 'minimize_changes' ? ' Proven the smallest.' : ' Proven best for this way forward.') : ''}`),
-      h('ul', { class: 'ch' }, res.changes.map((c) => h('li', {}, h('div', { class: 'ch__top' }, h('b', {}, c.title), h('span', { class: `ch__d ${c.deltaMinutes > 0 ? 'is-later' : 'is-earlier'}` }, `${c.deltaMinutes > 0 ? '+' : '−'}${Math.abs(c.deltaMinutes)}m`)), h('p', {}, `${fmt(c.from.start)} → ${fmt(c.to.start)}`)))),
+      h('ul', { class: 'ch' }, res.changes.map((c) => h('li', {}, h('div', { class: 'ch__top' }, h('b', {}, c.title), h('span', { class: `ch__d ${c.deltaMinutes > 0 ? 'is-later' : 'is-earlier'}` }, `${c.deltaMinutes > 0 ? '+' : '−'}${Math.abs(c.deltaMinutes)}m`)), h('p', {}, `${fmt(c.from.start)} -> ${fmt(c.to.start)}`)))),
       null);
 
   const deferredCard = (res) =>
@@ -538,7 +538,7 @@ export function initRescue({ getLenis, say, onSetup }) {
     h('section', { class: 'rcard rcard--bad' }, h('h3', {}, 'Why, and what would fix it'),
       h('ul', { class: 'cf' }, [...(res.diagnosis ? res.diagnosis.reasons.map((r) => h('li', {}, h('p', {}, emphasize(r.message)))) : []), ...(res.diagnosis ? res.diagnosis.suggestions.slice(0, 3).map((s) => h('li', { class: 'is-fix' }, h('span', { class: 'cf__tag' }, 'fix'), h('p', {}, emphasize(s.message)))) : [])]));
 
-  /* ═════════════ tab 2: Can you save this day? ═════════════ */
+  /* ═════════════ tab 2: can you save this day? ═════════════ */
 
   function renderChallenge() {
     const token = ++opened;
@@ -550,7 +550,7 @@ export function initRescue({ getLenis, say, onSetup }) {
     const planNow = () => C.ch.plan;
     const load = (seed) => { C.seed = seed; C.ch = E.makeChallenge(seed); C.disruptions = []; C.report = null; C.selected = null; C.placements = {}; C.deferred = new Set(); draw(); };
 
-    /** Start the visitor from what happens if they carry on: every task where the cascade leaves it. */
+    /** start the visitor from what happens if they carry on: every task where the cascade leaves it. */
     const startFix = () => {
       const sim = E.simulateCascade(planNow(), C.disruptions);
       C.placements = {};

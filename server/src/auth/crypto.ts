@@ -10,7 +10,7 @@ export function safeEqual(a: string, b: string): boolean {
   return x.length === y.length && timingSafeEqual(x, y);
 }
 
-/** AES-256-GCM. Output: v1.<iv>.<tag>.<ciphertext> (all base64url). Authenticated: tampering is detected on decrypt. */
+/** aes-256-gcm. output: v1.<iv>.<tag>.<ciphertext> (all base64url). authenticated: tampering is detected on decrypt. */
 export function encryptSecret(plain: string, key: Buffer): string {
   const iv = randomBytes(12);
   const c = createCipheriv('aes-256-gcm', key, iv);

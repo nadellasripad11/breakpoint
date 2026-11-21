@@ -4,7 +4,7 @@ import type { Preferences } from '../src/engine/index.ts';
 
 export const TZ = 'America/Chicago';
 
-/** Minutes for a local time on 2026-11-DD in America/Chicago (CST, UTC-6). */
+/** minutes for a local time on 2026-11-dd in america/chicago (cst, utc-6). */
 export function at(h: number, m = 0, day = 20): Minutes {
   return zonedToMin(2026, 11, day, h, m, TZ);
 }
@@ -41,7 +41,7 @@ export function mkPlan(items: ItemInput[], s: PlanSettings = settings()): Plan {
   return { items: items.map(item), settings: s };
 }
 
-/** The scenario from the landing page: 4-9 PM, Study 1h, Practice 1h30, Project 1h (due 8 PM), Rest 30m. */
+/** the scenario from the landing page: 4-9 pm, study 1h, practice 1h30, project 1h (due 8 pm), rest 30m. */
 export function landingPlan(opts: Parameters<typeof settings>[0] = {}): Plan {
   return mkPlan(
     [

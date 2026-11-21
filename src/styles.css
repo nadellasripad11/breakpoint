@@ -1,6 +1,6 @@
 /* ───────────────────────────────────────────────────────────
-   Breakpoint — landing page
-   Unit system: 1rem = 100 "design px" of the 1672px reference
+   breakpoint — landing page
+   unit system: 1rem = 100 "design px" of the 1672px reference
    mock-ups, so the desktop layout scales exactly with the width.
    ─────────────────────────────────────────────────────────── */
 
@@ -38,6 +38,9 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 .lenis.lenis-stopped { overflow: hidden; }
 
+/* the whole site speaks in lowercase, including text the server and scripts write in */
+body, input, button, select, textarea, option { text-transform: lowercase; }
+
 body {
   font-family: var(--f-sans);
   font-size: 0.2rem;
@@ -62,10 +65,10 @@ img { max-width: none; image-rendering: auto; }
 
 .wrap { position: relative; width: 16.72rem; margin-inline: auto; }
 
-/* hide animated bits until JS has set their starting state (no flash) */
+/* hide animated bits until js has set their starting state (no flash) */
 html.js:not(.anim-ready) [data-in] { opacity: 0; }
 
-/* ═════════════════════ NAV ═════════════════════ */
+/* ═════════════════════ nav ═════════════════════ */
 .nav {
   position: fixed; inset: 0 0 auto 0; z-index: 60;
   color: var(--cream-2);
@@ -114,7 +117,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 .nav[data-theme='light'] .nav__cta .ico--r { display: none; }
 .nav__toggle { display: none; }
 
-/* ═════════════════════ BUTTONS ═════════════════════ */
+/* ═════════════════════ buttons ═════════════════════ */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.14rem;
   border-radius: 999px; font-weight: 700; line-height: 1; white-space: nowrap; cursor: pointer;
@@ -143,7 +146,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 .link-arrow span { background: linear-gradient(currentColor, currentColor) 0 100% / 0 2px no-repeat; transition: background-size 0.5s var(--ease); padding-bottom: 0.03rem; }
 .link-arrow:hover span { background-size: 100% 2px; }
 
-/* ═════════════════════ HERO ═════════════════════ */
+/* ═════════════════════ hero ═════════════════════ */
 .hero { position: relative; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; background: var(--ink); overflow: hidden; }
 .hero__stage { position: relative; flex: 1 0 auto; min-height: 7.65rem; }
 .hero__wash {
@@ -254,7 +257,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 .feat h3 { font-size: 0.24rem; font-weight: 600; color: #f1e9dc; line-height: 1.25; letter-spacing: -0.005em; }
 .feat p { font-size: 0.175rem; color: #9b968c; line-height: 1.35; margin-top: 0.03rem; }
 
-/* ═════════════════════ LIGHT SECTION ═════════════════════ */
+/* ═════════════════════ light section ═════════════════════ */
 .light { position: relative; background: var(--paper); color: var(--text-l); min-height: 9.41rem; overflow: hidden; font-family: var(--f-ui); }
 .light::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(55% 40% at 50% 100%, rgba(224, 218, 200, 0.45), transparent 70%); }
 .light__wrap { z-index: 2; padding: 1rem 0.52rem 0.55rem 1rem; }
@@ -290,7 +293,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 .seg--practice { background: linear-gradient(#73648a, #685a7e); }
 .seg--project { background: linear-gradient(#636c3c, #565e36); }
 .seg--rest { background: #444441; }
-.seg[data-project] { display: none; } /* final state of the delayed plan: Project is bumped out by the alert */
+.seg[data-project] { display: none; } /* final state of the delayed plan: project is bumped out by the alert */
 .seg--alert {
   align-items: center; padding: 0; overflow: visible; position: relative;
   background: repeating-linear-gradient(135deg, #85594d 0 0.035rem, #4c2f29 0.035rem 0.08rem);
@@ -339,7 +342,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 .land--light { z-index: 1; }
 .land--light img { opacity: 1; }
 
-/* ═════════════════════ CTA ═════════════════════ */
+/* ═════════════════════ cta ═════════════════════ */
 .cta { position: relative; min-height: 100vh; min-height: 100svh; background: var(--ink-2); overflow: hidden; display: flex; flex-direction: column; }
 .cta__wrap { flex: 1 0 auto; min-height: 9.41rem; }
 .cta__ring { position: absolute; left: 0; top: 0; width: 16.72rem; height: 9.41rem; overflow: visible; pointer-events: none; }
@@ -359,7 +362,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 .cta__tag { margin-top: 0.535rem; line-height: 0.45rem; font-size: 0.321rem; font-style: italic; font-weight: 500; color: #f0e8db; letter-spacing: -0.005em; }
 .cta__content .btn--xl { margin-top: 0.325rem; }
 
-/* ═════════════════════ TOAST ═════════════════════ */
+/* ═════════════════════ toast ═════════════════════ */
 .toast {
   position: fixed; left: 50%; bottom: 0.4rem; z-index: 130; transform: translate(-50%, 160%);
   width: max-content; max-width: calc(100vw - 32px); text-align: center;
@@ -369,7 +372,7 @@ html.js:not(.anim-ready) [data-in] { opacity: 0; }
 }
 .toast.is-on { transform: translate(-50%, 0); opacity: 1; }
 
-/* ═════════════════════ PHONES + TABLETS ═════════════════════ */
+/* ═════════════════════ phones + tablets ═════════════════════ */
 @media (max-width: 1023px) {
   html { font-size: clamp(70px, 25vw, 130px); }
   body { font-size: 0.16rem; }

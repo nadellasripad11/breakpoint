@@ -4,8 +4,8 @@ import { D1Store } from './store/d1.ts';
 import type { D1Like } from './store/d1.ts';
 
 /**
- * Cloudflare Workers entry: the same Hono app and the same engine as the Node server, with the database on D1.
- * Configuration comes from the Worker's variables (wrangler.jsonc) and secrets (`wrangler secret put`), exactly the
+ * cloudflare workers entry: the same hono app and the same engine as the node server, with the database on d1.
+ * configuration comes from the worker's variables (wrangler.jsonc) and secrets (`wrangler secret put`), exactly the
  * names documented in .env.example.
  */
 interface Env {
@@ -31,7 +31,7 @@ export default {
     return boot(env).app.fetch(request, env, ctx as never);
   },
 
-  /** Housekeeping on a schedule (see "triggers" in wrangler.jsonc): expired sessions, sign-in states and abandoned guest sandboxes. */
+  /** housekeeping on a schedule (see "triggers" in wrangler.jsonc): expired sessions, sign-in states and abandoned guest sandboxes. */
   async scheduled(_event: unknown, env: Env): Promise<void> {
     const { store } = boot(env);
     const config = loadConfig(Object.fromEntries(Object.entries(env).filter(([, v]) => typeof v === 'string')) as Record<string, string>);

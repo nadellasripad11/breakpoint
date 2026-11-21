@@ -1,12 +1,12 @@
 /**
- * Local simulator: runs the REAL Breakpoint API against a pretend Google and a pretend Notion, so the whole
+ * local simulator: runs the real breakpoint api against a pretend google and a pretend notion, so the whole
  * connector flow (sign in, consent, calendar picker, imports, errors) can be tried in the browser with no credentials.
  *
- *   npm run sim            (API on http://localhost:8787, pretend Google consent page at /sim/google/authorize)
+ *   npm run sim            (api on http://localhost:8787, pretend google consent page at /sim/google/authorize)
  *
- * The pretend services speak the same protocol as the real ones (OAuth code + PKCE, RS256-signed ID tokens, calendarList,
- * events, Notion search/query), so nothing about the app changes when you swap in real credentials. DEVELOPMENT ONLY:
- * it uses an in-memory database and a fake identity (Sam Student, sam@example.com).
+ * the pretend services speak the same protocol as the real ones (oauth code + pkce, rs256-signed id tokens, calendarlist,
+ * events, notion search/query), so nothing about the app changes when you swap in real credentials. development only:
+ * it uses an in-memory database and a fake identity (sam student, sam@example.com).
  */
 import { serve } from '@hono/node-server';
 import { SignJWT, exportJWK, generateKeyPair } from 'jose';
@@ -45,7 +45,7 @@ const codes = new Map<string, { nonce: string | null; scope: string; challenge: 
 const log = (who: string, msg: string) => console.log(`  [${who}] ${msg}`);
 const json = (v: unknown, status = 200) => new Response(JSON.stringify(v), { status, headers: { 'content-type': 'application/json' } });
 
-/* ───────── pretend Google ───────── */
+/* ───────── pretend google ───────── */
 
 function dayAt(offsetDays: number, h: number, m = 0): Date {
   const d = new Date();
@@ -91,7 +91,7 @@ async function idToken(nonce: string | null): Promise<string> {
     .sign(privateKey as unknown as KeyObject);
 }
 
-/* ───────── pretend Notion ───────── */
+/* ───────── pretend notion ───────── */
 
 const ymdOffset = (days: number) => dayAt(days, 0).toISOString().slice(0, 10);
 const notionPage = (n: number, title: string, due: number | null, minutes: number, priority: string, status: string, subject: string) => ({
@@ -116,7 +116,7 @@ const homework = () => [
   notionPage(6, 'Already finished worksheet', -1, 30, 'Low', 'Done', 'Math'),
 ];
 
-/* ───────── pretend calendar links (Google secret iCal address, iCloud public calendar) ───────── */
+/* ───────── pretend calendar links (google secret ical address, icloud public calendar) ───────── */
 
 const icsStamp = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 function vevent(uid: string, title: string, s: Date, e: Date, extra = ''): string {
@@ -177,7 +177,7 @@ const simFetch: typeof fetch = async (input, init) => {
   }
 
   if (url.host === 'www.googleapis.com' && url.pathname.startsWith('/calendar/v3/')) {
-    if (method !== 'GET') return json({ error: 'Breakpoint must only read' }, 405); // the real connector only ever GETs
+    if (method !== 'GET') return json({ error: 'Breakpoint must only read' }, 405); // the real connector only ever gets
     if (!auth.startsWith('Bearer sim-at-')) return json({}, 401);
     if (url.pathname === '/calendar/v3/users/me/calendarList') {
       log('google', 'listed calendars');
@@ -322,7 +322,7 @@ serve(
       if (u.pathname === '/sim/notion/authorize') return notionConsentPage(u);
       if (u.pathname === '/sim/notion/decide') return notionDecide(u);
       const res = await app.fetch(req);
-      // the real API returns Google's consent URL; point it at the pretend consent page instead
+      // the real api returns google's consent url; point it at the pretend consent page instead
       if (res.ok && req.method !== 'OPTIONS' && /\/google\/start$/.test(u.pathname) && res.headers.get('content-type')?.includes('json')) {
         const body = (await res.json()) as { url?: string };
         if (body.url?.startsWith(GOOGLE_AUTH)) body.url = body.url.replace(GOOGLE_AUTH, `${config.apiUrl}/sim/google/authorize`);
@@ -344,7 +344,7 @@ serve(
     console.log(`Breakpoint SIMULATOR on http://${info.address}:${info.port}  (pretend Google + pretend Notion, in-memory database)`);
     console.log(`  CORS:    ${config.appOrigins.join(', ')}`);
     console.log(`  Google:  sign in as Sam Student on the simulated consent page`);
-    console.log(`  Notion:  "Log in with Notion" opens a pretend consent page (or paste this token → ${NOTION_TOKEN})`);
+    console.log(`  Notion:  "Log in with Notion" opens a pretend consent page (or paste this token -> ${NOTION_TOKEN})`);
     console.log('  Google link: paste https://calendar.google.com/calendar/ical/sam/private-demo/basic.ics   (…/dead/… gives the "link was reset" error)');
     console.log('  Apple link:  paste webcal://p12-caldav.icloud.com/published/2/demo');
     console.log('  Start the site with: npm run dev   (in the project root)');

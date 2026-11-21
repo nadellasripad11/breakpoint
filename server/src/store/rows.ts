@@ -2,7 +2,7 @@ import type { Preferences } from '../engine/index.ts';
 import type { StoredItem } from '../calendar/expand.ts';
 import type { Connection, Schedule, User } from './types.ts';
 
-/** Row <-> object mapping shared by every SQL store (SQLite on Node, D1 on Cloudflare Workers). */
+/** row <-> object mapping shared by every sql store (sqlite on node, d1 on cloudflare workers). */
 export type Row = Record<string, unknown>;
 export const b = (v: unknown): boolean => v === 1 || v === true;
 export const nb = (v: unknown): boolean | null => (v === null || v === undefined ? null : b(v));

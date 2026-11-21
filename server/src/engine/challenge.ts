@@ -10,12 +10,12 @@ import { bufferFor, pipWords } from './explain.ts';
 import type { PipLine } from './explain.ts';
 
 /**
- * "Can you save this day?": a deliberately fragile day, generated from a seed, plus a judge that checks a visitor's fix
- * with the same rules the engine uses and compares it with Breakpoint's own rescue. No account, no server: everything
+ * "can you save this day?": a deliberately fragile day, generated from a seed, plus a judge that checks a visitor's fix
+ * with the same rules the engine uses and compares it with breakpoint's own rescue. no account, no server: everything
  * here is pure, deterministic code (the same seed always gives the same day).
  */
 
-/** An arbitrary fixed Monday. Times in a challenge are the same wall-clock times for everyone (UTC). */
+/** an arbitrary fixed monday. times in a challenge are the same wall-clock times for everyone (utc). */
 export const CHALLENGE_DAY: Minutes = isoToMin('2026-01-12T00:00:00Z');
 const at = (h: number, m = 0): Minutes => CHALLENGE_DAY + h * 60 + m;
 
@@ -108,7 +108,7 @@ function build(seed: number, attempt: number): Challenge | null {
   };
 }
 
-/** The same seed always returns the same challenge. */
+/** the same seed always returns the same challenge. */
 export function makeChallenge(seed: number): Challenge {
   const s = Math.abs(Math.trunc(seed)) >>> 0;
   for (let attempt = 0; attempt < 500; attempt++) {
@@ -163,7 +163,7 @@ export interface AttemptReport {
   yours: Metrics | null;
   breakpoint: Metrics | null;
   comparison: Comparison[];
-  /** 0 to 100: Breakpoint's cost divided by yours (documented in `scoreNote`) */
+  /** 0 to 100: breakpoint's cost divided by yours (documented in `scorenote`) */
   score: number;
   scoreNote: string;
   pip: PipLine[];
@@ -173,7 +173,7 @@ export interface AttemptReport {
 const COST = { deferred: 120, moved: 15 };
 const costOf = (m: Metrics) => m.totalMinutes + COST.moved * m.moved + COST.deferred * m.deferred;
 
-/** Checks a visitor's fix against the rules, using the engine's own model of the disrupted day. */
+/** checks a visitor's fix against the rules, using the engine's own model of the disrupted day. */
 export function checkAttempt(plan: Plan, attempt: Attempt): { violations: Violation[]; metrics: Metrics | null } {
   const world = buildWorld(plan, attempt.disruptions);
   const tz = plan.settings.timezone;
@@ -293,7 +293,7 @@ export function judgeAttempt(plan: Plan, attempt: Attempt): AttemptReport {
   const verdict: Verdict = cmp === 0 ? 'matched' : cmp < 0 ? 'better' : 'valid_bigger';
   const score = Math.max(0, Math.min(100, Math.round((100 * (costOf(ours) + 30)) / (costOf(metrics) + 30))));
 
-  // which of your moves were unnecessary? (Breakpoint left the same item exactly where it was planned)
+  // which of your moves were unnecessary? (breakpoint left the same item exactly where it was planned)
   const oursById = new Map((rescue.lanes.repaired?.blocks ?? []).map((x) => [x.id, x]));
   const extra: string[] = [];
   for (const f of world.floaters) {

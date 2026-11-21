@@ -11,7 +11,7 @@ breakpoint is a schedule stress-tester. it tells you exactly how much disruption
 
 1. open the site and click **can you save this day?**. you get a deliberately fragile day. break it, then fix it by hand without moving a locked event, missing a deadline or touching the protected lunch. breakpoint then shows how it would have done it and scores you against the smallest valid change.
 2. open **rescue my day** for the signature feature: a day breaks, and you see the original, the broken day and the repaired day side by side, with a timeline replay, the exact conflicts, and pip explaining why in plain english.
-3. click **get started** to bring in your own calendar (google calendar or apple calendar by private link, notion, or an .ics file), then use **rescue my day → my schedule** on it.
+3. click **get started** to bring in your own calendar (google calendar or apple calendar by private link, notion, or an .ics file), then use **rescue my day -> my schedule** on it.
 
 ## what it does
 
@@ -102,5 +102,16 @@ then upload `dist/` to cloudflare pages. full steps, secrets and limits are in [
 - notion login is live. google sign-in is switched off on purpose (google wants to verify apps that read calendars), so google calendar uses its private link instead. guest data lasts 24 hours.
 - apple has no sign-in for calendars, so apple calendar uses its public link or an exported file. asking for an apple password would be a bad idea, so it is intentionally not offered.
 - the cloudflare free plan has request and cpu limits; the hosting guide says what to watch.
+
+## ai use disclosure
+
+i used ai (claude, from anthropic) as a coding assistant while building breakpoint.
+
+- **ui:** i used ai to improve the ui of the website and to polish it: layout, motion, the minimal rescue screen and the wording on it.
+- **bugs:** i used ai to find and fix bugs, including a full test pass of the live site (phone layout, keyboard handling, import errors).
+- **code:** ai also helped write and test parts of the scheduling engine, the api and the connectors. i chose what to build and reviewed what it produced.
+- **launch video:** the video was built in code with ai help, and its narration is an ai-generated voice.
+
+the scheduling itself is not an ai guessing: the engine is deterministic code, and its results are checked by the test suite.
 
 made by sripad for a hackathon.

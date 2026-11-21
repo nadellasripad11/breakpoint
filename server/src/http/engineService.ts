@@ -57,7 +57,7 @@ export interface PreparedPlan {
   unscheduled: { id: string; title: string; message: string }[];
 }
 
-/** Stored items -> baseline plan. Items that cannot be placed are reported (never dropped) and excluded from the run. */
+/** stored items -> baseline plan. items that cannot be placed are reported (never dropped) and excluded from the run. */
 export function prepare(stored: readonly StoredItem[], prefs: Preferences, horizon: Interval): PreparedPlan {
   const built = buildPlan(stored, prefs, horizon);
   const plan: Plan = { ...built.plan, items: built.plan.items.filter((i) => !i.blocking || i.start !== undefined) };
@@ -97,7 +97,7 @@ export interface EngineRequest {
   maxShiftMinutes?: number;
 }
 
-/** Runs one engine operation and returns a JSON-ready DTO (ISO times in the schedule's timezone). Pure: writes nothing. */
+/** runs one engine operation and returns a json-ready dto (iso times in the schedule's timezone). pure: writes nothing. */
 export function runEngine(kind: EngineKind, p: PreparedPlan, req: EngineRequest): Record<string, unknown> {
   const { plan, tz } = p;
   const iso = (v: unknown) => withIsoTimes(v, tz);

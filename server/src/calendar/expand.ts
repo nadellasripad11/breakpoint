@@ -2,7 +2,7 @@ import type { BaselineResult, Interval, ItemKind, Minutes, Plan, PlanItem, Prefe
 import { PlanError, buildBaseline, expandProtectedBreaks, isoToMin, localParts, minToZonedIso, resolvePriority, settingsFor } from '../engine/index.ts';
 import { expandRecurrence, parseRRule } from './recurrence.ts';
 
-/** How an item is stored (database rows and API payloads share this shape). Times are ISO-8601 strings. */
+/** how an item is stored (database rows and api payloads share this shape). times are iso-8601 strings. */
 export interface StoredItem {
   id: string;
   kind: ItemKind;
@@ -64,7 +64,7 @@ export interface ExpandResult {
   warnings: string[];
 }
 
-/** Concrete items for a planning window: recurrences expanded, defaults and preferences applied. Pure. */
+/** concrete items for a planning window: recurrences expanded, defaults and preferences applied. pure. */
 export function expandItems(stored: readonly StoredItem[], prefs: Preferences, horizon: Interval): ExpandResult {
   checkHorizon(horizon);
   const items: PlanItem[] = [];
@@ -112,7 +112,7 @@ export interface BuiltPlan {
   warnings: string[];
 }
 
-/** Stored schedule -> engine plan with every flexible item placed (the "baseline"). */
+/** stored schedule -> engine plan with every flexible item placed (the "baseline"). */
 export function buildPlan(stored: readonly StoredItem[], prefs: Preferences, horizon: Interval): BuiltPlan {
   const { items, warnings } = expandItems(stored, prefs, horizon);
   const breaks = expandProtectedBreaks(horizon, prefs);

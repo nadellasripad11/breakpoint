@@ -6,19 +6,19 @@ export interface Config {
   port: number;
   host: string;
   databasePath: string;
-  /** Browser origins allowed to call the API (CORS) and to receive redirects after sign-in. */
+  /** browser origins allowed to call the api (cors) and to receive redirects after sign-in. */
   appOrigins: string[];
-  /** Where the user lands after OAuth completes (first allowed origin by default). */
+  /** where the user lands after oauth completes (first allowed origin by default). */
   appUrl: string;
-  /** Public base URL of THIS API; used to build OAuth redirect URIs. */
+  /** public base url of this api; used to build oauth redirect uris. */
   apiUrl: string;
   cookie: { secure: boolean; sameSite: 'Lax' | 'Strict' | 'None'; domain?: string };
-  /** Trust X-Forwarded-For for rate limiting (only behind a proxy you control). */
+  /** trust x-forwarded-for for rate limiting (only behind a proxy you control). */
   trustProxy: boolean;
-  /** 32-byte AES-256-GCM key for stored OAuth tokens. */
+  /** 32-byte aes-256-gcm key for stored oauth tokens. */
   tokenEncKey: Buffer;
   google: { clientId: string; clientSecret: string } | null;
-  /** "Log in with Notion" (a Notion PUBLIC integration). Optional: pasting a token always works. */
+  /** "log in with notion" (a notion public integration). optional: pasting a token always works. */
   notion: { clientId: string; clientSecret: string } | null;
   sessionTtlDays: number;
   guestTtlHours: number;

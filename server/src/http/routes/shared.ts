@@ -13,7 +13,7 @@ export function currentUser(c: Context<AppEnv>): User {
   return u;
 }
 
-/** Object-level authorization: a schedule is only ever loaded through its owner. Others get a plain 404. */
+/** object-level authorization: a schedule is only ever loaded through its owner. others get a plain 404. */
 export async function loadSchedule(c: Context<AppEnv>, id: string): Promise<Schedule> {
   const u = currentUser(c);
   if (!/^[0-9a-f-]{36}$/i.test(id)) throw notFound('Schedule');
@@ -22,7 +22,7 @@ export async function loadSchedule(c: Context<AppEnv>, id: string): Promise<Sche
   return s;
 }
 
-/** Preferences as the engine needs them; the schedule's timezone is authoritative. */
+/** preferences as the engine needs them; the schedule's timezone is authoritative. */
 export function schedulePrefs(s: Schedule): Preferences {
   return normalizePreferences({ ...s.preferences, timezone: s.timezone });
 }

@@ -3,10 +3,10 @@ import { PlanError } from './types.ts';
 import { fmtClock, fmtDuration } from './time.ts';
 import { intersectIntervals, mergeIntervals, subtractIntervals } from './intervals.ts';
 
-/** Hard cap so a typo cannot create absurd plans. */
+/** hard cap so a typo cannot create absurd plans. */
 export const MAX_DISRUPTION_MIN = 7 * 24 * 60;
 
-/** A plan item resolved for simulation: has a concrete start and remembers where it came from. */
+/** a plan item resolved for simulation: has a concrete start and remembers where it came from. */
 export interface WorkItem extends PlanItem {
   start: Minutes;
   origStart: Minutes;
@@ -23,7 +23,7 @@ export interface Floater {
   duration: number;
   release: Minutes;
   deadline: Minutes;
-  /** Baseline start, used to measure how far a plan moved it. */
+  /** baseline start, used to measure how far a plan moved it. */
   origStart: Minutes;
   priority: Priority;
   deferrable: boolean;
@@ -32,14 +32,14 @@ export interface Floater {
 
 export interface World {
   settings: PlanSettings;
-  /** Blocking, locked time: calendar commitments, locked breaks, injected disruptions. */
+  /** blocking, locked time: calendar commitments, locked breaks, injected disruptions. */
   locked: WorkItem[];
-  /** Flexible blocking work that the solver may place. */
+  /** flexible blocking work that the solver may place. */
   floaters: Floater[];
-  /** Everything (including non-blocking items) after the disruptions were applied. */
+  /** everything (including non-blocking items) after the disruptions were applied. */
   work: WorkItem[];
   injected: WorkItem[];
-  /** Sum of all disruption minutes (used to size mobility windows). */
+  /** sum of all disruption minutes (used to size mobility windows). */
   disruptionTotal: number;
   notes: string[];
 }
@@ -54,7 +54,7 @@ function checkMinutes(m: number, what: string): number {
   return Math.round(m);
 }
 
-/** Copy the plan's items into WorkItems and apply the disruptions to the COPIES. The plan is never mutated. */
+/** copy the plan's items into workitems and apply the disruptions to the copies. the plan is never mutated. */
 export function applyDisruptions(plan: Plan, disruptions: readonly Disruption[]): { work: WorkItem[]; injected: WorkItem[]; notes: string[]; total: number } {
   const work: WorkItem[] = plan.items.map((it) => {
     if (it.start === undefined) {
@@ -136,8 +136,8 @@ export function applyDisruptions(plan: Plan, disruptions: readonly Disruption[])
 }
 
 /**
- * Re-planning view of the disrupted day: what is locked (cannot move) and what the solver may place.
- * Mobility rules are baked into each floater's [release, deadline] window.
+ * re-planning view of the disrupted day: what is locked (cannot move) and what the solver may place.
+ * mobility rules are baked into each floater's [release, deadline] window.
  */
 export function buildWorld(plan: Plan, disruptions: readonly Disruption[]): World {
   const { work, injected, notes, total } = applyDisruptions(plan, disruptions);
@@ -173,7 +173,7 @@ export function buildWorld(plan: Plan, disruptions: readonly Disruption[]): Worl
   return { settings: plan.settings, locked, floaters, work, injected, disruptionTotal: total, notes };
 }
 
-/** Human description of one disruption ("Practice runs 45m long"). */
+/** human description of one disruption ("practice runs 45m long"). */
 export function describeDisruption(d: Disruption, plan: Plan): string {
   const tz = plan.settings.timezone;
   const title = (id: string) => plan.items.find((i) => i.id === id)?.title ?? id;
@@ -189,7 +189,7 @@ export function describeDisruption(d: Disruption, plan: Plan): string {
   }
 }
 
-/** Time in which flexible items may be placed: availability inside the horizon, minus every locked block. */
+/** time in which flexible items may be placed: availability inside the horizon, minus every locked block. */
 export function freeTime(world: Pick<World, 'settings' | 'locked'>): Interval[] {
   const avail = intersectIntervals(world.settings.availability, [world.settings.horizon]);
   return subtractIntervals(avail, mergeIntervals(world.locked.map(lockedInterval)));
