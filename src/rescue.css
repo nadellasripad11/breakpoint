@@ -192,6 +192,7 @@
 .result__btns { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .link-arrow--rescue { margin-left: -0.1rem; }
+@media (max-width: 1023px) { .link-arrow--rescue { margin-left: 0; } }
 
 @media (max-width: 1000px) {
   .rs__grid { grid-template-columns: minmax(0, 1fr); }
@@ -216,7 +217,7 @@
 /* ───────────────────────────────────────────────────────────
    the minimal rescue screen: pip on top, one line for what goes wrong, three quiet choices, the day
    ─────────────────────────────────────────────────────────── */
-.rv { display: grid; gap: 18px; max-width: 1040px; margin: 0 auto; padding-top: 4px; }
+.rv { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; max-width: 1040px; margin: 0 auto; padding-top: 4px; }
 
 /* pip, talking: a portrait, then a dialogue box with the words typed out */
 .say { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 20px; align-items: end; }

@@ -201,7 +201,9 @@ export function initRescue({ getLenis, say, onSetup }) {
   /** The "what goes wrong?" form. Builds real engine disruptions from whatever the visitor chooses. */
   const disruptionForm = (plan, onAdd, atTime) => {
     const tasks = plan.items.filter((i) => i.blocking && !i.locked && i.kind !== 'break');
-    const type = h('select', { 'aria-label': 'what goes wrong?' }, Object.entries(TYPE_LABEL).map(([v, l]) => h('option', { value: v }, l)));
+    // with nothing movable (an import where every event is locked), "runs long" and "starts late" have no task to pick
+    const kinds = Object.entries(TYPE_LABEL).filter(([v]) => tasks.length > 0 || (v !== 'overrun' && v !== 'delay'));
+    const type = h('select', { 'aria-label': 'what goes wrong?' }, kinds.map(([v, l]) => h('option', { value: v }, l)));
     const target = h('select', { 'aria-label': 'which task?' }, tasks.map((t) => h('option', { value: t.id }, t.title)));
     const minutes = h('input', { type: 'number', min: 5, max: 480, step: 5, value: 45, 'aria-label': 'how many minutes?' });
     const time = h('input', { type: 'time', value: '15:00', 'aria-label': 'at what time?' });
@@ -359,6 +361,7 @@ export function initRescue({ getLenis, say, onSetup }) {
     /** Probe every item with the engine, find the one with the least slack, and break it just past what it can take. */
     const stressTest = () => {
       const plan = planNow();
+      if (!plan.items.some((i) => i.blocking && !i.locked && i.kind !== 'break')) { S.note = 'every item here is locked, so nothing can move. add a surprise commitment to see what it does.'; draw(false); return; }
       if (plan.items.filter((i) => i.blocking).length > 30) { S.note = 'this day has a lot of items. add one disruption yourself.'; draw(false); return; }
       const prof = E.weakLinkProfile(plan, 240);
       const w = prof.weakest;
@@ -787,6 +790,13 @@ export function initRescue({ getLenis, say, onSetup }) {
     if (!f.length) return;
     if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
     else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  });
+
+  // a redraw can drop focus on the page behind (the focused block is replaced), where the handler above never hears the key
+  document.addEventListener('keydown', (e) => {
+    if (!isOpen || root.contains(document.activeElement)) return;
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    else if (e.key === 'Tab') { e.preventDefault(); root.querySelector('[data-rs-close]').focus({ preventScroll: true }); }
   });
 
   function open(which = 'rescue', opts = {}) {

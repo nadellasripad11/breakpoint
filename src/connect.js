@@ -155,6 +155,8 @@ export function initConnect({ ob, say, reduce, persist }) {
     msgEl.className = `sh__msg sh__msg--${tone}`;
     msgEl.textContent = text || '';
     msgEl.hidden = !text;
+    // on a short screen the message can sit below the fold of the card; bring it into view
+    if (text && tone === 'err') requestAnimationFrame(() => msgEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
   };
 
   /**
