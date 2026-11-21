@@ -15,6 +15,7 @@ breakpoint is a schedule stress-tester. it tells you exactly how much disruption
 
 ## what it does
 
+- **a quiet screen**: pip sits at the top and talks in a small box, one short line at a time (click for the next). under it: one line for what goes wrong, three ways forward, the day as three lanes that glide, and two buttons. everything the screen says is lowercase. the long explanations are one click away under "details".
 - **rescue my day**: the smallest feasible change that repairs a broken day. "smallest" has one precise meaning: defer nothing if possible, then touch the fewest items, then move them the fewest total minutes. it is exact, and the tests prove it against brute-force search. locked events never move, deadlines are never missed, protected breaks stay inside their windows. if no valid schedule exists it says why, with numbers, and changes nothing.
 - **three ways forward**: for the same disruption, protect your priorities, keep the most tasks, or change the least. each one is a full repair you can look at, and **test this schedule again** adopts it as the day and breaks its weakest link.
 - **pip explains why**: plain-english explanations built only from computed numbers ("your project ran 45 minutes long, but you only had 25 minutes of buffer. we need to find another 20 minutes."). no language model, so nothing is invented.

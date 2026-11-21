@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Disruption, Interval, Minutes, Plan } from '../src/engine/index.ts';
-import { Rng, adoptRepair, bufferFor, buildWorld, freeTime, minDisplacementPlacement, rescueDay, simulateCascade } from '../src/engine/index.ts';
+import { Rng, adoptRepair, bufferFor, buildWorld, freeTime, makeChallenge, minDisplacementPlacement, rescueDay, simulateCascade } from '../src/engine/index.ts';
 import { at, item, mkPlan, settings } from './helpers.ts';
 import { randomPlan } from './random.ts';
 
@@ -504,4 +504,39 @@ test('adoptRepair: the repaired day becomes a plan that has no conflicts left, l
     }
   }
   assert.ok(adopted > 150, `adopted ${adopted}`);
+});
+
+/* ═══════════════════ Pip, short ═══════════════════ */
+
+test('brief: three short lines, every number read from the result (the 45-minute problem set on sample day 4)', () => {
+  const ch = makeChallenge(4);
+  const r = rescueDay(ch.plan, [{ type: 'overrun', targetId: 'problems', minutes: 45 }]);
+  assert.deepEqual(r.brief, [
+    'Problem set ran 45m long. It only had 30m of buffer.',
+    'So Problem set misses its 2:30 PM deadline by 15m. 1 more would break too.',
+    'Fix: move Problem set 1h 40m earlier and Lunch 1h 5m later.',
+  ]);
+  // each way forward says its own fix
+  const protect = r.options.find((o) => o.strategy === 'protect_priorities')!.view!;
+  assert.equal(protect.brief[2], 'Protect priorities: move 3 things, 55m in total.');
+  assert.equal(protect.brief[0], r.brief[0]);
+});
+
+test('brief: always short (at most three lines, none longer than 110 characters), including impossible and absorbed days', () => {
+  let n = 0;
+  for (let seed = 1; seed <= 200; seed++) {
+    const plan = randomPlan(seed);
+    if (!plan) continue;
+    const t = plan.items.find((i) => !i.locked && i.blocking);
+    if (!t) continue;
+    for (const minutes of [10, 45, 240]) {
+      const r = rescueDay(plan, [{ type: 'overrun', targetId: t.id, minutes }]);
+      for (const lines of [r.brief, ...r.options.filter((o) => o.view).map((o) => o.view!.brief)]) {
+        n++;
+        assert.ok(lines.length >= 2 && lines.length <= 3, `seed ${seed}: ${lines.length} lines`);
+        for (const l of lines) assert.ok(l.length <= 110, `seed ${seed}: "${l}" is ${l.length} characters`);
+      }
+    }
+  }
+  assert.ok(n > 400, `checked ${n}`);
 });

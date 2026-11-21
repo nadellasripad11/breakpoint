@@ -45,6 +45,7 @@ How this is checked (not just claimed), in `test/rescue.test.ts` and `test/chall
 | `diagnosis` | when impossible: reasons, minimal conflicting set, suggestions |
 | `replay[]` | frames for the timeline replay: original → each disruption in turn → conflicts → each move → done |
 | `pip[]` | Pip's explanation (below) |
+| `brief[]` | Pip in three short lines or fewer: what happened, what breaks, the fix. This is what the screen shows, typed out in a speech box (each way forward in `options[]` has its own). Every number in it is computed |
 | `options[]` | **three ways forward** for the same disruption (protect priorities / preserve the most tasks / minimize changes). Each has its own `view`: repaired lane, changes, guarantees, Pip's words and replay. `sameAs` says when two ways land on the identical day. The top-level fields above always describe the smallest change |
 | `alternatives[]` | what the other two strategies would cost (kept for older clients) |
 

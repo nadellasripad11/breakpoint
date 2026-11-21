@@ -112,6 +112,8 @@ export interface RescueView {
   metrics: { moved: number; kept: number; totalMinutes: number; maxMinutes: number; deferred: number; conflictsBefore: number };
   guarantees: Guarantee[];
   pip: PipLine[];
+  /** Pip in three short lines or fewer (what happened, what breaks, the fix). Every number in them is computed. */
+  brief: string[];
   replay: ReplayFrame[];
   optimal: boolean;
 }
@@ -148,6 +150,7 @@ export interface RescueResult {
   guarantees: Guarantee[];
   diagnosis: Diagnosis | null;
   pip: PipLine[];
+  brief: string[];
   replay: ReplayFrame[];
   /** all three ways forward, each with its own repaired lane (same disruption, different priorities) */
   options: RescueOption[];
@@ -363,6 +366,7 @@ export function rescueDay(plan: Plan, disruptions: readonly Disruption[]): Rescu
       metrics: { moved: m.movedCount, kept: m.keptCount, totalMinutes: m.totalDisplacementMinutes, maxMinutes: m.maxDisplacementMinutes, deferred: m.deferredCount, conflictsBefore: conflicts.length },
       guarantees: checkGuarantees(plan, lane, f),
       pip: explainRescue({ plan, disruptions, cascade, futures, repaired: f, changes, status }),
+      brief: briefFor({ plan, disruptions, conflicts, changes, deferred: f.deferred, status, strategy: f.strategy, totalMinutes: m.totalDisplacementMinutes, diagnosis: null, tz }),
       replay: buildReplay(plan, disruptions, original, disrupted, lane, changes, conflicts, tz),
       optimal: f.optimal,
     };
@@ -407,6 +411,7 @@ export function rescueDay(plan: Plan, disruptions: readonly Disruption[]): Rescu
       guarantees: [],
       diagnosis,
       pip,
+      brief: briefFor({ plan, disruptions, conflicts, changes: [], deferred: [], status: 'impossible', strategy: 'minimize_changes', totalMinutes: 0, diagnosis, tz }),
       replay: buildReplay(plan, disruptions, original, disrupted, null, [], conflicts, tz),
       options,
       alternatives,
@@ -430,11 +435,60 @@ export function rescueDay(plan: Plan, disruptions: readonly Disruption[]): Rescu
     guarantees: smallest.guarantees,
     diagnosis: null,
     pip: smallest.pip,
+    brief: smallest.brief,
     replay: smallest.replay,
     options,
     alternatives,
     optimal: smallest.optimal,
   };
+}
+
+/**
+ * Pip, short: at most three lines (what happened, what breaks, the fix) for a speech bubble. Same rule as everything else
+ * Pip says: every number is read from the result, nothing is invented.
+ */
+function briefFor(a: {
+  plan: Plan; disruptions: readonly Disruption[]; conflicts: ExplainedConflict[]; changes: Change[]; deferred: Future['deferred'];
+  status: RescueStatus; strategy: StrategyId; totalMinutes: number; diagnosis: Diagnosis | null; tz: string;
+}): string[] {
+  const { plan, disruptions, conflicts, changes, deferred, status, strategy, totalMinutes, diagnosis, tz } = a;
+  const byId = new Map(plan.items.map((i) => [i.id, i]));
+  const d0 = disruptions[0];
+
+  // 1. what happened
+  let what = 'Nothing has gone wrong yet.';
+  if (disruptions.length > 1) what = `${disruptions.length} things went wrong.`;
+  else if (d0) {
+    const first = conflicts.find((c) => d0.type === 'overrun' && c.itemId === d0.targetId && c.slackBefore !== null && c.slackBefore >= 0);
+    if (d0.type === 'overrun') what = `${byId.get(d0.targetId)?.title ?? 'A task'} ran ${fmtDuration(d0.minutes)} long.${first ? ` It only had ${fmtDuration(first.slackBefore!)} of buffer.` : ''}`;
+    else if (d0.type === 'delay') what = `${byId.get(d0.targetId)?.title ?? 'A task'} started ${fmtDuration(d0.minutes)} late.`;
+    else if (d0.type === 'unexpected') what = `${d0.title ?? 'Something'} landed at ${fmtClock(d0.start, tz)} for ${fmtDuration(d0.duration)}.`;
+    else what = `You lost ${fmtDuration(d0.minutes)}.`;
+  }
+  if (status === 'impossible') {
+    const why = (diagnosis?.summary ?? 'No valid day exists.').split(/(?<=\.)\s/)[0]!;
+    return [what, why, 'Nothing was changed.'];
+  }
+
+  // 2. what breaks
+  if (conflicts.length === 0) return [what, 'Nothing breaks. Your day absorbs it.'];
+  const c = conflicts[0]!;
+  const it = byId.get(c.itemId);
+  let breaks: string;
+  if (c.code === 'deadline_missed' && it?.deadline !== undefined) breaks = `So ${c.itemTitle} misses its ${fmtClock(it.deadline, tz)} deadline by ${fmtDuration(c.minutes)}.`;
+  else if (c.code === 'break_lost') breaks = `So ${c.itemTitle} loses its protected window.`;
+  else if (c.code === 'locked_overlap') breaks = `So ${c.itemTitle} collides with ${c.otherTitle ?? 'a locked event'}.`;
+  else breaks = `So ${c.itemTitle} no longer fits.`;
+  if (conflicts.length > 1) breaks += ` ${conflicts.length - 1} more would break too.`;
+
+  // 3. the fix
+  const lead = strategy === 'minimize_changes' ? 'Fix: ' : `${STRATEGIES[strategy].title}: `;
+  const moves = changes.length <= 2
+    ? changes.map((x) => `${x.title} ${fmtDuration(Math.abs(x.deltaMinutes))} ${x.deltaMinutes < 0 ? 'earlier' : 'later'}`).join(' and ')
+    : `${changes.length} things, ${fmtDuration(totalMinutes)} in total`;
+  let fix = changes.length ? `${lead}move ${moves}.` : `${lead}nothing has to move.`;
+  if (deferred.length) fix += ` ${deferred.length} ${deferred.length === 1 ? 'task has' : 'tasks have'} to wait.`;
+  return [what, breaks, fix];
 }
 
 /**
