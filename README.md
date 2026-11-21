@@ -38,8 +38,8 @@ the scheduling is not an ai guessing. it is plain, deterministic code: integer m
 
 ## ai use disclosure
 
-i used ai (claude, from anthropic) as a coding assistant while building breakpoint.
+i used ai for:
 
-- **ui:** i used ai to improve the ui of the website and to polish it: 
+- **ui:** i used ai to improve the ui of the website and to polish at
 - **bugs:** i used ai to find and fix bugs
   
