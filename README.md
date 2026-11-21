@@ -36,21 +36,10 @@ you can import from google calendar, apple calendar, notion or an .ics file. eve
 
 the scheduling is not an ai guessing. it is plain, deterministic code: integer minutes, an exact solver for "the smallest change", and no randomness except where it is seeded. the same day always gives the same answer, and a test suite checks the solver against brute force. the site is vite and vanilla js, the api runs on cloudflare workers with d1.
 
-the longer notes are in [`server/docs/RESCUE.md`](server/docs/RESCUE.md) if you want to see what "smallest" means exactly.
-
-## honest limits
-
-- google sign-in is switched off on purpose, because google wants to verify any app that reads calendars. google calendar works through its private link instead.
-- apple calendar works through its public link or an exported file. apple has no calendar sign-in, and i didn't want to ask anyone for an apple password.
-- there is no separate dashboard: finishing setup takes you straight into rescue my day on your schedule.
-
 ## ai use disclosure
 
 i used ai (claude, from anthropic) as a coding assistant while building breakpoint.
 
-- **ui:** i used ai to improve the ui of the website and to polish it: layout, motion, the minimal rescue screen and the wording on it.
-- **bugs:** i used ai to find and fix bugs, including a full test pass of the live site (phone layout, keyboard handling, import errors).
-- **code:** ai also helped write and test parts of the scheduling engine, the api and the connectors. i chose what to build and reviewed what it produced.
-- **launch video:** the video was built in code with ai help, and its narration is an ai-generated voice.
-
-made by sripad for a hackathon.
+- **ui:** i used ai to improve the ui of the website and to polish it: 
+- **bugs:** i used ai to find and fix bugs
+  
